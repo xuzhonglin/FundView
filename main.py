@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 from src.fundViewMain import FundViewMain
-import ui.fundViewResource
+import ui.fundViewResource_rc
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
