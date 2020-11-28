@@ -18,6 +18,10 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="fundViewResource.qrc">
+    <normaloff>:/icon/windows/icon_windows.ico</normaloff>:/icon/windows/icon_windows.ico</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
@@ -42,7 +46,9 @@
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;上证指数 &lt;/span&gt;SH000001&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot;
+                                                font-size:10pt; font-weight:600;&quot;&gt;上证指数 &lt;/span&gt;SH000001&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+                                            </string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -97,7 +103,9 @@
         <item>
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;深证指数 &lt;/span&gt;SZ399001&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot;
+                                                font-size:10pt; font-weight:600;&quot;&gt;深证指数 &lt;/span&gt;SZ399001&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+                                            </string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -152,7 +160,9 @@
         <item>
          <widget class="QLabel" name="label_11">
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;沪深300 &lt;/span&gt;SZ399300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot;
+                                                font-size:10pt; font-weight:600;&quot;&gt;沪深300 &lt;/span&gt;SZ399300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+                                            </string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -207,7 +217,9 @@
         <item>
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;中证500 &lt;/span&gt;SH000905&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot;
+                                                font-size:10pt; font-weight:600;&quot;&gt;中证500 &lt;/span&gt;SH000905&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+                                            </string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -262,7 +274,9 @@
         <item>
          <widget class="QLabel" name="label_10">
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;创业板指 &lt;/span&gt;SZ399006&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot;
+                                                font-size:10pt; font-weight:600;&quot;&gt;创业板指 &lt;/span&gt;SZ399006&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+                                            </string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -332,6 +346,8 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <resources/>
+ <resources>
+  <include location="fundViewResource.qrc"/>
+ </resources>
  <connections/>
 </ui>

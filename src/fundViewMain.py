@@ -2,7 +2,7 @@ import os, requests
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
-from fundViewForm import Ui_MainWindow
+from ui.fundViewForm import Ui_MainWindow
 from fundCrawler import FundCrawler
 # import jpype
 import traceback

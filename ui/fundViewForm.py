@@ -18,6 +18,9 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setFamily("等线")
         MainWindow.setFont(font)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/icon/windows/icon_windows.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout_2 = QtWidgets.QGridLayout(self.centralwidget)
@@ -181,23 +184,33 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.label.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">上证指数 </span>SH000001</p></body></html>"))
+        self.label.setText(_translate("MainWindow", "<html><head/><body><p><span style=\"\n"
+                                                    "                                                font-size:10pt; font-weight:600;\">上证指数 </span>SH000001</p></body></html>\n"
+                                                    "                                            "))
         self.SHZ_Price.setText(_translate("MainWindow", "3408.31"))
         self.SHZ_PriceChange.setText(_translate("MainWindow", "+38.58"))
         self.SHZ_ChangePercent.setText(_translate("MainWindow", "+1.14%"))
-        self.label_3.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">深证指数 </span>SZ399001</p></body></html>"))
+        self.label_3.setText(_translate("MainWindow", "<html><head/><body><p><span style=\"\n"
+                                                      "                                                font-size:10pt; font-weight:600;\">深证指数 </span>SZ399001</p></body></html>\n"
+                                                      "                                            "))
         self.SZZ_Price.setText(_translate("MainWindow", "13690.88"))
         self.SZZ_PriceChange.setText(_translate("MainWindow", "+90.89"))
         self.SZZ_ChangePercent.setText(_translate("MainWindow", "+0.67%"))
-        self.label_11.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">沪深300 </span>SZ399300</p></body></html>"))
+        self.label_11.setText(_translate("MainWindow", "<html><head/><body><p><span style=\"\n"
+                                                       "                                                font-size:10pt; font-weight:600;\">沪深300 </span>SZ399300</p></body></html>\n"
+                                                       "                                            "))
         self.HS_Price.setText(_translate("MainWindow", "4980.77"))
         self.HS_PriceChange.setText(_translate("MainWindow", "+61.18"))
         self.HS_ChangePercent.setText(_translate("MainWindow", "+1.24%"))
-        self.label_5.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">中证500 </span>SH000905</p></body></html>"))
+        self.label_5.setText(_translate("MainWindow", "<html><head/><body><p><span style=\"\n"
+                                                      "                                                font-size:10pt; font-weight:600;\">中证500 </span>SH000905</p></body></html>\n"
+                                                      "                                            "))
         self.ZZ_Price.setText(_translate("MainWindow", "6351.61"))
         self.ZZ_PriceChange.setText(_translate("MainWindow", "+17.31"))
         self.ZZ_ChangePercent.setText(_translate("MainWindow", "+0.27%"))
-        self.label_10.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">创业板指 </span>SZ399006</p></body></html>"))
+        self.label_10.setText(_translate("MainWindow", "<html><head/><body><p><span style=\"\n"
+                                                       "                                                font-size:10pt; font-weight:600;\">创业板指 </span>SZ399006</p></body></html>\n"
+                                                       "                                            "))
         self.CY_Price.setText(_translate("MainWindow", "2618.99"))
         self.CY_PriceChange.setText(_translate("MainWindow", "+9.60"))
         self.CY_ChangePercent.setText(_translate("MainWindow", "+0.37%"))
