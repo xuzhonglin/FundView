@@ -5,4 +5,4 @@
 ### 安装
 + 安装依赖 `pip install -r requirements.txt`
 ### 打包
-+ `pyinstaller -F -w -i icon.ico main.py`
++ `pyinstaller -F main.spec`
