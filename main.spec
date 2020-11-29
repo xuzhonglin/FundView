@@ -3,10 +3,10 @@
 block_cipher = None
 
 
-a = Analysis(['fundView.py'],
-             pathex=['E:\\colinxu\\Python\\fundView'],
+a = Analysis(['main.py'],
+             pathex=['/Users/colinxu/workspace/python/FundView'],
              binaries=[],
-             datas=[('icon_windows.ico', '.')],
+             datas=[],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -23,11 +23,15 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='fundView',
+          name='main',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=False , icon='icon_windows.ico')
+          console=False , icon='ui/icon_mac.icns')
+app = BUNDLE(exe,
+             name='main.app',
+             icon='ui/icon_mac.icns',
+             bundle_identifier=None)
