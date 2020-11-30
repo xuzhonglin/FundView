@@ -18,9 +18,10 @@ class FundCrawler:
             pass
         return []
 
-    def get_position_data(self):
+    def get_position_data(self, fundCode: []):
         try:
-            url = self.URL + '/fund?code=001510,161029,009777,260108,007020,161725'
+            fundCodes = ','.join(fundCode)
+            url = self.URL + '/fund?code=' + fundCodes
             resp = requests.get(url)
             if resp.status_code == 200:
                 resp_json = resp.json()

@@ -9,8 +9,6 @@ import ui.fundViewResource_rc
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    print(sys.platform)
-
     w = FundViewMain()
     fontFamily = "PingFang SC" if sys.platform == 'darwin' else "等线"
     font = QtGui.QFont()
