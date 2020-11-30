@@ -1,12 +1,15 @@
 import json
 import os, requests
+import sys
 
+from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QStandardItemModel, QBrush, QColor
+from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu
 
-from addFundDialog import Ui_AddFundDialog
+from ui.addFundDialog import Ui_AddFundDialog
 from ui.fundViewForm import Ui_MainWindow
+from ui.fundImageDialog import Ui_FundImageDialog
 from src.fundCrawler import FundCrawler
 # import jpype
 import traceback
@@ -39,6 +42,12 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.refresh_board_data()
         self.init_position_table()
         self.refresh_position_data()
+
+        # fontFamily = "PingFang SC" if sys.platform == 'darwin' else "等线"
+        # font = QtGui.QFont()
+        # font.setFamily(fontFamily)
+        # self.positionRefreshBtn.setFont(font)
+        # self.addFundBtn.setFont(font)
 
         # print(self.fundConfigOrigin)
         print(self.positionFund)
@@ -94,31 +103,32 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         menu2 = contextMenu.addAction('基金持仓')
         menu3 = contextMenu.addAction('净值图')
         menu4 = contextMenu.addAction('估值图')
-        action = contextMenu.exec_(self.positionTable.mapToGlobal(pos))
+        menu5 = contextMenu.addAction('删除')
 
-        # 得到索引
-        # for i in self.tableWidget.selectionModel().selection().indexes():
-        #     rowNum = i.row()
+        screenPos = self.positionTable.mapToGlobal(pos)
+        action = contextMenu.exec_(screenPos)
+        selectedItem = self.positionTable.selectedItems()
+        if len(selectedItem) == 0: return
+        if action == menu4:
+            fundCode = selectedItem[1].text()
+            url = "http://j4.dfcfw.com/charts/pic6/{}.png".format(fundCode)
+            title = '估值图：' + selectedItem[0].text()
+            self.show_net_image(title, url)
+        elif action == menu3:
+            fundCode = selectedItem[1].text()
+            url = "http://j3.dfcfw.com/images/JJJZ1/{}.png".format(fundCode)
+            title = '估值图：' + selectedItem[0].text()
+            self.show_net_image(title, url)
 
-        # 如果选择的行索引小于1，弹出上下文菜单
-        # if rowNum < 3:
-        #     menu = QMenu()
-        #     item1 = menu.addAction("菜单1")
-        #     item2 = menu.addAction("菜单2")
-        #     item3 = menu.addAction("菜单3")
-        #     # 使菜单在正常位置显示
-        #     screenPos = self.tableWidget.mapToGlobal(pos)
-        #
-        #     # 单击一个菜单项就返回，使之被阻塞
-        #     action = menu.exec(screenPos)
-        #     if action == item1:
-        #         print('选择菜单1', self.tableWidget.item(rowNum, 0).text())
-        #     if action == item2:
-        #         print('选择菜单2', self.tableWidget.item(rowNum, 0).text())
-        #     if action == item3:
-        #         print('选择菜单3', self.tableWidget.item(rowNum, 0).text())
-        #     else:
-        #         return
+    def show_net_image(self, title, url):
+        res = requests.get(url)
+        img = QImage.fromData(res.content)
+        dialog = QDialog(self.centralwidget)
+        ui = Ui_FundImageDialog()
+        ui.setupUi(dialog)
+        ui.imageLabel.setPixmap(QPixmap.fromImage(img))
+        dialog.setWindowTitle(title)
+        dialog.exec_()
 
     def refresh_board_data(self):
         ret = self.fundCrawler.get_board_info()
@@ -203,8 +213,11 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.positionTable.setItem(index, 5, fundHoldIncomeItem)
 
             # 7.持有收益率
-            fundHoldIncomeRate = (float(item['netWorth']) - fundHold['fundCost']) / fundHold['fundCost']
-            fundHoldIncomeRate = 0 if fundHold['fundUnits'] <= float(0) else fundHoldIncomeRate
+            if fundHold['fundCost'] != float(0):
+                fundHoldIncomeRate = (float(item['netWorth']) - fundHold['fundCost']) / fundHold['fundCost']
+                fundHoldIncomeRate = 0 if fundHold['fundUnits'] <= float(0) else fundHoldIncomeRate
+            else:
+                fundHoldIncomeRate = 0
             fundHoldIncomeRateItem = QTableWidgetItem("{}%".format(round(fundHoldIncomeRate * 100, 2)))
             self.positionTable.setItem(index, 6, fundHoldIncomeRateItem)
             expectGrowthColor = RED if fundHoldIncomeRate >= 0 else GREEN
@@ -296,6 +309,13 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
     def edit_fund_data(self, fundCode, fundCost, fundUnits):
         print(fundCode, fundCost, fundUnits)
+        print(fundCode, type(fundCost), type(fundUnits))
+
+        if fundCost is None or fundCost == '':
+            fundCost = 0
+        if fundUnits is None or fundUnits == '':
+            fundUnits = 0
+
         self.positionFund[fundCode] = {
             "fundCode": fundCode,
             "fundCost": float(fundCost),

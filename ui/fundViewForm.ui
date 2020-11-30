@@ -76,18 +76,6 @@
           <property name="bottomMargin">
            <number>10</number>
           </property>
-          <item row="0" column="1">
-           <widget class="QLabel" name="worthDateTxt">
-            <property name="font">
-             <font>
-              <family>等线</family>
-             </font>
-            </property>
-            <property name="text">
-             <string>2020-11-30 12:20:20</string>
-            </property>
-           </widget>
-          </item>
           <item row="2" column="0" colspan="5">
            <widget class="QTableWidget" name="positionTable">
             <property name="font">
@@ -148,11 +136,6 @@
           </item>
           <item row="0" column="0">
            <widget class="QPushButton" name="positionRefreshBtn">
-            <property name="font">
-             <font>
-              <family>等线</family>
-             </font>
-            </property>
             <property name="text">
              <string>刷新</string>
             </property>
@@ -160,11 +143,6 @@
           </item>
           <item row="0" column="4">
            <widget class="QPushButton" name="addFundBtn">
-            <property name="font">
-             <font>
-              <family>等线</family>
-             </font>
-            </property>
             <property name="text">
              <string>添加</string>
             </property>
@@ -236,6 +214,18 @@
            <widget class="QPushButton" name="editFundBtn">
             <property name="text">
              <string>编辑</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="worthDateTxt">
+            <property name="font">
+             <font>
+              <family>等线</family>
+             </font>
+            </property>
+            <property name="text">
+             <string>2020-11-30 12:20:20</string>
             </property>
            </widget>
           </item>

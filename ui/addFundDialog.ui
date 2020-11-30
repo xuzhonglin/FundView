@@ -48,13 +48,7 @@
     </spacer>
    </item>
    <item row="0" column="0" colspan="3">
-    <layout class="QFormLayout" name="formLayout">
-     <property name="labelAlignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-     <property name="formAlignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
+    <layout class="QGridLayout" name="gridLayout_2">
      <property name="verticalSpacing">
       <number>15</number>
      </property>
