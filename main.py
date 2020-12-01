@@ -11,7 +11,7 @@ if __name__ == '__main__':
     w = FundViewMain()
 
     # 设置全局字体
-    fontFamily = "PingFang SC" if sys.platform == 'darwin' else "微软雅黑"
+    fontFamily = ".AppleSystemUIFont" if sys.platform == 'darwin' else "微软雅黑"
     fontSize = 13 if sys.platform == 'darwin' else 9
     font = QFont(fontFamily, fontSize)
     app.setFont(font)

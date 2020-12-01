@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu
 
-from MyThread import MyThread
+from src.MyThread import MyThread
 from ui.addFundDialog import Ui_AddFundDialog
 from ui.fundViewForm import Ui_MainWindow
 from ui.fundImageDialog import Ui_FundImageDialog
@@ -259,7 +259,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             for key in self.positionFund:
                 keys.append(key)
             ret = self.fundCrawler.get_funds_data(keys)
-        self.positionTable.clearContents()
+        # self.positionTable.clearContents()
         self.positionTable.setRowCount(len(ret))
         todayExpectIncome = 0
         totalIncome = 0

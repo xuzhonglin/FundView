@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from fundCrawler import FundCrawler
+from src.fundCrawler import FundCrawler
 
 
 class MyThread(QThread):
