@@ -1,15 +1,19 @@
+import _thread
 import json
 import os, requests
 import sys
+import time
 
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu
 
+from MyThread import MyThread
 from ui.addFundDialog import Ui_AddFundDialog
 from ui.fundViewForm import Ui_MainWindow
 from ui.fundImageDialog import Ui_FundImageDialog
+from ui.fundTableMain import FundTableMain
 from src.fundCrawler import FundCrawler
 # import jpype
 import traceback
@@ -24,8 +28,6 @@ STYLE_GREEN = 'color: rgb(0, 170, 0);'
 
 class FundViewMain(QMainWindow, Ui_MainWindow):
 
-    # fundSaveSignal=pySignal
-
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -34,33 +36,56 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.positionModel = QStandardItemModel(0, 11)
         self.fundConfigOrigin = {}
         self.positionFund = {}
+        self.optionalFund = []
+        self.spaceKeyTimes = 0
         self.start_init()
 
     def start_init(self):
         self.read_local_config()
         self.parse_fund_config()
-        self.refresh_board_data()
         self.init_position_table()
-        self.refresh_position_data()
+        self.init_optional_table()
 
-        # fontFamily = "PingFang SC" if sys.platform == 'darwin' else "等线"
-        # font = QtGui.QFont()
-        # font.setFamily(fontFamily)
-        # self.positionRefreshBtn.setFont(font)
-        # self.addFundBtn.setFont(font)
-
-        # print(self.fundConfigOrigin)
-        print(self.positionFund)
+        print("界面初始化完成")
+        self.thread = MyThread(self.positionFund, self.optionalFund)
+        self.thread.start()
+        self.thread.BDone.connect(self.refresh_board_data)
+        self.thread.PDone.connect(self.refresh_position_data)
+        self.thread.ODone.connect(self.refresh_optional_data)
 
     def init_slot(self):
-        self.positionRefreshBtn.clicked.connect(self.refresh_btn_clicked)
+        self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))
         self.addFundBtn.clicked.connect(lambda: self.fund_add_edit_clicked(True))
         self.editFundBtn.clicked.connect(lambda: self.fund_add_edit_clicked(False))
+        self.optionalRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(True))
+        self.addOptionalFundBtn.clicked.connect(self.optional_add_fund_clicked)
 
-    def refresh_btn_clicked(self):
+    def refresh_btn_clicked(self, isOptional: bool = False):
         print('refresh_btn_click')
-        self.refresh_board_data()
-        self.refresh_position_data()
+        if not isOptional:
+            self.positionRefreshBtn.setDisabled(True)
+            self.addFundBtn.setDisabled(True)
+            self.editFundBtn.setDisabled(True)
+            _thread.start_new_thread(lambda: self.refresh_data(False), ())
+        else:
+            self.optionalRefreshBtn.setDisabled(True)
+            self.optionalFundCodeTxt.setDisabled(True)
+            self.addOptionalFundBtn.setDisabled(True)
+            _thread.start_new_thread(lambda: self.refresh_data(True), ())
+
+    def refresh_data(self, isOptional: bool = False):
+        if not isOptional:
+            self.refresh_board_data()
+            self.refresh_position_data()
+            self.positionRefreshBtn.setEnabled(True)
+            self.addFundBtn.setEnabled(True)
+            self.editFundBtn.setEnabled(True)
+        else:
+            self.refresh_board_data()
+            self.refresh_optional_data()
+            self.optionalRefreshBtn.setEnabled(True)
+            self.optionalFundCodeTxt.setEnabled(True)
+            self.addOptionalFundBtn.setEnabled(True)
 
     def init_position_table(self):
         self.positionTable.clearContents()
@@ -78,26 +103,52 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         # 设置整行选中
         self.positionTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.positionTable.verticalHeader().hide()
-        # 设置选中行是表头不加粗
-        # self.positionTable.horizontalHeader().setHighlightSections(False)
 
         # 设置行高
         self.positionTable.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
 
-        # self.positionTable.setColumnWidth(1, 40)
-
         # 调整第 1-3列的宽度 为适应内容
         self.positionTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.positionTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.positionTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        # self.positionTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        # self.positionTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
         # 允许弹出菜单
         self.positionTable.setContextMenuPolicy(Qt.CustomContextMenu)
         # 将信号请求连接到槽（单击鼠标右键，就调用方法）
-        self.positionTable.customContextMenuRequested.connect(self.position_table_menu)
+        self.positionTable.customContextMenuRequested.connect(self.fund_table_menu)
 
-    def position_table_menu(self, pos):
-        print(pos)
+    def init_optional_table(self):
+        self.optionalTable.clearContents()
+        # 设置一共10列
+        self.optionalTable.setColumnCount(10)
+        #  设置水平方向两个头标签文本内容
+        self.optionalTable.setHorizontalHeaderLabels(
+            ['基金名称', '基金编码', '估值', '净值', '近1周', '近1月', '近3月', '近6月', '近1年', '更新时间'])
+        # 水平方向标签拓展剩下的窗口部分，填满表格
+        # self.tableView.horizontalHeader().setStretchLastSection(True)
+        # 水平方向，表格大小拓展到适当的尺寸
+        self.optionalTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.optionalTable.horizontalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        # 设置整行选中
+        self.optionalTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.optionalTable.verticalHeader().hide()
+
+        # 设置行高
+        self.optionalTable.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+
+        # 调整第 1-3列的宽度 为适应内容
+        self.optionalTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.optionalTable.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
+        # self.positionTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+
+        # 允许弹出菜单
+        self.optionalTable.setContextMenuPolicy(Qt.CustomContextMenu)
+        # 将信号请求连接到槽（单击鼠标右键，就调用方法）
+        self.optionalTable.customContextMenuRequested.connect(self.fund_table_menu)
+
+    def fund_table_menu(self, pos):
+        curTabIndex = self.tabWidget.currentIndex()
+
         contextMenu = QMenu(self.positionTable)
         menu1 = contextMenu.addAction('历史净值')
         menu2 = contextMenu.addAction('基金持仓')
@@ -105,20 +156,52 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         menu4 = contextMenu.addAction('估值图')
         menu5 = contextMenu.addAction('删除')
 
-        screenPos = self.positionTable.mapToGlobal(pos)
+        if curTabIndex == 0:
+            screenPos = self.positionTable.mapToGlobal(pos)
+        else:
+            screenPos = self.optionalTable.mapToGlobal(pos)
+
         action = contextMenu.exec_(screenPos)
-        selectedItem = self.positionTable.selectedItems()
+
+        if curTabIndex == 0:
+            selectedItem = self.positionTable.selectedItems()
+        else:
+            selectedItem = self.optionalTable.selectedItems()
+
         if len(selectedItem) == 0: return
-        if action == menu4:
-            fundCode = selectedItem[1].text()
+        fundCode = selectedItem[1].text()
+        if action == menu1:
+            title = '历史净值：' + selectedItem[0].text()
+            dialog = QDialog(self.centralwidget)
+            FundTableMain(dialog, fundCode, 1)
+            dialog.setWindowTitle(title)
+            dialog.exec_()
+        elif action == menu2:
+            title = '基金持仓：' + selectedItem[0].text()
+            dialog = QDialog(self.centralwidget)
+            FundTableMain(dialog, fundCode, 2)
+            dialog.setWindowTitle(title)
+            dialog.exec_()
+        elif action == menu3:
+            url = "http://j3.dfcfw.com/images/JJJZ1/{}.png".format(fundCode)
+            title = '净值图：' + selectedItem[0].text()
+            self.show_net_image(title, url)
+        elif action == menu4:
             url = "http://j4.dfcfw.com/charts/pic6/{}.png".format(fundCode)
             title = '估值图：' + selectedItem[0].text()
             self.show_net_image(title, url)
-        elif action == menu3:
-            fundCode = selectedItem[1].text()
-            url = "http://j3.dfcfw.com/images/JJJZ1/{}.png".format(fundCode)
-            title = '估值图：' + selectedItem[0].text()
-            self.show_net_image(title, url)
+        elif action == menu5:
+            if curTabIndex == 0:
+                selectedIndex = self.positionTable.selectedIndexes()[0].row()
+                self.positionTable.removeRow(selectedIndex)
+                self.positionFund.pop(fundCode)
+                self.write_local_config(fundCode, isDelete=True)
+
+            else:
+                selectedIndex = self.optionalTable.selectedIndexes()[0].row()
+                self.optionalTable.removeRow(selectedIndex)
+                self.optionalFund.remove(fundCode)
+                self.write_local_config(fundCode, isDelete=True, isOptional=True)
 
     def show_net_image(self, title, url):
         res = requests.get(url)
@@ -130,8 +213,9 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         dialog.setWindowTitle(title)
         dialog.exec_()
 
-    def refresh_board_data(self):
-        ret = self.fundCrawler.get_board_info()
+    def refresh_board_data(self, ret: list = None):
+        if ret is None:
+            ret = self.fundCrawler.get_board_info()
         for board_item in ret:
             # fund_name = board_item["name"]
             fund_code = board_item["code"]
@@ -169,14 +253,19 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 self.CY_PriceChange.setText(priceChange)
                 self.CY_ChangePercent.setText(changePercent)
 
-    def refresh_position_data(self):
-        ret = self.fundCrawler.get_position_data(self.positionFund.keys())
+    def refresh_position_data(self, ret: list = None):
+        if ret is None:
+            keys = []
+            for key in self.positionFund:
+                keys.append(key)
+            ret = self.fundCrawler.get_funds_data(keys)
         self.positionTable.clearContents()
         self.positionTable.setRowCount(len(ret))
         todayExpectIncome = 0
         totalIncome = 0
         holdAmount = 0
         worthDate = ''
+        expectWorthDate = ''
         for index, item in enumerate(ret):
             print(index, item)
             fundCode = item['code']
@@ -255,8 +344,15 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
             # 11.预估收益
             netWorthFloat = float(netWorth)
-            expectWorthFloat = float(item['expectWorth'])
-            expectIncome = (expectWorthFloat - netWorthFloat) * fundHoldUnits
+            # 当日净值已更新
+            if item['netWorthDate'] == item['expectWorthDate'][:-9]:
+                lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode)['netWorth']
+                lastDayNetWorthFloat = float(lastDayNetWorth)
+                expectIncome = (netWorthFloat - lastDayNetWorthFloat) * fundHoldUnits
+            else:
+                expectWorthFloat = float(item['expectWorth'])
+                expectIncome = (expectWorthFloat - netWorthFloat) * fundHoldUnits
+
             todayExpectIncome = todayExpectIncome + expectIncome
             prefix = '+' if expectIncome > 0 else ''
             expectIncomeItem = QTableWidgetItem('{}{}'.format(prefix, round(expectIncome, 2)))
@@ -287,6 +383,89 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.holdAmount.setText(holdAmountTxt)
         # self.holdIncomeTxt.setStyleSheet(self.holdIncomeTxt.styleSheet() + totalIncomeTxtColor)
 
+    def refresh_optional_data(self, ret: list = None):
+        if ret is None:
+            ret = self.fundCrawler.get_funds_data(self.optionalFund)
+        self.optionalTable.clearContents()
+        self.optionalTable.setRowCount(len(ret))
+
+        for index, item in enumerate(ret):
+            print(index, item)
+            fundCode = item['code']
+
+            # 1.基金名称
+            fundNameItem = QTableWidgetItem(item['name'])
+            self.optionalTable.setItem(index, 0, fundNameItem)
+
+            # 2.基金代码
+            fundCodeItem = QTableWidgetItem(item['code'])
+            self.optionalTable.setItem(index, 1, fundCodeItem)
+
+            # 3.基金估值
+            fundExpectWorth = float(item['expectWorth'])
+            fundExpectWorthColor = RED if fundExpectWorth >= 0 else GREEN
+            fundExpectWorthItem = QTableWidgetItem("{}".format(format(fundExpectWorth, '.4f')))
+            self.optionalTable.setItem(index, 2, fundExpectWorthItem)
+            self.optionalTable.item(index, 2).setForeground(fundExpectWorthColor)
+
+            # 4.基金净值
+            fundNetWorth = float(item['netWorth'])
+            fundNetWorthColor = RED if fundNetWorth >= 0 else GREEN
+            fundNetWorthItem = QTableWidgetItem("{}".format(format(fundNetWorth, '.4f')))
+            self.optionalTable.setItem(index, 3, fundNetWorthItem)
+            self.optionalTable.item(index, 3).setForeground(fundNetWorthColor)
+
+            # 5.近1周
+            lastWeekGrowth = float(item['lastWeekGrowth'])
+            lastWeekGrowthColor = RED if lastWeekGrowth >= 0 else GREEN
+            lastWeekGrowthItem = QTableWidgetItem("{}%".format(format(lastWeekGrowth, '.2f')))
+            self.optionalTable.setItem(index, 4, lastWeekGrowthItem)
+            self.optionalTable.item(index, 4).setForeground(lastWeekGrowthColor)
+
+            #  6.近1月
+            lastMonthGrowth = float(item['lastMonthGrowth'])
+            lastMonthGrowthColor = RED if lastMonthGrowth >= 0 else GREEN
+            lastMonthGrowthItem = QTableWidgetItem("{}%".format(format(lastMonthGrowth, '.2f')))
+            self.optionalTable.setItem(index, 5, lastMonthGrowthItem)
+            self.optionalTable.item(index, 5).setForeground(lastMonthGrowthColor)
+
+            #  7.近3月
+            lastThreeMonthsGrowth = float(item['lastThreeMonthsGrowth'])
+            lastThreeMonthsGrowthColor = RED if lastThreeMonthsGrowth >= 0 else GREEN
+            lastThreeMonthsGrowthItem = QTableWidgetItem("{}%".format(format(lastThreeMonthsGrowth, '.2f')))
+            self.optionalTable.setItem(index, 6, lastThreeMonthsGrowthItem)
+            self.optionalTable.item(index, 6).setForeground(lastThreeMonthsGrowthColor)
+
+            #  8.近6月
+            if 'lastSixMonthsGrowth' in item:
+                lastSixMonthsGrowth = float(item['lastSixMonthsGrowth'])
+                lastSixMonthsGrowthColor = RED if lastSixMonthsGrowth >= 0 else GREEN
+                lastSixMonthsGrowthItem = QTableWidgetItem("{}%".format(format(lastSixMonthsGrowth, '.2f')))
+                self.optionalTable.setItem(index, 7, lastSixMonthsGrowthItem)
+                self.optionalTable.item(index, 7).setForeground(lastSixMonthsGrowthColor)
+            else:
+                lastSixMonthsGrowthItem = QTableWidgetItem("-")
+                self.optionalTable.setItem(index, 7, lastSixMonthsGrowthItem)
+
+            #  9.近1年
+            if 'lastYearGrowth' in item:
+                lastYearGrowth = float(item['lastYearGrowth'])
+                lastYearGrowthColor = RED if lastYearGrowth >= 0 else GREEN
+                lastYearGrowthItem = QTableWidgetItem("{}%".format(format(lastYearGrowth, '.2f')))
+                self.optionalTable.setItem(index, 8, lastYearGrowthItem)
+                self.optionalTable.item(index, 8).setForeground(lastYearGrowthColor)
+            else:
+                lastYearGrowthItem = QTableWidgetItem("-")
+                self.optionalTable.setItem(index, 8, lastYearGrowthItem)
+
+            #  10.更新时间
+            if 'expectWorthDate' in item:
+                expectWorthDateItem = QTableWidgetItem("{}".format(item['expectWorthDate']))
+                self.optionalTable.setItem(index, 9, expectWorthDateItem)
+            else:
+                expectWorthDateItem = QTableWidgetItem("-")
+                self.optionalTable.setItem(index, 9, expectWorthDateItem)
+
     def fund_add_edit_clicked(self, isAddFlag):
         title = '新增基金' if isAddFlag else "编辑基金"
         dialog = QDialog(self.centralwidget)
@@ -307,7 +486,30 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         dialog.setWindowTitle(title)
         dialog.exec_()
 
+    def optional_add_fund_clicked(self):
+        fundCode = self.optionalFundCodeTxt.text()
+        if fundCode == '' or len(fundCode) != 6 or fundCode is None: return
+        self.optionalFundCodeTxt.setText("")
+
+        if fundCode in self.optionalFund:
+            index = self.optionalFund.index(fundCode)
+            # self.optionalTable.row(index).
+            # self.optionalTable.scrollTo()
+            # self.optionalTable.findItems(fundCode)
+            return
+
+        self.optionalFund.append(fundCode)
+        self.refresh_optional_data()
+        self.optionalTable.scrollToBottom()
+
     def edit_fund_data(self, fundCode, fundCost, fundUnits):
+        """
+        修改持仓基金
+        :param fundCode: 基金代码
+        :param fundCost: 基金成本
+        :param fundUnits: 持有份额
+        :return:
+        """
         print(fundCode, fundCost, fundUnits)
         print(fundCode, type(fundCost), type(fundUnits))
 
@@ -323,16 +525,133 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         }
         # self.fundConfigOrigin[]
         self.refresh_position_data()
+        self.write_local_config(fundCode, float(fundCost), float(fundUnits))
 
     def read_local_config(self):
-        with open('fund.json', 'r', encoding='utf-8') as f:
-            # temp = f.read()
-            self.fundConfigOrigin = json.load(f)
+        """
+        读取本地配置文件
+        :return: void
+        """
+        try:
+            with open('fund.json', 'r', encoding='utf-8') as f:
+                self.fundConfigOrigin = json.load(f)
+        except:
+            with open('fund.json', 'w', encoding='utf-8') as f:
+                config = {
+                    'positions': [
+                        {
+                            'fundCode': '260108',
+                            'fundCost': 1.000,
+                            'fundUnits': 500.00
+                        }
+                    ],
+                    'optional': ['260108']
+                }
+                self.fundConfigOrigin = config
+                json.dump(config, f, indent=4, ensure_ascii=False)
+
+    def write_local_config(self, fundCode: str, fundCost: float = 0, fundUnits: float = 0, isDelete: bool = False,
+                           isOptional: bool = False):
+        """
+        写入本地配置文件
+        :param fundCode: 基金代码
+        :param fundCost: 持有成本
+        :param fundUnits: 持有份额
+        :param isDelete: 是否删除
+        :param isOptional: 是否自选
+        :return:
+        """
+        try:
+            # 删除持仓
+            if isDelete and not isOptional:
+                for index, item in enumerate(self.fundConfigOrigin['positions']):
+                    if item['fundCode'] == fundCode:
+                        self.fundConfigOrigin['positions'].remove(item)
+                        break
+            # 删除自选
+            elif isDelete and isOptional:
+                if fundCode in self.fundConfigOrigin['optional']:
+                    self.fundConfigOrigin['optional'].remove(fundCode)
+            # 修改持仓
+            elif not isDelete and not isOptional:
+                modifyIndex = -1
+                fund = {
+                    'fundCode': fundCode,
+                    'fundCost': fundCost,
+                    'fundUnits': fundUnits
+                }
+                for index, item in enumerate(self.fundConfigOrigin['positions']):
+                    if item['fundCode'] == fundCode:
+                        modifyIndex = index
+                        self.fundConfigOrigin['positions'].remove(item)
+                        break
+                if modifyIndex >= 0:
+                    self.fundConfigOrigin['positions'].insert(modifyIndex, fund)
+                else:
+                    self.fundConfigOrigin['positions'].append(fund)
+            # 修改自选
+            elif not isDelete and isOptional:
+                if fundCode not in self.fundConfigOrigin['optional']:
+                    self.fundConfigOrigin['optional'].append(fundCode)
+                else:
+                    pass
+            with open('fund.json', 'w', encoding='utf-8') as f:
+                json.dump(self.fundConfigOrigin, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            print(e)
 
     def parse_fund_config(self):
-        positions = self.fundConfigOrigin['positions']
-        totalPositionAmount = 0
-        for item in positions:
-            self.positionFund[item['fundCode']] = item
-            totalPositionAmount = totalPositionAmount + item['fundCost'] * item['fundUnits']
-        print(totalPositionAmount)
+        """
+        解析配置文件
+        :return:
+        """
+        # 持仓基金
+        if "positions" in self.fundConfigOrigin:
+            positions = self.fundConfigOrigin['positions']
+            for item in positions:
+                self.positionFund[item['fundCode']] = item
+        else:
+            self.positionFund = {}
+        # 自选基金
+        if "optional" in self.fundConfigOrigin:
+            self.optionalFund = self.fundConfigOrigin['optional']
+        else:
+            self.optionalFund = []
+
+        # 检测键盘回车按键
+
+    def keyPressEvent(self, event):
+        print("按下：" + str(event.key()))
+        curTabIndex = self.tabWidget.currentIndex()
+        # 刷新按钮按下
+        if event.key() == Qt.Key_F5:
+            if curTabIndex == 0:
+                self.refresh_btn_clicked(False)
+            elif curTabIndex == 1:
+                self.refresh_btn_clicked(True)
+
+        # 回车按钮
+        if event.key() == Qt.Key_Enter:
+            if curTabIndex == 0:
+                pass
+            elif curTabIndex == 1:
+                self.optional_add_fund_clicked()
+
+        # if event.key()==Qt.Key_Doub
+        # 举例
+        # if event.key() == Qt.Key_Escape:
+        #     print('测试：ESC')
+        # if event.key() == Qt.Key_A:
+        #     print('测试：A')
+        # if event.key() == Qt.Key_1:
+        #     print('测试：1')
+        # if event.key() == Qt.Key_Enter:
+        #     curTabIndex = self.tabWidget.currentIndex()
+        #     print('测试：Enter')
+        # if event.key() == Qt.Key_Space:
+        #     self.spaceKeyTimes = self.spaceKeyTimes + 1
+        #     print(self.spaceKeyTimes)
+        #     if self.spaceKeyTimes == 2:
+        #         self.spaceKeyTimes = 0
+        #         if curTabIndex == 0:
+        #             self.fund_add_edit_clicked(False)

@@ -19,6 +19,9 @@
    </property>
    <item row="2" column="2">
     <widget class="QPushButton" name="cancelBtn">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="text">
       <string>取消</string>
      </property>
@@ -26,6 +29,9 @@
    </item>
    <item row="2" column="1">
     <widget class="QPushButton" name="saveBtn">
+     <property name="focusPolicy">
+      <enum>Qt::TabFocus</enum>
+     </property>
      <property name="text">
       <string>保存</string>
      </property>
