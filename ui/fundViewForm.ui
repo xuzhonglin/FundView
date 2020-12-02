@@ -263,6 +263,9 @@ QTabBar::tab{height:24}</string>
             <property name="editTriggers">
              <set>QAbstractItemView::NoEditTriggers</set>
             </property>
+            <property name="alternatingRowColors">
+             <bool>true</bool>
+            </property>
             <property name="wordWrap">
              <bool>false</bool>
             </property>

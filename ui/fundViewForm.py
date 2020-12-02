@@ -111,6 +111,7 @@ class Ui_MainWindow(object):
         self.gridLayout_3.addItem(spacerItem2, 0, 1, 1, 1)
         self.optionalTable = QtWidgets.QTableWidget(self.tab_2)
         self.optionalTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.optionalTable.setAlternatingRowColors(True)
         self.optionalTable.setWordWrap(False)
         self.optionalTable.setObjectName("optionalTable")
         self.optionalTable.setColumnCount(0)

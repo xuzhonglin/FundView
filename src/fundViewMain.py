@@ -88,6 +88,10 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.addOptionalFundBtn.setEnabled(True)
 
     def init_position_table(self):
+        """
+        初始化持仓表头
+        :return:
+        """
         self.positionTable.clearContents()
         # 设置一共10列
         self.positionTable.setColumnCount(11)
@@ -313,7 +317,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.positionTable.item(index, 6).setForeground(expectGrowthColor)
 
             # 8.基金净值
-            netWorth = format(item['netWorth'], '.4f')
+            netWorth = format(float(item['netWorth']), '.4f')
             # 净值变化率
             dayGrowth = format(float(item['dayGrowth']), '.2f')
             isDayGrowthUpDown = float(dayGrowth) > 0
@@ -385,7 +389,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
     def refresh_optional_data(self, ret: list = None):
         if ret is None:
-            ret = self.fundCrawler.get_funds_data(self.optionalFund)
+            ret = self.fundCrawler.get_funds_data(self.optionalFund, isOptional=True)
         self.optionalTable.clearContents()
         self.optionalTable.setRowCount(len(ret))
 
@@ -403,24 +407,32 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
             # 3.基金估值
             fundExpectWorth = float(item['expectWorth'])
-            fundExpectWorthColor = RED if fundExpectWorth >= 0 else GREEN
-            fundExpectWorthItem = QTableWidgetItem("{}".format(format(fundExpectWorth, '.4f')))
+            fundExpectGrowth = float(item['expectGrowth'])
+            fundExpectWorthColor = RED if fundExpectGrowth >= 0 else GREEN
+            fundExpectWorthItem = QTableWidgetItem(
+                "{} ({}%)".format(format(fundExpectWorth, '.4f'), format(fundExpectGrowth, '.2f')))
             self.optionalTable.setItem(index, 2, fundExpectWorthItem)
             self.optionalTable.item(index, 2).setForeground(fundExpectWorthColor)
 
             # 4.基金净值
             fundNetWorth = float(item['netWorth'])
-            fundNetWorthColor = RED if fundNetWorth >= 0 else GREEN
-            fundNetWorthItem = QTableWidgetItem("{}".format(format(fundNetWorth, '.4f')))
+            fundDayGrowth = float(item['dayGrowth'])
+            fundNetWorthColor = RED if fundDayGrowth >= 0 else GREEN
+            fundNetWorthItem = QTableWidgetItem(
+                "{} ({}%)".format(format(fundNetWorth, '.4f'), format(fundDayGrowth, '.2f')))
             self.optionalTable.setItem(index, 3, fundNetWorthItem)
             self.optionalTable.item(index, 3).setForeground(fundNetWorthColor)
 
             # 5.近1周
-            lastWeekGrowth = float(item['lastWeekGrowth'])
-            lastWeekGrowthColor = RED if lastWeekGrowth >= 0 else GREEN
-            lastWeekGrowthItem = QTableWidgetItem("{}%".format(format(lastWeekGrowth, '.2f')))
-            self.optionalTable.setItem(index, 4, lastWeekGrowthItem)
-            self.optionalTable.item(index, 4).setForeground(lastWeekGrowthColor)
+            if 'lastWeekGrowth' in item and item['lastWeekGrowth'] != '---':
+                lastWeekGrowth = float(item['lastWeekGrowth'])
+                lastWeekGrowthColor = RED if lastWeekGrowth >= 0 else GREEN
+                lastWeekGrowthItem = QTableWidgetItem("{}%".format(format(lastWeekGrowth, '.2f')))
+                self.optionalTable.setItem(index, 4, lastWeekGrowthItem)
+                self.optionalTable.item(index, 4).setForeground(lastWeekGrowthColor)
+            else:
+                lastWeekGrowthItem = QTableWidgetItem("-")
+                self.optionalTable.setItem(index, 4, lastWeekGrowthItem)
 
             #  6.近1月
             lastMonthGrowth = float(item['lastMonthGrowth'])
@@ -437,7 +449,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.optionalTable.item(index, 6).setForeground(lastThreeMonthsGrowthColor)
 
             #  8.近6月
-            if 'lastSixMonthsGrowth' in item:
+            if 'lastSixMonthsGrowth' in item and item['lastSixMonthsGrowth'] != '---':
                 lastSixMonthsGrowth = float(item['lastSixMonthsGrowth'])
                 lastSixMonthsGrowthColor = RED if lastSixMonthsGrowth >= 0 else GREEN
                 lastSixMonthsGrowthItem = QTableWidgetItem("{}%".format(format(lastSixMonthsGrowth, '.2f')))
@@ -448,7 +460,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 self.optionalTable.setItem(index, 7, lastSixMonthsGrowthItem)
 
             #  9.近1年
-            if 'lastYearGrowth' in item:
+            if 'lastYearGrowth' in item and item['lastYearGrowth'] != '---':
                 lastYearGrowth = float(item['lastYearGrowth'])
                 lastYearGrowthColor = RED if lastYearGrowth >= 0 else GREEN
                 lastYearGrowthItem = QTableWidgetItem("{}%".format(format(lastYearGrowth, '.2f')))
@@ -636,22 +648,3 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 pass
             elif curTabIndex == 1:
                 self.optional_add_fund_clicked()
-
-        # if event.key()==Qt.Key_Doub
-        # 举例
-        # if event.key() == Qt.Key_Escape:
-        #     print('测试：ESC')
-        # if event.key() == Qt.Key_A:
-        #     print('测试：A')
-        # if event.key() == Qt.Key_1:
-        #     print('测试：1')
-        # if event.key() == Qt.Key_Enter:
-        #     curTabIndex = self.tabWidget.currentIndex()
-        #     print('测试：Enter')
-        # if event.key() == Qt.Key_Space:
-        #     self.spaceKeyTimes = self.spaceKeyTimes + 1
-        #     print(self.spaceKeyTimes)
-        #     if self.spaceKeyTimes == 2:
-        #         self.spaceKeyTimes = 0
-        #         if curTabIndex == 0:
-        #             self.fund_add_edit_clicked(False)

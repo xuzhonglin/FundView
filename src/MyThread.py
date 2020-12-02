@@ -30,5 +30,5 @@ class MyThread(QThread):
         self.PDone.emit(position_ret)
 
         # 刷新自选数据
-        optional_ret = self.fundCrawler.get_funds_data(self.optionalFund)
+        optional_ret = self.fundCrawler.get_funds_data(self.optionalFund, isOptional=True)
         self.ODone.emit(optional_ret)
