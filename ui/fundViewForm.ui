@@ -130,6 +130,9 @@ QTabBar::tab{height:24}</string>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
+              <property name="autoFillBackground">
+               <bool>false</bool>
+              </property>
               <property name="styleSheet">
                <string notr="true">padding-left:3px;
 padding-right:3px;

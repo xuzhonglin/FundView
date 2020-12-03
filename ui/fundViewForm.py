@@ -69,6 +69,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_6.addItem(spacerItem)
         self.settingBtn = QtWidgets.QToolButton(self.tab)
         self.settingBtn.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.settingBtn.setAutoFillBackground(False)
         self.settingBtn.setStyleSheet("padding-left:3px;\n"
 "padding-right:3px;\n"
 "padding-top:1px;")
@@ -328,4 +329,4 @@ class Ui_MainWindow(object):
         self.CY_Price.setText(_translate("MainWindow", "2618.99"))
         self.CY_PriceChange.setText(_translate("MainWindow", "+9.60"))
         self.CY_ChangePercent.setText(_translate("MainWindow", "+0.37%"))
-import fundViewResource_rc
+import ui.fundViewResource_rc

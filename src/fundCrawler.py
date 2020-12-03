@@ -392,9 +392,9 @@ class FundCrawler:
 
 
 if __name__ == '__main__':
-    pass
-    # fund = FundCrawler()
-    # ret = fund.get_history_worth('110011')
+    # pass
+    fund = FundCrawler()
+    ret = fund.get_day_worth('110011','2020-12-04')
     # ret = fund.get_funds_data(['110011'])
     # ret = fund.get_board_data_bak()
-    # print(ret)
+    print(ret)

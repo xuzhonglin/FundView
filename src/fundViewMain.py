@@ -9,8 +9,8 @@ from PyQt5.QtCore import Qt, pyqtSignal, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu
 
-from fundChartMain import ChartView, FundChartMain
-from fundSettingDialog import Ui_FundSettingDialog
+from ui.fundChartMain import ChartView, FundChartMain
+from ui.fundSettingDialog import Ui_FundSettingDialog
 from src.myThread import MyThread
 from ui.addFundDialog import Ui_AddFundDialog
 from ui.fundViewForm import Ui_MainWindow
@@ -354,18 +354,29 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
             # 11.预估收益
             netWorthFloat = float(netWorth)
+            checkTip = ''
+            timeArray = time.localtime(time.time())
+            curHour = timeArray.tm_hour
+            curDateStr = time.strftime("%Y-%m-%d", timeArray)
+            todayWorth = None
+            # 晚上19之后
+            # if curHour >= 19:
+            #     todayWorth = self.fundCrawler.get_day_worth(fundCode, curDateStr)
+            # if todayWorth is not None:
+            #     netWorth=todayWorth['netWorth']
             # 当日净值已更新
             if item['netWorthDate'] == item['expectWorthDate'][:-9]:
                 lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode)['netWorth']
                 lastDayNetWorthFloat = float(lastDayNetWorth)
                 expectIncome = (netWorthFloat - lastDayNetWorthFloat) * fundHoldUnits
+                checkTip = '√'
             else:
                 expectWorthFloat = float(item['expectWorth'])
                 expectIncome = (expectWorthFloat - netWorthFloat) * fundHoldUnits
 
             todayExpectIncome = todayExpectIncome + expectIncome
             prefix = '+' if expectIncome > 0 else ''
-            expectIncomeItem = QTableWidgetItem('{}{}'.format(prefix, round(expectIncome, 2)))
+            expectIncomeItem = QTableWidgetItem('{} {}{}'.format(checkTip, prefix, round(expectIncome, 2)))
             self.positionTable.setItem(index, 10, expectIncomeItem)
             expectIncomeColor = RED if expectIncome > 0 else GREEN
             self.positionTable.item(index, 10).setForeground(expectIncomeColor)
