@@ -5,11 +5,13 @@ import sys
 import time
 
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu
 
-from src.MyThread import MyThread
+from fundChartMain import ChartView, FundChartMain
+from fundSettingDialog import Ui_FundSettingDialog
+from src.myThread import MyThread
 from ui.addFundDialog import Ui_AddFundDialog
 from ui.fundViewForm import Ui_MainWindow
 from ui.fundImageDialog import Ui_FundImageDialog
@@ -40,6 +42,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.spaceKeyTimes = 0
         self.start_init()
 
+        self.tabWidget.setCurrentIndex(0)
+
     def start_init(self):
         self.read_local_config()
         self.parse_fund_config()
@@ -59,6 +63,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.editFundBtn.clicked.connect(lambda: self.fund_add_edit_clicked(False))
         self.optionalRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(True))
         self.addOptionalFundBtn.clicked.connect(self.optional_add_fund_clicked)
+        self.positionTable.doubleClicked.connect(self.fund_double_clicked)
+        self.settingBtn.clicked.connect(self.setting_btn_clicked)
 
     def refresh_btn_clicked(self, isOptional: bool = False):
         print('refresh_btn_click')
@@ -227,9 +233,9 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             # 上涨还是下跌
             isRaiseFall = float(priceChange) > 0
             price = board_item["price"]
-            priceChange = "+" + priceChange if isRaiseFall else "" + priceChange
+            priceChange = "+{}".format(priceChange) if isRaiseFall else "{}".format(priceChange)
             changePercent = board_item["changePercent"]
-            changePercent = "+" + changePercent if isRaiseFall > 0 else "" + changePercent
+            changePercent = "+{}".format(changePercent) if isRaiseFall > 0 else "{}".format(changePercent)
             changePercent = changePercent + " %"
             colorString = RED_STR if isRaiseFall else GREEN_STR
             # 变色
@@ -538,6 +544,26 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         # self.fundConfigOrigin[]
         self.refresh_position_data()
         self.write_local_config(fundCode, float(fundCost), float(fundUnits))
+
+    def fund_double_clicked(self, index: QModelIndex):
+        rowIndex = index.row()
+        fundCode = self.positionTable.item(rowIndex, 1).text()
+        fundName = self.positionTable.item(rowIndex, 0).text()
+        title = "业绩走势：{}".format(fundName)
+        dialog = QDialog(self.centralwidget)
+        windowsFlags = dialog.windowFlags()
+        windowsFlags |= Qt.WindowMaximizeButtonHint
+        dialog.setWindowFlags(windowsFlags)
+        FundChartMain(dialog, fundCode, 1)
+        dialog.setWindowTitle(title)
+        dialog.exec_()
+
+    def setting_btn_clicked(self):
+        dialog = QDialog(self.centralwidget)
+        ui = Ui_FundSettingDialog()
+        ui.setupUi(dialog)
+        dialog.setWindowTitle("程序设置")
+        dialog.exec_()
 
     def read_local_config(self):
         """

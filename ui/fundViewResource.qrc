@@ -2,6 +2,9 @@
   <qresource prefix="/icon/windows">
     <file>icon_windows.ico</file>
   </qresource>
+  <qresource prefix="/icon/setting">
+    <file>setting.png</file>
+  </qresource>
   <qresource prefix="/icon/macos">
     <file>icon_mac.icns</file>
   </qresource>

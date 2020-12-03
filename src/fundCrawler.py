@@ -6,11 +6,19 @@ import time
 import requests
 from bs4 import BeautifulSoup
 
+from src.fundConfig import FundConfig
+
 
 class FundCrawler:
-    URL = 'https://api.yiduu.com/v1'
-    PROXY_POOL = 'http://proxy-pool.colinxu.cn'
-    ENABLE_PROXY = False
+    ZS_MAP = {
+        '000001': 'sh000001',
+        '399001': 'sz399001',
+        '399300': 'sz399300',
+        '000905': 'sh000905',
+        '399006': 'sz399006',
+        '000300': 'sz399300',
+        '399005': 'sz399005'
+    }
 
     def __init__(self):
         pass
@@ -20,7 +28,7 @@ class FundCrawler:
         获取代理地址
         :return:
         """
-        return requests.get(self.PROXY_POOL + "/get/").json()
+        return requests.get(FundConfig.PROXY_POOL + "/get/").json()
 
     def delete_proxy(self, proxy):
         """
@@ -28,19 +36,71 @@ class FundCrawler:
         :param proxy: 代理地址
         :return:
         """
-        requests.get(self.PROXY_POOL + "/delete/?proxy={}".format(proxy))
+        requests.get(FundConfig.PROXY_POOL + "/delete/?proxy={}".format(proxy))
 
-    def get_board_info(self):
+    def get_board_info_bak(self):
         """
         获取大盘信息
         :return:
         """
         try:
-            url = self.URL + '/stock/board'
+            url = FundConfig.URL + '/stock/board'
             resp = self.http_get(url)
             if resp.status_code == 200:
                 resp_json = resp.json()
                 return resp_json['data']
+        except Exception as e:
+            print(e)
+        return []
+
+    def get_board_info(self):
+        """
+        获取基金的历史净值
+        :param fundCode:
+        :param startDate:
+        :param endDate:
+        :return:
+        """
+        if FundConfig.DB_SWITCH == 'other': return self.get_board_info_bak()
+        try:
+            url = 'http://push2.eastmoney.com/api/qt/clist/get'
+            # 参数化访问链接，以dict方式存储
+            params = {
+                'cb': 'jQuery{}_{}'.format(self.random_str(20), self.get_now_timestamp()),
+                'pn': 1,
+                'pz': 10,  # 页码
+                'fltt': 2,
+                'fs': 'i:1.000001,i:0.399001,i:0.399005,i:0.399006,i:1.000300,i:1.000905',
+                'fields': 'f2,f3,f4,f5,f6,f12,f14,f15,f16,f17,f18',
+                '_': self.get_now_timestamp()
+            }
+            # 装饰头文件
+            headers = {
+                'Host': '16.push2.eastmoney.com',
+                'User-Agent': self.get_fake_ua(),
+                'Referer': 'http://quote.eastmoney.com/',
+            }
+            r = self.http_get(url=url, headers=headers, params=params)  # 发送请求
+            result = json.loads(r.text[len(params['cb']) + 1:-2])
+            temp = []
+            for item in result['data']['diff'].values():
+                temp.append({
+                    "priceChange": item['f4'],
+                    "date": "2020-12-03 15:01:42",
+                    "code": self.ZS_MAP[item['f12']],
+                    "type": "ZS",
+                    "volume": item['f5'],
+                    "high": item['f15'],
+                    "low": item['f16'],
+                    "price": item['f2'],
+                    "name": item['f14'],
+                    "changePercent": item['f3'],
+                    "close": item['f18'],
+                    "turnover": item['f6'],
+                    "open": item['f17']
+                })
+            return temp
+
         except Exception as e:
             print(e)
         return []
@@ -52,11 +112,11 @@ class FundCrawler:
         :return:
         """
         try:
-            fundCodeArray = self.split_array(fundCode, 12)
+            fundCodeArray = self.split_array(fundCode, 20)
             data = []
             for subArray in fundCodeArray:
                 fundCodes = ','.join(subArray)
-                url = self.URL + '/fund?code=' + fundCodes
+                url = FundConfig.URL + '/fund?code=' + fundCodes
                 resp = self.http_get(url)
                 if resp.status_code == 200:
                     resp_json = resp.json()
@@ -73,13 +133,16 @@ class FundCrawler:
         :param fundCodes: 基金代码列表
         :return:
         """
+        if FundConfig.DB_SWITCH == 'other': return self.get_funds_data_bak(fundCodes)
         data = []
         try:
             for fundCode in fundCodes:
                 url = "http://fundgz.1234567.com.cn/js/%s.js" % fundCode
                 # 浏览器头
-                headers = {'content-type': 'application/json',
-                           'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:22.0) Gecko/20100101 Firefox/22.0'}
+                headers = {
+                    'content-type': 'application/json',
+                    'User-Agent': self.get_fake_ua()
+                }
                 r = requests.get(url, headers=headers)
                 # 返回信息
                 content = r.text
@@ -150,7 +213,7 @@ class FundCrawler:
             headers = {
                 'Cookie': cookie,
                 'Host': 'api.fund.eastmoney.com',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
+                'User-Agent': self.get_fake_ua(),
                 'Referer': 'http://fundf10.eastmoney.com/jjjz_%s.html' % fundCode,
             }
             r = self.http_get(url=url, headers=headers, params=params)  # 发送请求
@@ -208,7 +271,7 @@ class FundCrawler:
         :return: []
         """
         try:
-            url = self.URL + '/fund/position?code=' + fundCode
+            url = FundConfig.URL + '/fund/position?code=' + fundCode
             resp = self.http_get(url)
             if resp.status_code == 200:
                 resp_json = resp.json()
@@ -235,7 +298,7 @@ class FundCrawler:
         :param headers: 请求头
         :return:
         """
-        if self.ENABLE_PROXY:
+        if FundConfig.ENABLE_PROXY:
             retry_count = 5
             proxy = self.get_proxy().get("proxy")
             while retry_count > 0:
@@ -259,7 +322,7 @@ class FundCrawler:
         :param headers: 请求头
         :return:
         """
-        if self.ENABLE_PROXY:
+        if FundConfig.ENABLE_PROXY:
             retry_count = 5
             proxy = self.get_proxy().get("proxy")
             while retry_count > 0:
@@ -329,8 +392,9 @@ class FundCrawler:
 
 
 if __name__ == '__main__':
-    fund = FundCrawler()
+    pass
+    # fund = FundCrawler()
     # ret = fund.get_history_worth('110011')
     # ret = fund.get_funds_data(['110011'])
-    ret = fund.get_fund_growth('009777')
-    print(ret)
+    # ret = fund.get_board_data_bak()
+    # print(ret)
