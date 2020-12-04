@@ -218,7 +218,7 @@ class ChartView(QChartView):
             maxValue = max(maxValue, value)
             minValue = min(minValue, value)
         # floor(minValue)
-
+        # TODO
         print(floor(minValue), ceil(maxValue))
         return floor(minValue) - 5, ceil(maxValue) + 5
 
