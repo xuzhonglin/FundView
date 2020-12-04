@@ -126,6 +126,35 @@ QTabBar::tab{height:24}</string>
              </spacer>
             </item>
             <item>
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>数据源：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="dbSourceCob">
+              <property name="currentIndex">
+               <number>0</number>
+              </property>
+              <item>
+               <property name="text">
+                <string>易读优</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>天天基金</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>小熊同学</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
              <widget class="QToolButton" name="settingBtn">
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
@@ -384,7 +413,7 @@ padding-top:1px;</string>
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>上证指数（SH000001）</string>
+           <string>上证指数（000001）</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -439,7 +468,7 @@ padding-top:1px;</string>
         <item>
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>深证成指（SZ399001 ）</string>
+           <string>深证成指（399001 ）</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -490,11 +519,66 @@ padding-top:1px;</string>
        </widget>
       </item>
       <item>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>创业板指 （399006 ）</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <item>
+           <widget class="QLabel" name="CY_Price">
+            <property name="text">
+             <string>2618.99</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="CY_PriceChange">
+            <property name="text">
+             <string>+9.60</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="CY_ChangePercent">
+            <property name="text">
+             <string>+0.37%</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="Line" name="line_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
          <widget class="QLabel" name="label_11">
           <property name="text">
-           <string>沪深300 （SZ399300 ）</string>
+           <string>沪深300 （000300 ）</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -549,7 +633,7 @@ padding-top:1px;</string>
         <item>
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>中证500（ SH000905 ）</string>
+           <string>上证50（ 000016 ）</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -559,7 +643,7 @@ padding-top:1px;</string>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <item>
-           <widget class="QLabel" name="ZZ_Price">
+           <widget class="QLabel" name="SZ_Price">
             <property name="text">
              <string>6351.61</string>
             </property>
@@ -569,7 +653,7 @@ padding-top:1px;</string>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="ZZ_PriceChange">
+           <widget class="QLabel" name="SZ_PriceChange">
             <property name="text">
              <string>+17.31</string>
             </property>
@@ -579,64 +663,9 @@ padding-top:1px;</string>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="ZZ_ChangePercent">
+           <widget class="QLabel" name="SZ_ChangePercent">
             <property name="text">
              <string>+0.27%</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="Line" name="line_4">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>创业板指 （SZ399006 ）</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <item>
-           <widget class="QLabel" name="CY_Price">
-            <property name="text">
-             <string>2618.99</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="CY_PriceChange">
-            <property name="text">
-             <string>+9.60</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="CY_ChangePercent">
-            <property name="text">
-             <string>+0.37%</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>

@@ -1,6 +1,7 @@
 import json
 import os, requests
 import sys
+from math import ceil, floor
 
 from PyQt5 import QtGui
 from PyQt5.QtChart import QCategoryAxis, QLegend, QChart, QLineSeries, QChartView
@@ -111,8 +112,9 @@ class ChartView(QChartView):
         self.fundCode = fundCode
         self.resize(650, 350)
         self.setRenderHint(QPainter.Antialiasing)  # 抗锯齿
-        # 自定义x轴label
-        self.category = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+
+        self.FundCrawler = FundCrawler()
+
         self.initChart()
 
         # 提示widget
@@ -133,17 +135,28 @@ class ChartView(QChartView):
         self.min_y, self.max_y = axisY.min(), axisY.max()
 
     def initChart(self):
-        self._chart = QChart(title="折线图堆叠" + self.fundCode)
+        originData = self.FundCrawler.get_fund_performance_ydi(self.fundCode)
+        # print(data['netWorthData'][-10:])
+        data = originData['netWorthData'][-90:]
+        self.get_pre_index(data)
+        x = []
+        for item in data:
+            x.append(item[0])
+        self.category = x
+        self._chart = QChart(title="业绩走势：{} ({})".format(originData['name'], originData['code']))
         self._chart.setAcceptHoverEvents(True)
         # Series动画
         self._chart.setAnimationOptions(QChart.SeriesAnimations)
+        dataList = []
+        baseWorth = float(data[0][1])
+        for item in data:
+            curWorth = float(item[1])
+            growth = (curWorth - baseWorth) / baseWorth * 100
+            dataList.append(round(growth, 2))
         dataTable = [
-            ["邮件营销", [120, 132, 101, 134, 90, 230, 210]],
-            ["联盟广告", [220, 182, 191, 234, 290, 330, 310]],
-            ["视频广告", [150, 232, 201, 154, 190, 330, 410]],
-            ["直接访问", [320, 332, 301, 334, 390, 330, 320]],
-            ["搜索引擎", [820, 932, 901, 934, 1290, 1330, 1320]]
+            [self.fundCode, dataList],
         ]
+
         for series_name, data_list in dataTable:
             series = QLineSeries(self._chart)
             for j, v in enumerate(data_list):
@@ -152,35 +165,62 @@ class ChartView(QChartView):
             series.setPointsVisible(True)  # 显示圆点
             series.hovered.connect(self.handleSeriesHoverd)  # 鼠标悬停
             self._chart.addSeries(series)
+
         self._chart.createDefaultAxes()  # 创建默认的轴
         axisX = self._chart.axisX()  # x轴
-        axisX.setTickCount(7)  # x轴设置7个刻度
+        axisX.setTickCount(3)  # x轴设置7个刻度
         axisX.setGridLineVisible(False)  # 隐藏从x轴往上的线条
         axisY = self._chart.axisY()
-        axisY.setTickCount(7)  # y轴设置7个刻度
-        axisY.setRange(0, 1500)  # 设置y轴范围
+        axisY.setTickCount(6)  # y轴设置7个刻度
+
+        down, up = self.get_pre_index(data)
+        axisY.setRange(down, up)  # 设置y轴范围
         # 自定义x轴
-        axis_x = QCategoryAxis(
-            self._chart, labelsPosition=QCategoryAxis.AxisLabelsPositionOnValue)
-        axis_x.setTickCount(7)
+        axis_x = QCategoryAxis(self._chart, labelsPosition=QCategoryAxis.AxisLabelsPositionOnValue)
+        axis_x.setTickCount(len(self.category))
         axis_x.setGridLineVisible(False)
         min_x = axisX.min()
         max_x = axisX.max()
-        step = (max_x - min_x) / (7 - 1)  # 7个tick
-        for i in range(0, 7):
-            axis_x.append(self.category[i], min_x + i * step)
+        # step = (max_x - min_x) / (6 - 1)  # 7个tick
+
+        axis_x.append(self.category[0], min_x)
+        axis_x.append(self.category[int(len(self.category) * 0.25)], (max_x - min_x) * 0.25)
+        axis_x.append(self.category[int(len(self.category) * 0.5)], (max_x - min_x) * 0.5)
+        axis_x.append(self.category[int(len(self.category) * 0.75)], (max_x - min_x) * 0.75)
+        axis_x.append(self.category[-1], max_x)
+
+        # for i in range(0, 6):
+        #     print(self.category[i], min_x + i * step)
+        #     axis_x.append(self.category[i], min_x + i * step)
         self._chart.setAxisX(axis_x, self._chart.series()[-1])
         # chart的图例
         legend = self._chart.legend()
+        # legend.
         # 设置图例由Series来决定样式
         legend.setMarkerShape(QLegend.MarkerShapeFromSeries)
         # 遍历图例上的标记并绑定信号
         for marker in legend.markers():
+            # 隐藏图例
+            marker.setVisible(False)
             # 点击事件
-            marker.clicked.connect(self.handleMarkerClicked)
+            # marker.clicked.connect(self.handleMarkerClicked)
             # 鼠标悬停事件
             marker.hovered.connect(self.handleMarkerHovered)
+
         self.setChart(self._chart)
+
+    def get_pre_index(self, data):
+        baseValue = float(data[0][1])
+        maxValue = 0
+        minValue = 0
+        for item in data:
+            value = (float(item[1]) - baseValue) / baseValue * 100
+            maxValue = max(maxValue, value)
+            minValue = min(minValue, value)
+        # floor(minValue)
+
+        print(floor(minValue), ceil(maxValue))
+        return floor(minValue) - 5, ceil(maxValue) + 5
 
     def resizeEvent(self, event):
         super(ChartView, self).resizeEvent(event)

@@ -4,12 +4,13 @@ import os, requests
 import sys
 import time
 
-from PyQt5 import QtGui
 from PyQt5.QtCore import Qt, pyqtSignal, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu
 
-from ui.fundChartMain import ChartView, FundChartMain
+from src.fundConfig import FundConfig
+from src.fundEnum import DBSource
+from ui.fundChartMain import FundChartMain
 from ui.fundSettingDialog import Ui_FundSettingDialog
 from src.myThread import MyThread
 from ui.addFundDialog import Ui_AddFundDialog
@@ -65,6 +66,16 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.addOptionalFundBtn.clicked.connect(self.optional_add_fund_clicked)
         self.positionTable.doubleClicked.connect(self.fund_double_clicked)
         self.settingBtn.clicked.connect(self.setting_btn_clicked)
+        self.dbSourceCob.currentIndexChanged.connect(self.dbSource_changed)
+
+    def dbSource_changed(self, index):
+        if index == 0:
+            FundConfig.DB_SWITCH = DBSource.YDI
+        elif index == 1:
+            FundConfig.DB_SWITCH = DBSource.TTT
+        elif index == 2:
+            FundConfig.DB_SWITCH = DBSource.OTH
+        print('当前数据源：{}'.format(FundConfig.DB_SWITCH))
 
     def refresh_btn_clicked(self, isOptional: bool = False):
         print('refresh_btn_click')
@@ -224,6 +235,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         dialog.exec_()
 
     def refresh_board_data(self, ret: list = None):
+        print(ret)
         if ret is None:
             ret = self.fundCrawler.get_board_info()
         for board_item in ret:
@@ -242,34 +254,44 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             price = colorString.format(price)
             priceChange = colorString.format(priceChange)
             changePercent = colorString.format(changePercent)
-            if fund_code == "sh000001":
+            # 上证指数
+            if fund_code == "000001":
                 self.SHZ_Price.setText(price)
                 self.SHZ_PriceChange.setText(priceChange)
                 self.SHZ_ChangePercent.setText(changePercent)
-            elif fund_code == "sz399001":
+            # 深证成指
+            elif fund_code == "399001":
                 self.SZZ_Price.setText(price)
                 self.SZZ_PriceChange.setText(priceChange)
                 self.SZZ_ChangePercent.setText(changePercent)
-            elif fund_code == "sz399300":
-                self.HS_Price.setText(price)
-                self.HS_PriceChange.setText(priceChange)
-                self.HS_ChangePercent.setText(changePercent)
-            elif fund_code == "sh000905":
-                self.ZZ_Price.setText(price)
-                self.ZZ_PriceChange.setText(priceChange)
-                self.ZZ_ChangePercent.setText(changePercent)
-            elif fund_code == "sz399006":
+            # 创业板指
+            elif fund_code == "399006":
                 self.CY_Price.setText(price)
                 self.CY_PriceChange.setText(priceChange)
                 self.CY_ChangePercent.setText(changePercent)
+            # 沪深300
+            elif fund_code == "399300" or fund_code == '000300':
+                self.HS_Price.setText(price)
+                self.HS_PriceChange.setText(priceChange)
+                self.HS_ChangePercent.setText(changePercent)
+            # 上证50
+            elif fund_code == "000016":
+                self.SZ_Price.setText(price)
+                self.SZ_PriceChange.setText(priceChange)
+                self.SZ_ChangePercent.setText(changePercent)
 
     def refresh_position_data(self, ret: list = None):
+        """
+        刷新持仓基金数据
+        :param ret: 手动出入的数据
+        :return:
+        """
         if ret is None:
             keys = []
             for key in self.positionFund:
                 keys.append(key)
             ret = self.fundCrawler.get_funds_data(keys)
-        # self.positionTable.clearContents()
+        self.positionTable.clearContents()
         self.positionTable.setRowCount(len(ret))
         todayExpectIncome = 0
         totalIncome = 0
@@ -353,23 +375,14 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.positionTable.item(index, 9).setForeground(expectGrowthColor)
 
             # 11.预估收益
-            netWorthFloat = float(netWorth)
             checkTip = ''
-            timeArray = time.localtime(time.time())
-            curHour = timeArray.tm_hour
-            curDateStr = time.strftime("%Y-%m-%d", timeArray)
-            todayWorth = None
-            # 晚上19之后
-            # if curHour >= 19:
-            #     todayWorth = self.fundCrawler.get_day_worth(fundCode, curDateStr)
-            # if todayWorth is not None:
-            #     netWorth=todayWorth['netWorth']
+            netWorthFloat = float(netWorth)
             # 当日净值已更新
             if item['netWorthDate'] == item['expectWorthDate'][:-9]:
                 lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode)['netWorth']
                 lastDayNetWorthFloat = float(lastDayNetWorth)
                 expectIncome = (netWorthFloat - lastDayNetWorthFloat) * fundHoldUnits
-                checkTip = '√'
+                checkTip = '√'  # 已结算标记
             else:
                 expectWorthFloat = float(item['expectWorth'])
                 expectIncome = (expectWorthFloat - netWorthFloat) * fundHoldUnits
@@ -383,6 +396,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
             totalIncome = totalIncome + (netWorthFloat - fundHold['fundCost']) * fundHold['fundUnits']
             holdAmount = holdAmount + fundHold['fundCost'] * fundHold['fundUnits']
+
+        self.positionTable.update()
 
         self.worthDateTxt.setText(worthDate)
 
@@ -405,6 +420,11 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         # self.holdIncomeTxt.setStyleSheet(self.holdIncomeTxt.styleSheet() + totalIncomeTxtColor)
 
     def refresh_optional_data(self, ret: list = None):
+        """
+        刷新自选基金数据
+        :param ret: 手动传入数据
+        :return:
+        """
         if ret is None:
             ret = self.fundCrawler.get_funds_data(self.optionalFund, isOptional=True)
         self.optionalTable.clearContents()
@@ -448,22 +468,28 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 self.optionalTable.setItem(index, 4, lastWeekGrowthItem)
                 self.optionalTable.item(index, 4).setForeground(lastWeekGrowthColor)
             else:
-                lastWeekGrowthItem = QTableWidgetItem("-")
-                self.optionalTable.setItem(index, 4, lastWeekGrowthItem)
+                self.optionalTable.setItem(index, 4, QTableWidgetItem("-"))
 
             #  6.近1月
-            lastMonthGrowth = float(item['lastMonthGrowth'])
-            lastMonthGrowthColor = RED if lastMonthGrowth >= 0 else GREEN
-            lastMonthGrowthItem = QTableWidgetItem("{}%".format(format(lastMonthGrowth, '.2f')))
-            self.optionalTable.setItem(index, 5, lastMonthGrowthItem)
-            self.optionalTable.item(index, 5).setForeground(lastMonthGrowthColor)
+
+            if 'lastMonthGrowth' in item and item['lastMonthGrowth'] != '---':
+                lastMonthGrowth = float(item['lastMonthGrowth'])
+                lastMonthGrowthColor = RED if lastMonthGrowth >= 0 else GREEN
+                lastMonthGrowthItem = QTableWidgetItem("{}%".format(format(lastMonthGrowth, '.2f')))
+                self.optionalTable.setItem(index, 5, lastMonthGrowthItem)
+                self.optionalTable.item(index, 5).setForeground(lastMonthGrowthColor)
+            else:
+                self.optionalTable.setItem(index, 5, QTableWidgetItem("-"))
 
             #  7.近3月
-            lastThreeMonthsGrowth = float(item['lastThreeMonthsGrowth'])
-            lastThreeMonthsGrowthColor = RED if lastThreeMonthsGrowth >= 0 else GREEN
-            lastThreeMonthsGrowthItem = QTableWidgetItem("{}%".format(format(lastThreeMonthsGrowth, '.2f')))
-            self.optionalTable.setItem(index, 6, lastThreeMonthsGrowthItem)
-            self.optionalTable.item(index, 6).setForeground(lastThreeMonthsGrowthColor)
+            if 'lastThreeMonthsGrowth' in item and item['lastThreeMonthsGrowth'] != '---':
+                lastThreeMonthsGrowth = float(item['lastThreeMonthsGrowth'])
+                lastThreeMonthsGrowthColor = RED if lastThreeMonthsGrowth >= 0 else GREEN
+                lastThreeMonthsGrowthItem = QTableWidgetItem("{}%".format(format(lastThreeMonthsGrowth, '.2f')))
+                self.optionalTable.setItem(index, 6, lastThreeMonthsGrowthItem)
+                self.optionalTable.item(index, 6).setForeground(lastThreeMonthsGrowthColor)
+            else:
+                self.optionalTable.setItem(index, 6, QTableWidgetItem("-"))
 
             #  8.近6月
             if 'lastSixMonthsGrowth' in item and item['lastSixMonthsGrowth'] != '---':
@@ -473,8 +499,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 self.optionalTable.setItem(index, 7, lastSixMonthsGrowthItem)
                 self.optionalTable.item(index, 7).setForeground(lastSixMonthsGrowthColor)
             else:
-                lastSixMonthsGrowthItem = QTableWidgetItem("-")
-                self.optionalTable.setItem(index, 7, lastSixMonthsGrowthItem)
+                self.optionalTable.setItem(index, 7, QTableWidgetItem("-"))
 
             #  9.近1年
             if 'lastYearGrowth' in item and item['lastYearGrowth'] != '---':
@@ -484,16 +509,16 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 self.optionalTable.setItem(index, 8, lastYearGrowthItem)
                 self.optionalTable.item(index, 8).setForeground(lastYearGrowthColor)
             else:
-                lastYearGrowthItem = QTableWidgetItem("-")
-                self.optionalTable.setItem(index, 8, lastYearGrowthItem)
+                self.optionalTable.setItem(index, 8, QTableWidgetItem("-"))
 
             #  10.更新时间
             if 'expectWorthDate' in item:
                 expectWorthDateItem = QTableWidgetItem("{}".format(item['expectWorthDate']))
                 self.optionalTable.setItem(index, 9, expectWorthDateItem)
             else:
-                expectWorthDateItem = QTableWidgetItem("-")
-                self.optionalTable.setItem(index, 9, expectWorthDateItem)
+                self.optionalTable.setItem(index, 9, QTableWidgetItem("-"))
+
+        self.optionalTable.update()
 
     def fund_add_edit_clicked(self, isAddFlag):
         title = '新增基金' if isAddFlag else "编辑基金"
