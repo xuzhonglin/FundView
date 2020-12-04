@@ -357,7 +357,7 @@ class FundCrawler:
         :return:
         """
         try:
-            if fundData['netWorthDate'] != fundData['expectWorthDate'][:-9] and self.is_query_worth():
+            if fundData['netWorthDate'] != fundData['expectWorthDate'][0:10] and self.is_query_worth():
                 todayDate = datetime.now().strftime('%Y-%m-%d')
                 todayWorth = self.get_day_worth(fundData['code'], todayDate)
                 if todayWorth is not None:
@@ -518,7 +518,7 @@ class FundCrawler:
         :return:
         """
         nowTime = datetime.now()
-        return is_workday(nowTime) and nowTime.hour >= 19 and nowTime.minute >= 30
+        return is_workday(nowTime) and nowTime.hour >= 19 and nowTime.minute >= 0
 
 
 if __name__ == '__main__':
