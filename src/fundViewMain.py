@@ -114,7 +114,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.positionTable.setColumnCount(11)
         #  设置水平方向两个头标签文本内容
         self.positionTable.setHorizontalHeaderLabels(
-            ['基金名称', '基金编码', '持仓成本', '持有份额', '持有金额', '持有收益', '持有收益率', '单位净值', '估算净值', '估值浮动', '预计收益'])
+            ['基金名称', '基金编码', '持仓成本', '持有份额', '持有金额', '持有收益', '持有收益率', '单位净值', '估算净值', '估值浮动', '预估收益'])
         # 水平方向标签拓展剩下的窗口部分，填满表格
         # self.tableView.horizontalHeader().setStretchLastSection(True)
         # 水平方向，表格大小拓展到适当的尺寸
@@ -291,7 +291,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             for key in self.positionFund:
                 keys.append(key)
             ret = self.fundCrawler.get_funds_data(keys)
-        self.positionTable.clearContents()
+        # self.positionTable.clearContents()
         self.positionTable.setRowCount(len(ret))
         todayExpectIncome = 0
         totalIncome = 0
@@ -378,7 +378,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             checkTip = ''
             netWorthFloat = float(netWorth)
             # 当日净值已更新
-            if item['netWorthDate'] == item['expectWorthDate'][:-9]:
+            if item['netWorthDate'] == item['expectWorthDate'][0:10]:
                 lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode)['netWorth']
                 lastDayNetWorthFloat = float(lastDayNetWorth)
                 expectIncome = (netWorthFloat - lastDayNetWorthFloat) * fundHoldUnits

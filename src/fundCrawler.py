@@ -527,5 +527,7 @@ if __name__ == '__main__':
     # ret = fund.get_day_worth('110011', '2020-12-03')
     # ret = fund.get_funds_data(['110011'])
     # ret = fund.get_board_data_bak()
-    ret = fund.get_fund_performance_ydi('110011')
+    # ret = fund.get_fund_performance_ydi('110011')
+    ret=fund.get_history_worth('110011','2020-09-04','2020-12-04',93,1)
     print(ret)
+

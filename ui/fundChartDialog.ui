@@ -24,10 +24,78 @@
     <number>0</number>
    </property>
    <property name="bottomMargin">
-    <number>0</number>
+    <number>15</number>
    </property>
-   <item row="0" column="0">
-    <layout class="QGridLayout" name="chartLayout"/>
+   <item row="1" column="1">
+    <widget class="QRadioButton" name="oneMonthRadio">
+     <property name="text">
+      <string>近1月</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="6">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="0" colspan="7">
+    <layout class="QGridLayout" name="chartLayout">
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+    </layout>
+   </item>
+   <item row="1" column="0">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="1" column="5">
+    <widget class="QRadioButton" name="threeYearRadio">
+     <property name="text">
+      <string>近3年</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QRadioButton" name="threeMonthRadio">
+     <property name="text">
+      <string>近3月</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
+    <widget class="QRadioButton" name="sixMonthRadio">
+     <property name="text">
+      <string>近6月</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4">
+    <widget class="QRadioButton" name="oneYearRadio">
+     <property name="text">
+      <string>近1年</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
