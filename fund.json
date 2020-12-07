@@ -13,7 +13,7 @@
         {
             "fundCode": "161725",
             "fundCost": 1.0715,
-            "fundUnits": 1399.93
+            "fundUnits": 700.0
         },
         {
             "fundCode": "009777",
@@ -29,6 +29,16 @@
             "fundCode": "110011",
             "fundCost": 7.9264,
             "fundUnits": 63.08
+        },
+        {
+            "fundCode": "001595",
+            "fundCost": 1.2916,
+            "fundUnits": 774.23
+        },
+        {
+            "fundCode": "004854",
+            "fundCost": 0.0,
+            "fundUnits": 0.0
         }
     ],
     "optional": [

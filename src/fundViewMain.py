@@ -4,9 +4,9 @@ import os, requests
 import sys
 import time
 
-from PyQt5.QtCore import Qt, pyqtSignal, QModelIndex
-from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap
-from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu
+from PyQt5.QtCore import Qt, pyqtSignal, QModelIndex, QTimer
+from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap, QFont
+from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, QApplication
 
 from src.fundConfig import FundConfig
 from src.fundEnum import DBSource
@@ -31,9 +31,10 @@ STYLE_GREEN = 'color: rgb(0, 170, 0);'
 
 class FundViewMain(QMainWindow, Ui_MainWindow):
 
-    def __init__(self):
+    def __init__(self, parent: QApplication):
         super().__init__()
         self.setupUi(self)
+        self.parentWindow = parent
         self.init_slot()
         self.fundCrawler = FundCrawler()
         self.positionModel = QStandardItemModel(0, 11)
@@ -42,6 +43,9 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.optionalFund = []
         self.spaceKeyTimes = 0
         self.start_init()
+
+        self.timer = QTimer()  # 初始化定时器
+        self.timer.timeout.connect(self.timer_refresh)
 
         self.tabWidget.setCurrentIndex(0)
 
@@ -65,17 +69,29 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.optionalRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(True))
         self.addOptionalFundBtn.clicked.connect(self.optional_add_fund_clicked)
         self.positionTable.doubleClicked.connect(self.fund_double_clicked)
+        self.optionalTable.doubleClicked.connect(self.fund_double_clicked)
         self.settingBtn.clicked.connect(self.setting_btn_clicked)
-        self.dbSourceCob.currentIndexChanged.connect(self.dbSource_changed)
+        self.dbSourceCob.currentIndexChanged.connect(self.db_source_changed)
 
-    def dbSource_changed(self, index):
+    def db_source_changed(self, index):
         if index == 0:
             FundConfig.DB_SWITCH = DBSource.YDI
         elif index == 1:
             FundConfig.DB_SWITCH = DBSource.TTT
         elif index == 2:
             FundConfig.DB_SWITCH = DBSource.OTH
-        print('当前数据源：{}'.format(FundConfig.DB_SWITCH))
+        self.refresh_btn_clicked()
+        self.refresh_btn_clicked(True)
+
+    def timer_refresh(self):
+        if not FundConfig.AUTO_REFRESH_ENABLE: return
+        print('timer_refresh')
+        if self.tabWidget.currentIndex() == 0:
+            self.positionRefreshBtn.setText('自动刷新...')
+            self.refresh_btn_clicked()
+        else:
+            self.optionalRefreshBtn.setText('自动刷新...')
+            self.refresh_btn_clicked(True)
 
     def refresh_btn_clicked(self, isOptional: bool = False):
         print('refresh_btn_click')
@@ -97,12 +113,14 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.positionRefreshBtn.setEnabled(True)
             self.addFundBtn.setEnabled(True)
             self.editFundBtn.setEnabled(True)
+            self.positionRefreshBtn.setText('刷新')
         else:
             self.refresh_board_data()
             self.refresh_optional_data()
             self.optionalRefreshBtn.setEnabled(True)
             self.optionalFundCodeTxt.setEnabled(True)
             self.addOptionalFundBtn.setEnabled(True)
+            self.optionalRefreshBtn.setText('刷新')
 
     def init_position_table(self):
         """
@@ -419,6 +437,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.holdAmount.setText(holdAmountTxt)
         # self.holdIncomeTxt.setStyleSheet(self.holdIncomeTxt.styleSheet() + totalIncomeTxtColor)
 
+        self.positionTable.viewport().update()
+
     def refresh_optional_data(self, ret: list = None):
         """
         刷新自选基金数据
@@ -427,7 +447,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         """
         if ret is None:
             ret = self.fundCrawler.get_funds_data(self.optionalFund, isOptional=True)
-        self.optionalTable.clearContents()
+        # self.optionalTable.clearContents()
         self.optionalTable.setRowCount(len(ret))
 
         for index, item in enumerate(ret):
@@ -518,7 +538,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             else:
                 self.optionalTable.setItem(index, 9, QTableWidgetItem("-"))
 
-        self.optionalTable.update()
+        self.optionalTable.viewport().update()
 
     def fund_add_edit_clicked(self, isAddFlag):
         title = '新增基金' if isAddFlag else "编辑基金"
@@ -583,14 +603,18 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
     def fund_double_clicked(self, index: QModelIndex):
         rowIndex = index.row()
-        fundCode = self.positionTable.item(rowIndex, 1).text()
-        fundName = self.positionTable.item(rowIndex, 0).text()
+        if self.tabWidget.currentIndex() == 0:
+            fundCode = self.positionTable.item(rowIndex, 1).text()
+            fundName = self.positionTable.item(rowIndex, 0).text()
+        else:
+            fundCode = self.optionalTable.item(rowIndex, 1).text()
+            fundName = self.optionalTable.item(rowIndex, 0).text()
         title = "业绩走势：{}".format(fundName)
         dialog = QDialog(self.centralwidget)
         windowsFlags = dialog.windowFlags()
         windowsFlags |= Qt.WindowMaximizeButtonHint
         dialog.setWindowFlags(windowsFlags)
-        FundChartMain(dialog, fundCode, 1)
+        FundChartMain(dialog, fundCode, fundName)
         dialog.setWindowTitle(title)
         dialog.exec_()
 
@@ -598,8 +622,39 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         dialog = QDialog(self.centralwidget)
         ui = Ui_FundSettingDialog()
         ui.setupUi(dialog)
+        ui.fontNameCob.setCurrentText(FundConfig.FONT_NAME)
+        ui.fontSizeCob.setCurrentText(str(FundConfig.FONT_SIZE))
+        ui.enableRefreshChb.setChecked(FundConfig.AUTO_REFRESH_ENABLE)
+        ui.refreshTimeoutTxt.setValue(FundConfig.AUTO_REFRESH_TIMEOUT)
+        ui.enableProxyChb.setChecked(FundConfig.ENABLE_PROXY)
+        ui.saveBtn.clicked.connect(lambda: self.save_program_setting(ui))
         dialog.setWindowTitle("程序设置")
         dialog.exec_()
+
+    def save_program_setting(self, dialog: Ui_FundSettingDialog):
+        try:
+            print('保存配置')
+            FundConfig.FONT_NAME = dialog.fontNameCob.currentText()
+            FundConfig.FONT_SIZE = int(dialog.fontSizeCob.currentText())
+            FundConfig.AUTO_REFRESH_TIMEOUT = dialog.refreshTimeoutTxt.value()
+            lastAutoRefreshEnable = FundConfig.AUTO_REFRESH_ENABLE
+            FundConfig.AUTO_REFRESH_ENABLE = dialog.enableRefreshChb.isChecked()
+
+            # 更新自动刷新
+            if lastAutoRefreshEnable and FundConfig.AUTO_REFRESH_ENABLE:
+                self.timer.stop()
+                self.timer.start(FundConfig.AUTO_REFRESH_TIMEOUT)
+            elif lastAutoRefreshEnable and not FundConfig.AUTO_REFRESH_ENABLE:
+                self.timer.stop()
+            elif not lastAutoRefreshEnable and FundConfig.AUTO_REFRESH_ENABLE:
+                self.timer.start(FundConfig.AUTO_REFRESH_TIMEOUT)
+
+            font = QFont(dialog.fontNameCob.currentText(), FundConfig.FONT_SIZE)
+            self.parentWindow.setFont(font)
+            for child in self.parentWindow.allWidgets():
+                child.setFont(font)
+        except Exception as e:
+            print(e)
 
     def read_local_config(self):
         """

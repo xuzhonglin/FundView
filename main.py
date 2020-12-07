@@ -9,7 +9,7 @@ import ui.fundViewResource_rc
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    w = FundViewMain()
+    w = FundViewMain(app)
 
     # 设置全局字体
     font = QFont(FundConfig.FONT_NAME, FundConfig.FONT_SIZE)

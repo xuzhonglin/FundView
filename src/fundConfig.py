@@ -32,3 +32,9 @@ class FundConfig:
 
     # 字体大小
     FONT_SIZE = 13 if PLATFORM == 'darwin' else 9
+
+    # 自动刷新使能
+    AUTO_REFRESH_ENABLE = False
+
+    # 刷新超时
+    AUTO_REFRESH_TIMEOUT = 60 * 1000

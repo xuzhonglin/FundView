@@ -3,7 +3,7 @@ import os, requests
 import sys
 from math import ceil, floor
 
-from PyQt5.QtChart import QCategoryAxis, QChart, QLineSeries, QChartView
+from PyQt5.QtChart import QCategoryAxis, QChart, QLineSeries, QChartView, QLegend
 from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF, QMargins
 from PyQt5.QtGui import QBrush, QColor, QPen, QPainter
 from PyQt5.QtWidgets import QMainWindow, QGraphicsProxyWidget, QVBoxLayout, QLabel, QWidget, QHBoxLayout, \
@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QMainWindow, QGraphicsProxyWidget, QVBoxLayout, QLab
 
 from ui.fundChartDialog import Ui_FundChartDialog
 from src.fundCrawler import FundCrawler
+from src.fundUtils import *
 # import jpype
 import traceback
 
@@ -24,7 +25,7 @@ STYLE_GREEN = 'color: rgb(0, 170, 0);'
 
 class FundChartMain(QMainWindow, Ui_FundChartDialog):
 
-    def __init__(self, parent, fundCode: str, chartType: int):
+    def __init__(self, parent, fundCode: str, fundName: str):
         """
         构造函数
         :param fundCode: 基金代码
@@ -32,20 +33,20 @@ class FundChartMain(QMainWindow, Ui_FundChartDialog):
         """
         super().__init__()
         self.setupUi(parent)
-        self.chart = ChartView(self, fundCode=fundCode)
+        self.chart = ChartView(self, fundCode=fundCode, fundName=fundName)
         self.chartLayout.addWidget(self.chart)
         self.init_slot()
 
     def init_slot(self):
-        self.oneMonthRadio.toggled.connect(lambda a: self.radio_button_check(a, 30))
-        self.threeMonthRadio.toggled.connect(lambda a: self.radio_button_check(a, 90))
-        self.sixMonthRadio.toggled.connect(lambda a: self.radio_button_check(a, 180))
-        self.oneYearRadio.toggled.connect(lambda a: self.radio_button_check(a, 365))
-        self.threeYearRadio.toggled.connect(lambda a: self.radio_button_check(a, 365 * 3))
+        self.oneMonthRadio.toggled.connect(lambda a: self.radio_button_check(a, 'ONE_MONTH'))
+        self.threeMonthRadio.toggled.connect(lambda a: self.radio_button_check(a, 'THREE_MONTH'))
+        self.sixMonthRadio.toggled.connect(lambda a: self.radio_button_check(a, 'SIX_MONTH'))
+        self.oneYearRadio.toggled.connect(lambda a: self.radio_button_check(a, 'ONE_YEAR'))
+        self.threeYearRadio.toggled.connect(lambda a: self.radio_button_check(a, 'THREE_YEAR'))
 
-    def radio_button_check(self, isChecked: bool, dayRange: int):
+    def radio_button_check(self, isChecked: bool, type: str):
         if not isChecked: return
-        self.chart.initChart(dayRange)
+        self.chart.initChart(type)
 
 
 class ToolTipItem(QWidget):
@@ -120,7 +121,7 @@ class GraphicsProxyWidget(QGraphicsProxyWidget):
 
 class ChartView(QChartView):
 
-    def __init__(self, *args, fundCode):
+    def __init__(self, *args, fundCode, fundName):
         super(ChartView, self).__init__(*args)
         self.fundCode = fundCode
         self.cacheData = []
@@ -128,34 +129,69 @@ class ChartView(QChartView):
         self.setRenderHint(QPainter.Antialiasing)  # 抗锯齿
         # 基金爬虫
         self.FundCrawler = FundCrawler()
+        self.cacheData = {}
+        self.fundName = fundName
         self.initChart()
 
-    def initChart(self, dayRange: int = 90):
-        if len(self.cacheData) == 0:
-            self.cacheData = self.FundCrawler.get_fund_performance_ydi(self.fundCode)
-        originData = self.cacheData
-        # print(data['netWorthData'][-10:])
-        data = originData['netWorthData'][-dayRange:]
-        self.get_pre_index(data)
+    def initChart(self, type: str = 'THREE_MONTH'):
+        # if 'THREE_YEAR' not in self.cacheData:
+        #     dayDate, dayLength = get_last_trading_day('THREE_YEAR')
+        #     tempData = self.FundCrawler.get_fund_performance_ydi(self.fundCode, dayDate)
+        #     self.cacheData['THREE_YEAR'] = tempData['totalNetWorthData']
+        #     self.fundName = tempData['name']
+        #
+        # if type not in self.cacheData:
+        #     dayDate, dayLength = get_last_trading_day(type)
+        #     for index, day in enumerate(reversed(self.cacheData['THREE_YEAR'])):
+        #         if day[0] == dayDate:
+        #             self.cacheData[type] = self.cacheData['THREE_YEAR'][-index - 1:]
+        #             break
+
+        if type not in self.cacheData:
+            tempData = self.FundCrawler.get_fund_performance_ttt(self.fundCode, type)
+            self.cacheData[type] = tempData
+
+        # if type not in self.cacheData:
+        #     dayDate, dayLength = get_last_trading_day(type)
+        #     for index, day in enumerate(reversed(self.cacheData['THREE_YEAR'])):
+        #         if day[0] == dayDate:
+        #             self.cacheData[type] = self.cacheData['THREE_YEAR'][-index - 1:]
+        #             break
+
+        data = self.cacheData[type]
+
         self.category = []
         for item in data:
-            self.category.append(item[0][5:])
-        self._chart = QChart(title="业绩走势：{} ({})".format(originData['name'], originData['code']))
+            # self.category.append(item[0][5:])
+            self.category.append(item[0])
+        self._chart = QChart(title="业绩走势：{} ({})".format(self.fundName, self.fundCode))
         self._chart.setAcceptHoverEvents(True)
         # Series动画
         self._chart.setAnimationOptions(QChart.SeriesAnimations)
         # 设置图表margin
         self._chart.setMargins(QMargins(20, 20, 35, 20))
 
-        dataList = []
-        baseWorth = float(data[0][1])
+        if len(data[0]) == 4:
+            dataList = [[], [], []]
+        else:
+            dataList = [[], []]
+
+        # 插入数据
         for item in data:
-            curWorth = float(item[1])
-            growth = (curWorth - baseWorth) / baseWorth * 100
-            dataList.append(round(growth, 2))
-        dataTable = [
-            ['涨幅', dataList],
-        ]
+            for i in range(len(item) - 1):
+                dataList[i].append(item[i + 1])
+
+        if len(dataList) == 3:
+            dataTable = [
+                ['本基金 ', dataList[0]],
+                ['沪深300', dataList[1]],
+                ['上证指数', dataList[2]],
+            ]
+        else:
+            dataTable = [
+                ['本基金 ', dataList[0]],
+                ['同类均值', dataList[1]],
+            ]
 
         for series_name, data_list in dataTable:
             series = QLineSeries(self._chart)
@@ -178,6 +214,7 @@ class ChartView(QChartView):
         axisY.setTickCount(6)  # y轴设置7个刻度
 
         down, up = self.get_pre_index(data)
+        # down, up = -20, 50
         axisY.setRange(down, up)  # 设置y轴范围
         # 设置坐标格式
         axisY.setLabelFormat("%0.1f%")
@@ -200,18 +237,18 @@ class ChartView(QChartView):
         # self._chart.legend(
         # chart的图例
         legend = self._chart.legend()
-        legend.setVisible(False)
+        # legend.setVisible(False)
         # legend.
         # 设置图例由Series来决定样式
-        # legend.setMarkerShape(QLegend.MarkerShapeFromSeries)
+        legend.setMarkerShape(QLegend.MarkerShapeFromSeries)
         # 遍历图例上的标记并绑定信号
-        # for marker in legend.markers():
-        # 隐藏图例
-        # marker.setVisible(False)
-        # 点击事件
-        # marker.clicked.connect(self.handleMarkerClicked)
-        # 鼠标悬停事件
-        # marker.hovered.connect(self.handleMarkerHovered)
+        for marker in legend.markers():
+            # 隐藏图例
+            # marker.setVisible(False)
+            # 点击事件
+            marker.clicked.connect(self.handleMarkerClicked)
+            # 鼠标悬停事件
+            marker.hovered.connect(self.handleMarkerHovered)
 
         self.setChart(self._chart)
 
@@ -232,13 +269,25 @@ class ChartView(QChartView):
         self.min_y, self.max_y = axisY.min(), axisY.max()
 
     def get_pre_index(self, data):
-        baseValue = float(data[0][1])
+        # baseValue = float(data[0][1])
+        # maxValue = 0
+        # minValue = 0
+        # for item in data:
+        #     value = (float(item[1]) - baseValue) / baseValue * 100
+        #     maxValue = max(maxValue, value)
+        #     minValue = min(minValue, value)
+        # # TODO 包含0
+        # print(floor(minValue), ceil(maxValue))
+        # return self.get_seris_y(floor(minValue), ceil(maxValue))
+
+        # baseValue = float(data[0][1])
         maxValue = 0
         minValue = 0
+
         for item in data:
-            value = (float(item[1]) - baseValue) / baseValue * 100
-            maxValue = max(maxValue, value)
-            minValue = min(minValue, value)
+            for i in range(1, len(item)):
+                maxValue = max(maxValue, item[i])
+                minValue = min(minValue, item[i])
         # TODO 包含0
         print(floor(minValue), ceil(maxValue))
         return self.get_seris_y(floor(minValue), ceil(maxValue))
@@ -390,6 +439,6 @@ class ChartView(QChartView):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    view = ChartView(fundCode='110011')
+    view = ChartView(fundCode='110011', fundName='易方达中小盘混合')
     view.show()
     sys.exit(app.exec_())

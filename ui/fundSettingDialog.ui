@@ -54,6 +54,52 @@
       </property>
       <item>
        <layout class="QGridLayout" name="gridLayout_5">
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>刷新：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>50</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>字号：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QCheckBox" name="enableRefreshChb">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>自动刷新</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0">
          <widget class="QLabel" name="label">
           <property name="minimumSize">
@@ -73,10 +119,29 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="1" colspan="2">
-         <widget class="QComboBox" name="comboBox">
+        <item row="2" column="3">
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>毫秒</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" colspan="3">
+         <widget class="QFontComboBox" name="fontNameCob">
+          <property name="focusPolicy">
+           <enum>Qt::TabFocus</enum>
+          </property>
+          <property name="currentFont">
+           <font>
+            <family>宋体</family>
+           </font>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" colspan="3">
+         <widget class="QComboBox" name="fontSizeCob">
           <property name="currentText">
-           <string>9</string>
+           <string>7</string>
           </property>
           <item>
            <property name="text">
@@ -131,73 +196,24 @@
          </widget>
         </item>
         <item row="2" column="2">
-         <widget class="QLineEdit" name="lineEdit_3">
+         <widget class="QSpinBox" name="refreshTimeoutTxt">
           <property name="enabled">
            <bool>false</bool>
           </property>
-          <property name="focusPolicy">
-           <enum>Qt::ClickFocus</enum>
-          </property>
-          <property name="placeholderText">
-           <string>刷新时间</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_7">
-          <property name="text">
-           <string>刷新：</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1" colspan="2">
-         <widget class="QFontComboBox" name="fontNameCob">
-          <property name="focusPolicy">
-           <enum>Qt::TabFocus</enum>
-          </property>
-          <property name="currentFont">
-           <font>
-            <family>Helvetica</family>
-           </font>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QCheckBox" name="checkBox_2">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>自动刷新</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="minimumSize">
-           <size>
-            <width>50</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>50</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>字号：</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="2">
-         <widget class="QLabel" name="label_8">
-          <property name="text">
+          <property name="suffix">
            <string/>
+          </property>
+          <property name="prefix">
+           <string/>
+          </property>
+          <property name="minimum">
+           <number>30000</number>
+          </property>
+          <property name="maximum">
+           <number>999000</number>
+          </property>
+          <property name="singleStep">
+           <number>1000</number>
           </property>
          </widget>
         </item>
@@ -347,7 +363,7 @@
          </widget>
         </item>
         <item row="3" column="1">
-         <widget class="QCheckBox" name="checkBox">
+         <widget class="QCheckBox" name="enableProxyChb">
           <property name="minimumSize">
            <size>
             <width>100</width>
@@ -375,8 +391,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>524</x>
-     <y>339</y>
+     <x>506</x>
+     <y>376</y>
     </hint>
     <hint type="destinationlabel">
      <x>506</x>
@@ -391,8 +407,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>454</x>
-     <y>339</y>
+     <x>425</x>
+     <y>376</y>
     </hint>
     <hint type="destinationlabel">
      <x>321</x>
@@ -401,34 +417,34 @@
    </hints>
   </connection>
   <connection>
-   <sender>checkBox</sender>
+   <sender>enableProxyChb</sender>
    <signal>toggled(bool)</signal>
    <receiver>lineEdit_2</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>122</x>
-     <y>269</y>
+     <x>174</x>
+     <y>325</y>
     </hint>
     <hint type="destinationlabel">
-     <x>224</x>
-     <y>267</y>
+     <x>405</x>
+     <y>327</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>checkBox_2</sender>
+   <sender>enableRefreshChb</sender>
    <signal>toggled(bool)</signal>
-   <receiver>lineEdit_3</receiver>
+   <receiver>refreshTimeoutTxt</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>114</x>
-     <y>113</y>
+     <x>113</x>
+     <y>91</y>
     </hint>
     <hint type="destinationlabel">
-     <x>184</x>
-     <y>121</y>
+     <x>236</x>
+     <y>98</y>
     </hint>
    </hints>
   </connection>

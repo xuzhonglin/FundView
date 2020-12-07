@@ -238,17 +238,53 @@ class FundCrawler:
         else:
             return self.get_funds_data_ttt(fundCodes, isOptional)
 
-    def get_fund_performance_ydi(self, fundCode: str):
+    def get_fund_performance_ydi(self, fundCode: str, startDate: str = ''):
         try:
-            url = FundConfig.YDI_URL + '/fund/report?code=' + fundCode
+            url = FundConfig.OTHER_URL + '/fund/detail?code={}&startDate={}'.format(fundCode, startDate)
             resp = self.http_get(url)
             if resp.status_code == 200:
                 resp_json = resp.json()
                 data = resp_json['data']
+
                 return data
         except Exception as e:
             print(e)
         return {}
+
+    def get_fund_performance_ttt(self, fundCode: str, type: str = 'threemonth'):
+        if type == 'ONE_MONTH':
+            type = 'month'
+        elif type == 'THREE_MONTH':
+            type = 'threemonth'
+        elif type == 'SIX_MONTH':
+            type = 'sixmonth'
+        elif type == 'ONE_YEAR':
+            type = 'year'
+        elif type == 'THREE_YEAR':
+            type = 'threeyear'
+
+        try:
+            url = 'http://fund.eastmoney.com/data/FundPicData.aspx?bzdm={}&n=0&dt={}&vname=ljsylSVG_PicData&r={}'.format(
+                fundCode, type, random.random())
+            resp = self.http_get(url)
+            if resp.status_code == 200:
+                result = re.findall('PicData="(.*)";', resp.text)
+                result = result[0].split('|')
+                data = []
+                for i in result:
+                    temp = i.split('_')
+                    dateTime = temp[0].replace('/', '-')
+                    curFund = float(temp[1]) if temp[1] != '' else 0.0
+                    hz300 = float(temp[2]) if temp[2] != '' else 0.0
+                    if len(temp) == 4:
+                        szzs = float(temp[3]) if temp[3] != '' else 0.0
+                        data.append([dateTime, curFund, hz300, szzs])
+                    else:
+                        data.append([dateTime, curFund, hz300])
+                return data
+        except Exception as e:
+            print(e)
+        return []
 
     def get_day_worth(self, fundCode: str, worthDate: str = ''):
         """
@@ -528,6 +564,6 @@ if __name__ == '__main__':
     # ret = fund.get_funds_data(['110011'])
     # ret = fund.get_board_data_bak()
     # ret = fund.get_fund_performance_ydi('110011')
-    ret=fund.get_history_worth('110011','2020-09-04','2020-12-04',93,1)
+    # ret = fund.get_history_worth('110011', '2020-09-04', '2020-12-04', 93, 1)
+    ret = fund.get_fund_performance_ttt('110011', 'THREE_MONTH')
     print(ret)
-
