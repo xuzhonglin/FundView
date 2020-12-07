@@ -294,12 +294,13 @@ class FundCrawler:
         :return:
         """
         ret = self.get_history_worth(fundCode, worthDate, worthDate)
-        if worthDate == '':
+        if worthDate == '' and len(ret) > 1:
             return ret[1]
         else:
             for item in ret:
                 if item['netWorthDate'] == worthDate:
                     return item
+        return None
 
     def get_history_worth(self, fundCode: str, startDate: str = '', endDate: str = '', pageSize: int = 10,
                           pageNum: int = 1):
