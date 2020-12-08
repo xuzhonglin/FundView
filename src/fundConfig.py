@@ -10,7 +10,7 @@ class FundConfig:
     YDI_URL = 'https://api.yiduu.com/v1'
 
     # https: // api.doctorxiong.club / v1
-    OTHER_URL = 'https://fund.colinxu.cn/v1'
+    OTHER_URL = 'https://fund.colinxu.cn/fundApi/v1'
 
     ANT_URL = 'http://www.fund123.cn/api/fund'
 
