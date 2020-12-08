@@ -7,7 +7,7 @@ from PyQt5.QtChart import QCategoryAxis, QChart, QLineSeries, QChartView, QLegen
 from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF, QMargins
 from PyQt5.QtGui import QBrush, QColor, QPen, QPainter
 from PyQt5.QtWidgets import QMainWindow, QGraphicsProxyWidget, QVBoxLayout, QLabel, QWidget, QHBoxLayout, \
-    QGraphicsLineItem, QApplication
+    QGraphicsLineItem, QApplication, QMessageBox, QDialog
 
 from ui.fundChartDialog import Ui_FundChartDialog
 from src.fundCrawler import FundCrawler
@@ -25,7 +25,7 @@ STYLE_GREEN = 'color: rgb(0, 170, 0);'
 
 class FundChartMain(QMainWindow, Ui_FundChartDialog):
 
-    def __init__(self, parent, fundCode: str, fundName: str):
+    def __init__(self, parent: QDialog, fundCode: str, fundName: str):
         """
         构造函数
         :param fundCode: 基金代码
@@ -33,9 +33,13 @@ class FundChartMain(QMainWindow, Ui_FundChartDialog):
         """
         super().__init__()
         self.setupUi(parent)
-        self.chart = ChartView(self, fundCode=fundCode, fundName=fundName)
-        self.chartLayout.addWidget(self.chart)
-        self.init_slot()
+        try:
+            self.chart = ChartView(self, fundCode=fundCode, fundName=fundName)
+            self.chartLayout.addWidget(self.chart)
+            self.init_slot()
+        except Exception as e:
+            QMessageBox.warning(self.parent(), '提示', '出现异常请重试!\t')
+            raise e
 
     def init_slot(self):
         self.oneMonthRadio.toggled.connect(lambda a: self.radio_button_check(a, 'ONE_MONTH'))
@@ -170,6 +174,11 @@ class ChartView(QChartView):
         self._chart.setAnimationOptions(QChart.SeriesAnimations)
         # 设置图表margin
         self._chart.setMargins(QMargins(20, 20, 35, 20))
+
+        if len(data) == 0:
+            self.close()
+            raise Exception('渲染异常')
+            # self.exex
 
         if len(data[0]) == 4:
             dataList = [[], [], []]

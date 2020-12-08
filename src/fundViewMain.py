@@ -602,21 +602,25 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.write_local_config(fundCode, float(fundCost), float(fundUnits))
 
     def fund_double_clicked(self, index: QModelIndex):
-        rowIndex = index.row()
-        if self.tabWidget.currentIndex() == 0:
-            fundCode = self.positionTable.item(rowIndex, 1).text()
-            fundName = self.positionTable.item(rowIndex, 0).text()
-        else:
-            fundCode = self.optionalTable.item(rowIndex, 1).text()
-            fundName = self.optionalTable.item(rowIndex, 0).text()
-        title = "业绩走势：{}".format(fundName)
-        dialog = QDialog(self.centralwidget)
-        windowsFlags = dialog.windowFlags()
-        windowsFlags |= Qt.WindowMaximizeButtonHint
-        dialog.setWindowFlags(windowsFlags)
-        FundChartMain(dialog, fundCode, fundName)
-        dialog.setWindowTitle(title)
-        dialog.exec_()
+
+        try:
+            rowIndex = index.row()
+            if self.tabWidget.currentIndex() == 0:
+                fundCode = self.positionTable.item(rowIndex, 1).text()
+                fundName = self.positionTable.item(rowIndex, 0).text()
+            else:
+                fundCode = self.optionalTable.item(rowIndex, 1).text()
+                fundName = self.optionalTable.item(rowIndex, 0).text()
+            title = "业绩走势：{}".format(fundName)
+            dialog = QDialog(self.centralwidget)
+            windowsFlags = dialog.windowFlags()
+            windowsFlags |= Qt.WindowMaximizeButtonHint
+            dialog.setWindowFlags(windowsFlags)
+            FundChartMain(dialog, fundCode, fundName)
+            dialog.setWindowTitle(title)
+            dialog.exec_()
+        except Exception as e:
+            print(e)
 
     def setting_btn_clicked(self):
         dialog = QDialog(self.centralwidget)
