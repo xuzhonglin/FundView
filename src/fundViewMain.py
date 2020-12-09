@@ -2,11 +2,12 @@ import _thread
 import json
 import os, requests
 import sys
-import time
+import sys
 
 from PyQt5.QtCore import Qt, pyqtSignal, QModelIndex, QTimer
 from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap, QFont
-from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, QApplication
+from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, QApplication, \
+    QMessageBox
 
 from src.fundConfig import FundConfig
 from src.fundEnum import DBSource
@@ -33,6 +34,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
     def __init__(self, parent: QApplication):
         super().__init__()
+        sys.excepthook = self.exceptHook
         self.setupUi(self)
         self.parentWindow = parent
         self.init_slot()
@@ -467,7 +469,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             fundExpectGrowth = float(item['expectGrowth'])
             fundExpectWorthColor = RED if fundExpectGrowth >= 0 else GREEN
             fundExpectWorthItem = QTableWidgetItem(
-                "{} ({}%)".format(format(fundExpectWorth, '.4f'), format(fundExpectGrowth, '.2f')))
+                "{}% ({})".format(format(fundExpectGrowth, '.2f'), format(fundExpectWorth, '.4f')))
             self.optionalTable.setItem(index, 2, fundExpectWorthItem)
             self.optionalTable.item(index, 2).setForeground(fundExpectWorthColor)
 
@@ -476,7 +478,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             fundDayGrowth = float(item['dayGrowth'])
             fundNetWorthColor = RED if fundDayGrowth >= 0 else GREEN
             fundNetWorthItem = QTableWidgetItem(
-                "{} ({}%)".format(format(fundNetWorth, '.4f'), format(fundDayGrowth, '.2f')))
+                "{}% ({})".format(format(fundDayGrowth, '.2f'), format(fundNetWorth, '.4f')))
             self.optionalTable.setItem(index, 3, fundNetWorthItem)
             self.optionalTable.item(index, 3).setForeground(fundNetWorthColor)
 
@@ -602,7 +604,6 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.write_local_config(fundCode, float(fundCost), float(fundUnits))
 
     def fund_double_clicked(self, index: QModelIndex):
-
         try:
             rowIndex = index.row()
             if self.tabWidget.currentIndex() == 0:
@@ -621,6 +622,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             dialog.exec_()
         except Exception as e:
             print(e)
+            QMessageBox.warning(self.parent(), '提示', '出现异常请重试!{}\t\t\n'.format(e))
 
     def setting_btn_clicked(self):
         dialog = QDialog(self.centralwidget)
@@ -769,3 +771,15 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 pass
             elif curTabIndex == 1:
                 self.optional_add_fund_clicked()
+
+    def exceptHook(self, excType, excValue, traceBack):
+        """
+        全局异常捕捉
+        :param excType:
+        :param excValue:
+        :param traceBack:
+        :return:
+        """
+
+        err_msg = ''.join(traceback.format_exception(excType, excValue, traceBack))
+        QMessageBox.critical(self, '异常', err_msg)

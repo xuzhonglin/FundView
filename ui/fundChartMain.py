@@ -7,7 +7,7 @@ from PyQt5.QtChart import QCategoryAxis, QChart, QLineSeries, QChartView, QLegen
 from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF, QMargins
 from PyQt5.QtGui import QBrush, QColor, QPen, QPainter
 from PyQt5.QtWidgets import QMainWindow, QGraphicsProxyWidget, QVBoxLayout, QLabel, QWidget, QHBoxLayout, \
-    QGraphicsLineItem, QApplication, QMessageBox, QDialog
+    QGraphicsLineItem, QApplication, QDialog
 
 from ui.fundChartDialog import Ui_FundChartDialog
 from src.fundCrawler import FundCrawler
@@ -33,13 +33,9 @@ class FundChartMain(QMainWindow, Ui_FundChartDialog):
         """
         super().__init__()
         self.setupUi(parent)
-        try:
-            self.chart = ChartView(self, fundCode=fundCode, fundName=fundName)
-            self.chartLayout.addWidget(self.chart)
-            self.init_slot()
-        except Exception as e:
-            QMessageBox.warning(self.parent(), '提示', '出现异常请重试!\t')
-            raise e
+        self.chart = ChartView(self, fundCode=fundCode, fundName=fundName)
+        self.chartLayout.addWidget(self.chart)
+        self.init_slot()
 
     def init_slot(self):
         self.oneMonthRadio.toggled.connect(lambda a: self.radio_button_check(a, 'ONE_MONTH'))

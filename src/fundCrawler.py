@@ -420,7 +420,9 @@ class FundCrawler:
                 resp_json = resp.json()
                 data = resp_json['data']
                 ret = []
+                stock_codes = []
                 for item in data['stockList']:
+                    stock_codes.append(item[0])
                     ret.append({
                         'code': item[0],
                         'name': item[1],
@@ -428,6 +430,14 @@ class FundCrawler:
                         'holdUnits': item[3],
                         'holdAmount': item[4]
                     })
+                stock_codes = ','.join(stock_codes)
+                url = FundConfig.OTHER_URL + '/stock?code=' + stock_codes
+                resp = self.http_get(url)
+                resp_json = resp.json()
+                data = resp_json['data']
+                for index, item in enumerate(ret):
+                    item['changePercent'] = data[index]['changePercent']
+                # print(ret)
                 return ret
         except Exception as e:
             print(e)
@@ -566,5 +576,6 @@ if __name__ == '__main__':
     # ret = fund.get_board_data_bak()
     # ret = fund.get_fund_performance_ydi('110011')
     # ret = fund.get_history_worth('110011', '2020-09-04', '2020-12-04', 93, 1)
-    ret = fund.get_fund_performance_ttt('110011', 'THREE_MONTH')
+    # ret = fund.get_fund_performance_ttt('110011', 'THREE_MONTH')
+    ret = fund.get_fund_growth('110011')
     print(ret)

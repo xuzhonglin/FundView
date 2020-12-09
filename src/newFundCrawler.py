@@ -1,3 +1,4 @@
+import json
 import random
 import re
 
@@ -50,7 +51,7 @@ def get_fund_data(fundCode: str):
     dayGrowth = netWorthHtml[1].get_text()
     netWorthDate = soup.select('div.dataOfFund > dl.dataItem02 > dt > p')[0].text[-11:-1]
 
-    # 获取估值
+    # 持仓股票
     expectWorthHtml = soup.select('#position_shares > div.poptableWrap > table')
     for i in expectWorthHtml[0].findAll('tr')[1:]:
         temp = i.findAll('td')
@@ -58,7 +59,14 @@ def get_fund_data(fundCode: str):
         b = temp[1].get_text().replace('%', '')
         c = temp[2].find('span').get_text().replace('%', '')
         print(a, b, c)
-        # print(i)
+
+    # 阶段涨幅
+    growthHtml = soup.select('#increaseAmount_stage > table')
+    for i in growthHtml[0].findAll('tr')[1:][0]:
+        a = i.find('div').get_text()
+        print(a)
+
+    # print(i)
     # expectWorth = soup.find(id='gz_gsz')
     # print(expectWorthHtml)
 
@@ -92,4 +100,33 @@ def get_fund_growth(fundCode):
     return ret
 
 
-get_fund_growth('110011')
+def get_fund_positions(fundCode):
+    url = 'http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code={}&topline=10&year=&month=&rt={}'.format(
+        fundCode,
+        random.random())
+    headers = {
+        'User-Agent': get_fake_ua(),
+        'Host': 'fundf10.eastmoney.com',
+        'Referer': 'http://fundf10.eastmoney.com/ccmx_{}.html'.format(fundCode)
+    }
+    html = requests.get(url, headers=headers)
+    html = html.content.decode('utf-8')
+    print(html)
+    html = re.findall(r'content:"(.*)",', html)[0]
+    print(html)
+    soup = BeautifulSoup(html, "lxml")
+    growth = []
+    for i in soup.select('ul li:nth-child(2)'):
+        growth.append(i.text.replace('%', ''))
+    ret = {
+        "lastWeekGrowth": growth[1],
+        "lastMonthGrowth": growth[2],
+        "lastThreeMonthsGrowth": growth[3],
+        "lastSixMonthsGrowth": growth[4],
+        "lastYearGrowth": growth[5]
+    }
+    print(ret)
+    return ret
+
+
+get_fund_data('110011')

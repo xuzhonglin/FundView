@@ -2,7 +2,7 @@ import json
 import os, requests
 import sys
 
-from PyQt5 import QtGui
+from PyQt5 import QtGui, sip
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu
@@ -38,13 +38,13 @@ class FundTableMain(QMainWindow, Ui_FundTableDialog):
             self.refreshBtn.hide()
         elif tableType == 2:
             self.refreshBtn.hide()
-            self.moreBtn.hide()
+            self.moreBtn.setText('刷新')
         self.init_slot()
         self.init_table_header()
         self.init_table_data()
 
     def init_slot(self):
-        self.moreBtn.clicked.connect(lambda: self.init_table_data(True))
+        self.moreBtn.clicked.connect(lambda: self.init_table_data(self.tableType == 1))
 
     def init_table_header(self):
         """
@@ -77,15 +77,16 @@ class FundTableMain(QMainWindow, Ui_FundTableDialog):
             # 设置一共10列
             self.fundTable.setColumnCount(3)
             #  设置水平方向两个头标签文本内容
-            self.fundTable.setHorizontalHeaderLabels(['日期', '净值', '涨幅'])
+            self.fundTable.setHorizontalHeaderLabels(['日期', '单位净值', '涨跌幅'])
 
         elif self.tableType == 2:
             # 设置一共10列
-            self.fundTable.setColumnCount(3)
+            self.fundTable.setColumnCount(4)
             #  设置水平方向两个头标签文本内容
-            self.fundTable.setHorizontalHeaderLabels(['股票', '占比', '持股数'])
+            self.fundTable.setHorizontalHeaderLabels(['股票', '涨跌幅', '占净值比例', '持股数（万）'])
 
     def init_table_data(self, isMore: bool = False):
+        print('init_table_data')
         if self.tableType == 1:
             base_row_cnt = 0
             if isMore:
@@ -108,5 +109,12 @@ class FundTableMain(QMainWindow, Ui_FundTableDialog):
             self.fundTable.setRowCount(len(list))
             for index, item in enumerate(list):
                 self.fundTable.setItem(index, 0, QTableWidgetItem("{}({})".format(item['name'], item['code'])))
-                self.fundTable.setItem(index, 1, QTableWidgetItem("{}".format(item['proportion'])))
-                self.fundTable.setItem(index, 2, QTableWidgetItem("{}".format(item['holdUnits'])))
+
+                changePercent = float(item['changePercent'])
+                changePercentColor = RED if changePercent >= 0 else GREEN
+                self.fundTable.setItem(index, 1, QTableWidgetItem("{}%".format(item['changePercent'])))
+                self.fundTable.item(index, 1).setForeground(changePercentColor)
+
+                self.fundTable.setItem(index, 2, QTableWidgetItem("{}".format(item['proportion'])))
+                self.fundTable.setItem(index, 3, QTableWidgetItem("{}".format(item['holdUnits'])))
+        self.fundTable.viewport().update()
