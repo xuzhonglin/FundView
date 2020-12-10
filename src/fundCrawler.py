@@ -212,16 +212,66 @@ class FundCrawler:
                     "expectGrowth": result['gszzl']
                 }
 
-                temp.update(self.query_update_worth(temp))
+                temp.update(self.get_fund_data_ttt_bak(fundCode, isOptional))
 
-                if isOptional:
-                    temp.update(self.get_fund_growth(fundCode))
+                # temp.update(self.query_update_worth(temp))
+
+                # if isOptional:
+                #     temp.update(self.get_fund_growth(fundCode))
                 # temp.
                 data.append(temp)
             return data
         except Exception as e:
             print(e)
             return data
+
+    def get_fund_data_ttt_bak(self, fundCode: str, isOptional: bool = False):
+        fundData = {}
+        try:
+            url = 'http://fund.eastmoney.com/{}.html'.format(fundCode)
+            headers = {
+                'User-Agent': self.get_fake_ua(),
+                'Host': 'fund.eastmoney.com',
+                'Referer': url
+            }
+            html = requests.get(url, headers=headers)
+            html = html.content.decode('utf-8')
+            soup = BeautifulSoup(html, "lxml")
+
+            # 获取净值
+            netWorthHtml = soup.select('div.dataOfFund > dl.dataItem02 > dd.dataNums > span')
+            fundData['netWorth'] = netWorthHtml[0].get_text()
+            fundData['dayGrowth'] = netWorthHtml[1].get_text().replace('%', '')
+            netWorthDate = soup.select('div.dataOfFund > dl.dataItem02 > dt > p')[0].text[-11:-1]
+            fundData['netWorthDate'] = netWorthDate
+
+            buyRate = soup.select('span.nowPrice')[0].text
+            fundData['buyRate'] = buyRate.replace('%', '')
+
+            # 持仓股票
+            # expectWorthHtml = soup.select('#position_shares > div.poptableWrap > table')
+            # for i in expectWorthHtml[0].findAll('tr')[1:]:
+            #     temp = i.findAll('td')
+            #     a = temp[0].find('a').get_text()
+            #     b = temp[1].get_text().replace('%', '')
+            #     c = temp[2].find('span').get_text().replace('%', '')
+            #     print(a, b, c)
+
+            if isOptional:
+                # 阶段涨幅
+                growthHtml = soup.select('#increaseAmount_stage > table  ')
+                growth = growthHtml[0].findAll('tr')[1:2][0].select('.Rdata')
+                a = {
+                    "lastWeekGrowth": growth[0].text.replace('%', ''),
+                    "lastMonthGrowth": growth[1].text.replace('%', ''),
+                    "lastThreeMonthsGrowth": growth[2].text.replace('%', ''),
+                    "lastSixMonthsGrowth": growth[3].text.replace('%', ''),
+                    "lastYearGrowth": growth[5].text.replace('%', '')
+                }
+                fundData.update(a)
+        except Exception as e:
+            print(e)
+        return fundData
 
     def get_funds_data(self, fundCodes: [], isOptional: bool = False):
         """
@@ -577,5 +627,5 @@ if __name__ == '__main__':
     # ret = fund.get_fund_performance_ydi('110011')
     # ret = fund.get_history_worth('110011', '2020-09-04', '2020-12-04', 93, 1)
     # ret = fund.get_fund_performance_ttt('110011', 'THREE_MONTH')
-    ret = fund.get_fund_growth('110011')
+    ret = fund.get_funds_data_ttt(['110011'])
     print(ret)

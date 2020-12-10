@@ -8,5 +8,4 @@
 + `pyinstaller -F main.spec`
 
 ### TODO
-+ 优化晚上7-8点后部分净值公布后的收益估算方式
-+ 自己写爬虫抓取净值 
++ 使用新地址：https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=50&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=3f998f06-d80c-4eb7-988d-44da0f3a0841&Fcodes=001510,007020,161725,009777,260108,110011,001595,004854

@@ -36,6 +36,7 @@ def get_fake_ua():
 
 def get_fund_data(fundCode: str):
     url = 'http://fund.eastmoney.com/{}.html'.format(fundCode)
+    fundData = {}
     headers = {
         'User-Agent': get_fake_ua(),
         'Host': 'fund.eastmoney.com',
@@ -45,11 +46,21 @@ def get_fund_data(fundCode: str):
     html = html.content.decode('utf-8')
     soup = BeautifulSoup(html, "lxml")
 
+    title = soup.select('.fundDetail-tit > div')[0]
+    fundCode = title.text.split('(')[0]
+    fundName = title.text.split('(')[1]
+    fundData['code'] = fundCode
+    fundData['name'] = fundName
+
     # 获取净值
     netWorthHtml = soup.select('div.dataOfFund > dl.dataItem02 > dd.dataNums > span')
-    netWorth = netWorthHtml[0].get_text()
-    dayGrowth = netWorthHtml[1].get_text()
+    fundData['netWorth'] = netWorthHtml[0].get_text()
+    fundData['dayGrowth'] = netWorthHtml[1].get_text().replace('%', '')
     netWorthDate = soup.select('div.dataOfFund > dl.dataItem02 > dt > p')[0].text[-11:-1]
+    fundData['netWorthDate'] = netWorthDate
+
+    buyRate = soup.select('span.nowPrice')[0].text
+    fundData['buyRate'] = buyRate.replace('%', '')
 
     # 持仓股票
     expectWorthHtml = soup.select('#position_shares > div.poptableWrap > table')
@@ -61,17 +72,19 @@ def get_fund_data(fundCode: str):
         print(a, b, c)
 
     # 阶段涨幅
-    growthHtml = soup.select('#increaseAmount_stage > table')
-    for i in growthHtml[0].findAll('tr')[1:][0]:
-        a = i.find('div').get_text()
-        print(a)
+    growthHtml = soup.select('#increaseAmount_stage > table  ')
+    growth = growthHtml[0].findAll('tr')[1:2][0].select('.Rdata')
 
-    # print(i)
-    # expectWorth = soup.find(id='gz_gsz')
-    # print(expectWorthHtml)
+    a = {
+        "lastWeekGrowth": growth[0].text.replace('%', ''),
+        "lastMonthGrowth": growth[1].text.replace('%', ''),
+        "lastThreeMonthsGrowth": growth[2].text.replace('%', ''),
+        "lastSixMonthsGrowth": growth[3].text.replace('%', ''),
+        "lastYearGrowth": growth[5].text.replace('%', '')
+    }
+    fundData.update(a)
 
-    # netWorthHtml
-    print(netWorth, dayGrowth, netWorthDate)
+    print(fundData)
 
 
 def get_fund_growth(fundCode):

@@ -1,6 +1,6 @@
 import sys
 
-from src.fundEnum import DBSource
+from src.fundEnum import DBSource, ColorSwitch, _FundColor
 
 
 class FundConfig:
@@ -38,3 +38,15 @@ class FundConfig:
 
     # 刷新超时
     AUTO_REFRESH_TIMEOUT = 60 * 1000
+
+    FUND_COLOR = ColorSwitch.BLACK_ONLY
+
+
+class FundColor:
+    _IS_BLACK = FundConfig.FUND_COLOR != ColorSwitch.BLACK_ONLY
+    RED_STR = _FundColor.RED_STR if _IS_BLACK else _FundColor.BLACK_STR
+    GREEN_STR = _FundColor.GREEN_STR if _IS_BLACK else _FundColor.BLACK_STR
+    RED_BRUSH = _FundColor.RED_BRUSH if _IS_BLACK else _FundColor.BLACK_BRUSH
+    GREEN_BRUSH = _FundColor.GREEN_BRUSH if _IS_BLACK else _FundColor.BLACK_BRUSH
+    STYLE_RED = _FundColor.STYLE_RED if _IS_BLACK else _FundColor.STYLE_BLACK
+    STYLE_GREEN = _FundColor.STYLE_GREEN if _IS_BLACK else _FundColor.STYLE_BLACK
