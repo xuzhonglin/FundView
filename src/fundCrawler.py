@@ -501,13 +501,15 @@ class FundCrawler:
         :param headers: 请求头
         :return:
         """
+        session = requests.Session()
+        session.trust_env = False
         if FundConfig.ENABLE_PROXY:
             retry_count = 5
             proxy = self.get_proxy().get("proxy")
             while retry_count > 0:
                 try:
-                    return requests.get(url, timeout=5, headers=headers, params=params,
-                                        proxies={"http": "http://{}".format(proxy)})
+                    return session.get(url, timeout=5, headers=headers, params=params,
+                                       proxies={"http": "http://{}".format(proxy)})
                 except Exception as e:
                     print(e)
                     retry_count -= 1
@@ -515,7 +517,7 @@ class FundCrawler:
             self.delete_proxy(proxy)
             return None
         else:
-            return requests.get(url, timeout=5, headers=headers, params=params)
+            return session.get(url, timeout=5, headers=headers, params=params)
 
     def http_post(self, url: str, data: dict = None, headers: dict = None):
         """
@@ -525,13 +527,16 @@ class FundCrawler:
         :param headers: 请求头
         :return:
         """
+        session = requests.Session()
+        session.trust_env = False
+
         if FundConfig.ENABLE_PROXY:
             retry_count = 5
             proxy = self.get_proxy().get("proxy")
             while retry_count > 0:
                 try:
-                    resp = requests.post(url, data, headers=headers, timeout=5,
-                                         proxies={"http": "http://{}".format(proxy)})
+                    resp = session.post(url, data, headers=headers, timeout=5,
+                                        proxies={"http": "http://{}".format(proxy)})
                     return resp
                 except Exception as e:
                     print(e)
@@ -540,7 +545,7 @@ class FundCrawler:
             self.delete_proxy(proxy)
             return None
         else:
-            return requests.post(url, data, headers=headers, timeout=5)
+            return session.post(url, data, headers=headers, timeout=5)
 
     def get_proxy(self):
         """

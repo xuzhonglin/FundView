@@ -39,14 +39,39 @@ class FundConfig:
     # 刷新超时
     AUTO_REFRESH_TIMEOUT = 60 * 1000
 
-    FUND_COLOR = ColorSwitch.BLACK_ONLY
+    # 配色方案
+    FUND_COLOR = ColorSwitch.RED_GREEN
+
+    SWAP_FLAG = False
 
 
-class FundColor:
-    _IS_BLACK = FundConfig.FUND_COLOR != ColorSwitch.BLACK_ONLY
-    RED_STR = _FundColor.RED_STR if _IS_BLACK else _FundColor.BLACK_STR
-    GREEN_STR = _FundColor.GREEN_STR if _IS_BLACK else _FundColor.BLACK_STR
-    RED_BRUSH = _FundColor.RED_BRUSH if _IS_BLACK else _FundColor.BLACK_BRUSH
-    GREEN_BRUSH = _FundColor.GREEN_BRUSH if _IS_BLACK else _FundColor.BLACK_BRUSH
-    STYLE_RED = _FundColor.STYLE_RED if _IS_BLACK else _FundColor.STYLE_BLACK
-    STYLE_GREEN = _FundColor.STYLE_GREEN if _IS_BLACK else _FundColor.STYLE_BLACK
+def get_color(value, colorType):
+    is_black = FundConfig.FUND_COLOR != ColorSwitch.BLACK_ONLY
+    is_green_red = FundConfig.FUND_COLOR == ColorSwitch.GREEN_RED
+
+    if value >= 0 and colorType == 'str':
+        if is_green_red:
+            return _FundColor.GREEN_STR
+        return _FundColor.RED_STR if is_black else _FundColor.BLACK_STR
+    elif colorType == 'str':
+        if is_green_red:
+            return _FundColor.RED_STR
+        return _FundColor.GREEN_STR if is_black else _FundColor.BLACK_STR
+
+    if value >= 0 and colorType == 'brush':
+        if is_green_red:
+            return _FundColor.GREEN_BRUSH
+        return _FundColor.RED_BRUSH if is_black else _FundColor.BLACK_BRUSH
+    elif colorType == 'brush':
+        if is_green_red:
+            return _FundColor.RED_BRUSH
+        return _FundColor.GREEN_BRUSH if is_black else _FundColor.BLACK_BRUSH
+
+    if value >= 0 and colorType == 'style':
+        if is_green_red:
+            return _FundColor.STYLE_GREEN
+        return _FundColor.STYLE_RED if is_black else _FundColor.STYLE_BLACK
+    elif colorType == 'style':
+        if is_green_red:
+            return _FundColor.STYLE_RED
+        return _FundColor.STYLE_GREEN if is_black else _FundColor.STYLE_BLACK

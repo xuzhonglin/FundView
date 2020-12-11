@@ -2,8 +2,8 @@
     "positions": [
         {
             "fundCode": "001510",
-            "fundCost": 3.5681,
-            "fundUnits": 140.13
+            "fundCost": 3.5983,
+            "fundUnits": 277.91
         },
         {
             "fundCode": "007020",
@@ -22,8 +22,8 @@
         },
         {
             "fundCode": "260108",
-            "fundCost": 2.6471,
-            "fundUnits": 566.65
+            "fundCost": 2.6945,
+            "fundUnits": 742.26
         },
         {
             "fundCode": "110011",
@@ -37,8 +37,8 @@
         },
         {
             "fundCode": "004854",
-            "fundCost": 1.3102,
-            "fundUnits": 763.24
+            "fundCost": 1.303,
+            "fundUnits": 1151.22
         }
     ],
     "optional": [
