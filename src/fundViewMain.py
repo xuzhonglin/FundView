@@ -386,14 +386,15 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
             # 8.基金净值
             netWorth = format(float(item['netWorth']), '.4f')
+            dayGrowthFloat = float(item['dayGrowth']) if '--' not in item['dayGrowth'] else 0.0
             # 净值变化率
-            dayGrowth = format(float(item['dayGrowth']), '.2f')
+            dayGrowth = format(dayGrowthFloat, '.2f')
             isDayGrowthUpDown = float(dayGrowth) > 0
             prefix = "+" if isDayGrowthUpDown else ""
             dayGrowth = prefix + dayGrowth + "%"
             dayGrowthItem = QTableWidgetItem("{} ({})".format(netWorth, dayGrowth))
             self.positionTable.setItem(index, 7, dayGrowthItem)
-            dayGrowthColor = get_color(float(item['dayGrowth']), 'brush')
+            dayGrowthColor = get_color(dayGrowthFloat, 'brush')
             self.positionTable.item(index, 7).setForeground(dayGrowthColor)
 
             # 9.估算净值
@@ -494,7 +495,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
             # 4.基金净值
             fundNetWorth = float(item['netWorth'])
-            fundDayGrowth = float(item['dayGrowth'])
+            fundDayGrowth = float(item['dayGrowth']) if '--' not in item['dayGrowth'] else 0
             fundNetWorthColor = get_color(fundDayGrowth, 'brush')
             fundNetWorthItem = QTableWidgetItem(
                 "{}% ({})".format(format(fundDayGrowth, '.2f'), format(fundNetWorth, '.4f')))
@@ -820,8 +821,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.optionalFund = []
 
         FundConfig.DB_SWITCH = DBSource(int(self.getOrDefault('source', 0)))
-        FundConfig.FONT_NAME = self.getOrDefault('fontName', '微软雅黑')
-        FundConfig.FONT_SIZE = self.getOrDefault('fontSize', 9)
+        FundConfig.FONT_NAME = self.getOrDefault('fontName', FundConfig.FONT_NAME)
+        FundConfig.FONT_SIZE = self.getOrDefault('fontSize', FundConfig.FONT_SIZE)
         FundConfig.AUTO_REFRESH_ENABLE = self.getOrDefault('enableAutoRefresh', False)
         FundConfig.AUTO_REFRESH_TIMEOUT = self.getOrDefault('autoRefreshTimeout', 60000)
         FundConfig.FUND_COLOR = ColorSwitch(int(self.getOrDefault('colorScheme', 0)))

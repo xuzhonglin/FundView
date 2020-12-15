@@ -86,7 +86,7 @@ class FundCrawlerAnt:
 def get_fund_data_ant(fundCodes: [], isOptional: bool = False):
     from concurrent.futures import ThreadPoolExecutor
     startTime = time.time()
-    threadPool = ThreadPoolExecutor(max_workers=5, thread_name_prefix="thread")
+    threadPool = ThreadPoolExecutor(max_workers=10, thread_name_prefix="thread")
 
     for fundCode in fundCodes:
         antCrawler = FundCrawlerAnt(fundCode)
