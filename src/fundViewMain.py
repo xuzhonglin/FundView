@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 
 from PyQt5.QtCore import Qt, QModelIndex, QTimer
-from PyQt5.QtGui import QStandardItemModel, QBrush, QColor, QImage, QPixmap, QFont
+from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, QApplication, \
     QMessageBox
 from chinese_calendar import is_workday
@@ -40,6 +40,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.positionFund = {}
         self.optionalFund = []
         self.spaceKeyTimes = 0
+        self.firstStart = True
         self.start_init()
 
         self.timer = QTimer()  # 初始化定时器
@@ -60,6 +61,11 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.thread.PDone.connect(self.refresh_position_data)
         self.thread.ODone.connect(self.refresh_optional_data)
 
+        self.thread.StartDone.connect(self.start_done)
+
+    def start_done(self):
+        self.firstStart = False
+
     def init_slot(self):
         self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))
         self.addFundBtn.clicked.connect(lambda: self.fund_add_edit_clicked(True))
@@ -72,6 +78,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.dbSourceCob.currentIndexChanged.connect(self.db_source_changed)
 
     def db_source_changed(self, index):
+        if self.firstStart: return
         if index == 0:
             FundConfig.DB_SWITCH = DBSource.YDI
         elif index == 1:
@@ -79,6 +86,9 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         elif index == 2:
             FundConfig.DB_SWITCH = DBSource.OTH
 
+        FundConfig.DB_SWITCH = DBSource(index)
+        self.fundConfigOrigin['source'] = index
+        self.write_local_config()
         self.refresh_btn_clicked()
         # self.refresh_btn_clicked(True)
 
@@ -198,12 +208,17 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         menu2 = contextMenu.addAction('基金持仓')
         menu3 = contextMenu.addAction('净值图')
         menu4 = contextMenu.addAction('估值图')
-        menu5 = contextMenu.addAction('删除')
+
+        contextMenu.addSeparator()
 
         if curTabIndex == 0:
+            # menu6 = contextMenu.addAction('加仓')
+            # menu7 = contextMenu.addAction('减仓')
             screenPos = self.positionTable.mapToGlobal(pos)
         else:
             screenPos = self.optionalTable.mapToGlobal(pos)
+
+        menu5 = contextMenu.addAction('删除')
 
         action = contextMenu.exec_(screenPos)
 
@@ -579,6 +594,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             return
 
         self.optionalFund.append(fundCode)
+        self.write_local_config(fundCode, isOptional=True)
         self.refresh_optional_data()
         self.optionalTable.scrollToBottom()
 
@@ -653,6 +669,10 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             lastAutoRefreshEnable = FundConfig.AUTO_REFRESH_ENABLE
             FundConfig.AUTO_REFRESH_ENABLE = dialog.enableRefreshChb.isChecked()
             FundConfig.FUND_COLOR = ColorSwitch(dialog.colorCob.currentIndex())
+            FundConfig.ENABLE_PROXY = dialog.enableProxyChb.isChecked()
+            FundConfig.PROXY_POOL = dialog.proxyUrlTxt.text()
+            FundConfig.FUND_MID = dialog.midTxt.text()
+            FundConfig.ENABLE_SYNC = dialog.cloudSyncChb.isChecked()
 
             # 更新自动刷新
             if lastAutoRefreshEnable and FundConfig.AUTO_REFRESH_ENABLE:
@@ -667,6 +687,19 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.parentWindow.setFont(font)
             for child in self.parentWindow.allWidgets():
                 child.setFont(font)
+
+            self.fundConfigOrigin['fontName'] = FundConfig.FONT_NAME
+            self.fundConfigOrigin['fontSize'] = FundConfig.FONT_SIZE
+            self.fundConfigOrigin['enableAutoRefresh'] = FundConfig.AUTO_REFRESH_ENABLE
+            self.fundConfigOrigin['autoRefreshTimeout'] = FundConfig.AUTO_REFRESH_TIMEOUT
+            self.fundConfigOrigin['colorScheme'] = FundConfig.FUND_COLOR.value
+            self.fundConfigOrigin['enableProxy'] = FundConfig.ENABLE_PROXY
+            self.fundConfigOrigin['proxyAddress'] = FundConfig.PROXY_POOL
+            self.fundConfigOrigin['mid'] = FundConfig.FUND_MID
+            self.fundConfigOrigin['enableSync'] = FundConfig.ENABLE_SYNC
+
+            self.write_local_config()
+
         except Exception as e:
             print(e)
 
@@ -678,6 +711,16 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         try:
             with open('fund.json', 'r', encoding='utf-8') as f:
                 self.fundConfigOrigin = json.load(f)
+                # 检查key值
+                for key in FundConfig.CONFIG_KEYS:
+                    if key not in self.fundConfigOrigin:
+                        self.fundConfigOrigin[key] = None
+
+                if type(self.fundConfigOrigin['positions']) != list:
+                    self.fundConfigOrigin['positions'] = []
+
+                if type(self.fundConfigOrigin['optional']) != list:
+                    self.fundConfigOrigin['optional'] = []
         except:
             with open('fund.json', 'w', encoding='utf-8') as f:
                 config = {
@@ -691,19 +734,19 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                     'optional': ['260108'],
                     'source': 0,
                     'fontName': '微软雅黑',
-                    'fontSize': '9',
+                    'fontSize': 9,
                     'enableAutoRefresh': False,
                     'autoRefreshTimeout': 60000,
                     'colorScheme': 0,
                     'enableProxy': False,
                     'proxyAddress': '',
-                    'mid': 'fb6c799a-3b84-11eb-9280-f43909456196',
+                    'mid': str(uuid.uuid4()),
                     'enableSync': False
                 }
                 self.fundConfigOrigin = config
                 json.dump(config, f, indent=4, ensure_ascii=False)
 
-    def write_local_config(self, fundCode: str, fundCost: float = 0, fundUnits: float = 0, isDelete: bool = False,
+    def write_local_config(self, fundCode: str = '', fundCost: float = 0, fundUnits: float = 0, isDelete: bool = False,
                            isOptional: bool = False):
         """
         写入本地配置文件
@@ -715,7 +758,12 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         :return:
         """
         try:
-            # 删除持仓
+            # 单纯保存配置
+            if fundCode is None or fundCode == '':
+                with open('fund.json', 'w', encoding='utf-8') as f:
+                    json.dump(self.fundConfigOrigin, f, indent=4, ensure_ascii=False)
+                    return
+                    # 删除持仓
             if isDelete and not isOptional:
                 for index, item in enumerate(self.fundConfigOrigin['positions']):
                     if item['fundCode'] == fundCode:
@@ -771,7 +819,28 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         else:
             self.optionalFund = []
 
+        FundConfig.DB_SWITCH = DBSource(int(self.getOrDefault('source', 0)))
+        FundConfig.FONT_NAME = self.getOrDefault('fontName', '微软雅黑')
+        FundConfig.FONT_SIZE = self.getOrDefault('fontSize', 9)
+        FundConfig.AUTO_REFRESH_ENABLE = self.getOrDefault('enableAutoRefresh', False)
+        FundConfig.AUTO_REFRESH_TIMEOUT = self.getOrDefault('autoRefreshTimeout', 60000)
+        FundConfig.FUND_COLOR = ColorSwitch(int(self.getOrDefault('colorScheme', 0)))
+        FundConfig.ENABLE_PROXY = self.getOrDefault('enableProxy', False)
+        FundConfig.PROXY_POOL = self.getOrDefault('proxyAddress', '')
+        FundConfig.FUND_MID = self.getOrDefault('mid', str(uuid.uuid4()))
+        FundConfig.ENABLE_SYNC = self.getOrDefault('enableSync', False)
+
+        self.dbSourceCob.setCurrentIndex(FundConfig.DB_SWITCH.value)
         # 检测键盘回车按键
+
+    def getOrDefault(self, key, value):
+        if key not in self.fundConfigOrigin \
+                or self.fundConfigOrigin[key] is None \
+                or self.fundConfigOrigin[key] == '':
+            self.fundConfigOrigin[key] = value
+            return value
+        else:
+            return self.fundConfigOrigin[key]
 
     def keyPressEvent(self, event):
         print("按下：" + str(event.key()))

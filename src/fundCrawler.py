@@ -1,6 +1,8 @@
 import json
+import queue
 import random
 import re
+import threading
 import time
 from datetime import datetime
 
@@ -272,6 +274,8 @@ class FundCrawler:
         except Exception as e:
             print(e)
         return fundData
+
+
 
     def get_funds_data(self, fundCodes: [], isOptional: bool = False):
         """

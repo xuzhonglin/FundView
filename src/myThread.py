@@ -8,6 +8,8 @@ class MyThread(QThread):
     PDone = pyqtSignal(list)
     ODone = pyqtSignal(list)
 
+    StartDone = pyqtSignal()
+
     def __init__(self, positionFund: dict, optionalFund: list):
         super(MyThread, self).__init__()
         self.positionFund = positionFund
@@ -32,3 +34,6 @@ class MyThread(QThread):
         # 刷新自选数据
         optional_ret = self.fundCrawler.get_funds_data(self.optionalFund, isOptional=True)
         self.ODone.emit(optional_ret)
+
+        print("数据加载完成")
+        self.StartDone.emit()

@@ -13,6 +13,12 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="2" column="2">
     <widget class="QPushButton" name="pushButton">
@@ -81,7 +87,7 @@
         </widget>
        </item>
        <item row="1" column="2" colspan="2">
-        <widget class="QLineEdit" name="lineEdit_2">
+        <widget class="QLineEdit" name="proxyUrlTxt">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -111,6 +117,9 @@
        </item>
        <item row="1" column="1">
         <widget class="QCheckBox" name="enableProxyChb">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="minimumSize">
           <size>
            <width>70</width>
@@ -162,7 +171,11 @@
         </widget>
        </item>
        <item row="2" column="1" colspan="3">
-        <widget class="QLineEdit" name="midTxt"/>
+        <widget class="QLineEdit" name="midTxt">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
        </item>
        <item row="3" column="0">
         <widget class="QLabel" name="label_4">
@@ -173,6 +186,9 @@
        </item>
        <item row="3" column="1">
         <widget class="QCheckBox" name="cloudSyncChb">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>云端同步</string>
          </property>
@@ -381,7 +397,10 @@
        </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="pushButton_2">
+     <widget class="QPushButton" name="resetBtn">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>370</x>
@@ -435,7 +454,7 @@
   <connection>
    <sender>enableProxyChb</sender>
    <signal>toggled(bool)</signal>
-   <receiver>lineEdit_2</receiver>
+   <receiver>proxyUrlTxt</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

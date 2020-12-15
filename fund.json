@@ -7,8 +7,8 @@
         },
         {
             "fundCode": "007020",
-            "fundCost": 1.0489,
-            "fundUnits": 2542.26
+            "fundCost": 1.0502,
+            "fundUnits": 3491.39
         },
         {
             "fundCode": "161725",
@@ -27,8 +27,8 @@
         },
         {
             "fundCode": "110011",
-            "fundCost": 7.9264,
-            "fundUnits": 63.08
+            "fundCost": 8.0441,
+            "fundUnits": 87.02
         },
         {
             "fundCode": "001595",
@@ -64,5 +64,15 @@
         "161725",
         "001595",
         "005693"
-    ]
+    ],
+    "source": 0,
+    "fontName": "微软雅黑",
+    "fontSize": 9,
+    "enableAutoRefresh": true,
+    "autoRefreshTimeout": 60000,
+    "colorScheme": 0,
+    "enableProxy": false,
+    "proxyAddress": "",
+    "mid": "05db098a-3ea3-11eb-a768-f43909456196",
+    "enableSync": false
 }

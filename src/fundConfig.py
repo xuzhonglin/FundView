@@ -4,6 +4,7 @@ from src.fundEnum import DBSource, ColorSwitch, _FundColor
 
 
 class FundConfig:
+    VERSION = '1.1.0'
     # 平台 darwin/win32
     PLATFORM = sys.platform
 
@@ -42,7 +43,14 @@ class FundConfig:
     # 配色方案
     FUND_COLOR = ColorSwitch.RED_GREEN
 
+    FUND_MID = ''
+
+    ENABLE_SYNC = False
+
     SWAP_FLAG = False
+
+    CONFIG_KEYS = ["positions", "optional", "source", "fontName", "fontSize", "enableAutoRefresh", "autoRefreshTimeout",
+                   "colorScheme", "enableProxy", "proxyAddress", "mid", "enableSync"]
 
 
 def get_color(value, colorType):
