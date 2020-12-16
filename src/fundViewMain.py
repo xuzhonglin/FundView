@@ -41,6 +41,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.optionalFund = []
         self.spaceKeyTimes = 0
         self.firstStart = True
+
         self.start_init()
 
         self.timer = QTimer()  # 初始化定时器

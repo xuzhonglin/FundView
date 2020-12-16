@@ -152,6 +152,11 @@ QTabBar::tab{height:24}</string>
                 <string>小熊同学</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string>蚂蚁财富</string>
+               </property>
+              </item>
              </widget>
             </item>
             <item>

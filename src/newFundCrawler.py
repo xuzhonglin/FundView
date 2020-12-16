@@ -1,6 +1,8 @@
 import json
 import random
 import re
+import time
+import uuid
 
 import requests
 from bs4 import BeautifulSoup
@@ -87,30 +89,30 @@ def get_fund_data(fundCode: str):
     print(fundData)
 
 
-def get_fund_growth(fundCode):
-    url = 'http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jdzf&code={}&rt={}'.format(fundCode,
-                                                                                               random.random())
-    headers = {
-        'User-Agent': get_fake_ua(),
-        'Host': 'fundf10.eastmoney.com',
-        'Referer': 'http://fundf10.eastmoney.com/jdzf_{}.html'.format(fundCode)
-    }
-    html = requests.get(url, headers=headers)
-    html = html.content.decode('utf-8')
-    html = re.findall(r'content:"(.*)"};', html)[0]
-    soup = BeautifulSoup(html, "lxml")
-    growth = []
-    for i in soup.select('ul li:nth-child(2)'):
-        growth.append(i.text.replace('%', ''))
-    ret = {
-        "lastWeekGrowth": growth[1],
-        "lastMonthGrowth": growth[2],
-        "lastThreeMonthsGrowth": growth[3],
-        "lastSixMonthsGrowth": growth[4],
-        "lastYearGrowth": growth[5]
-    }
-    print(ret)
-    return ret
+# def get_fund_growth(fundCode):
+#     url = 'http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jdzf&code={}&rt={}'.format(fundCode,
+#                                                                                                random.random())
+#     headers = {
+#         'User-Agent': get_fake_ua(),
+#         'Host': 'fundf10.eastmoney.com',
+#         'Referer': 'http://fundf10.eastmoney.com/jdzf_{}.html'.format(fundCode)
+#     }
+#     html = requests.get(url, headers=headers)
+#     html = html.content.decode('utf-8')
+#     html = re.findall(r'content:"(.*)"};', html)[0]
+#     soup = BeautifulSoup(html, "lxml")
+#     growth = []
+#     for i in soup.select('ul li:nth-child(2)'):
+#         growth.append(i.text.replace('%', ''))
+#     ret = {
+#         "lastWeekGrowth": growth[1],
+#         "lastMonthGrowth": growth[2],
+#         "lastThreeMonthsGrowth": growth[3],
+#         "lastSixMonthsGrowth": growth[4],
+#         "lastYearGrowth": growth[5]
+#     }
+#     print(ret)
+#     return ret
 
 
 def get_fund_positions(fundCode):
@@ -142,4 +144,125 @@ def get_fund_positions(fundCode):
     return ret
 
 
-get_fund_data('110011')
+def get_funds_data_ttt(fundCodes: list, isOptional: bool = False):
+    data = []
+    try:
+        url = 'https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo'
+        headers = {
+            'Host': 'fundmobapi.eastmoney.com',
+            'User-Agent': get_fake_ua()
+        }
+        params = {
+            'pageIndex': 1,
+            'pageSize': 100,
+            'plat': 'Android',
+            'appType': 'ttjj',
+            'product': 'EFund',
+            'Version': '1',
+            'deviceid': str(uuid.uuid4()),
+            'Fcodes': ','.join(fundCodes)
+        }
+        resp = requests.get(url, headers=headers, params=params)
+        resp_json = resp.json()
+        for item in resp_json['Datas']:
+            data.append({
+                "code": item['FCODE'],
+                "name": item['SHORTNAME'],
+                "netWorth": item['NAV'],
+                "netWorthDate": item['PDATE'],
+                "dayGrowth": item['NAVCHGRT'],
+                "expectWorth": item['GSZ'],
+                "expectWorthDate": item['GZTIME'],
+                "expectGrowth": item['GSZZL']
+            })
+        if isOptional:
+            growth = get_funds_growth(fundCodes)
+            for index, item in enumerate(data):
+                item.update(growth[index])
+        print(data)
+    except:
+        pass
+    return data
+
+
+def get_funds_growth(fundCodes: list):
+    from concurrent.futures import ThreadPoolExecutor
+    startTime = time.time()
+    threadPool = ThreadPoolExecutor(max_workers=10, thread_name_prefix="thread")
+    results = []
+    for result in threadPool.map(get_fund_growth, fundCodes):
+        results.append(result)
+    endTime = time.time()
+    print('执行耗时：{}'.format(endTime - startTime))
+    return results
+
+
+def get_fund_growth(fundCode: str):
+    growth = {}
+    try:
+        url = 'https://fundmobapi.eastmoney.com/FundMNewApi/FundMNPeriodIncrease'
+        headers = {
+            'Host': 'fundmobapi.eastmoney.com',
+            'User-Agent': get_fake_ua()
+        }
+        params = {
+            'deviceid': str(uuid.uuid4()),
+            'version': '6.3.5',
+            'appVersion': '6.0.0',
+            'product': 'EFund',
+            'plat': 'Iphone',
+            'FCODE': fundCode,
+        }
+        resp = requests.get(url, headers=headers, params=params)
+        resp_json = resp.json()
+        for item in resp_json['Datas']:
+            key_name = item['title']
+            if key_name == 'Z':
+                growth['lastWeekGrowth'] = item['syl'] if item['syl'] != '' else '--'
+            elif key_name == 'Y':
+                growth['lastMonthGrowth'] = item['syl'] if item['syl'] != '' else '--'
+            elif key_name == '3Y':
+                growth['lastThreeMonthsGrowth'] = item['syl'] if item['syl'] != '' else '--'
+            elif key_name == '6Y':
+                growth['lastSixMonthsGrowth'] = item['syl'] if item['syl'] != '' else '--'
+            elif key_name == '1N':
+                growth['lastYearGrowth'] = item['syl'] if item['syl'] != '' else '--'
+    except:
+        growth = {
+            "lastWeekGrowth": "--",
+            "lastMonthGrowth": "--",
+            "lastThreeMonthsGrowth": "--",
+            "lastSixMonthsGrowth": "--",
+            "lastYearGrowth": "--"
+        }
+    return growth
+
+
+funds = [
+    "002190",
+    "007824",
+    "001510",
+    "003096",
+    "007020",
+    "161029",
+    "001702",
+    "003984",
+    "161028",
+    "008888",
+    "320007",
+    "000961",
+    "001593",
+    "161726",
+    "519674",
+    "009777",
+    "160630",
+    "260108",
+    "001508",
+    "161725",
+    "001595",
+    "005693",
+    "161725"
+]
+get_funds_data_ttt(funds, isOptional=True)
+# get_fund_growth('110011')
+# get_funds_growth(funds)

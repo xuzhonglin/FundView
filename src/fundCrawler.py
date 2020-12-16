@@ -1,9 +1,8 @@
 import json
-import queue
 import random
 import re
-import threading
 import time
+import uuid
 from datetime import datetime
 
 import requests
@@ -12,6 +11,7 @@ from chinese_calendar import is_workday
 
 from src.fundEnum import DBSource
 from src.fundConfig import FundConfig
+from src.fundCrawlerAnt import FundAnt
 
 
 class FundCrawler:
@@ -184,48 +184,88 @@ class FundCrawler:
             print(e)
         return []
 
-    def get_funds_data_ttt(self, fundCodes: [], isOptional: bool = False):
+    # def get_funds_data_ttt(self, fundCodes: [], isOptional: bool = False):
+    #     data = []
+    #     try:
+    #         for fundCode in fundCodes:
+    #             url = "http://fundgz.1234567.com.cn/js/%s.js" % fundCode
+    #             # 浏览器头
+    #             headers = {
+    #                 'content-type': 'application/json',
+    #                 'User-Agent': self.get_fake_ua()
+    #             }
+    #             r = self.http_get(url, headers=headers)
+    #             # 返回信息
+    #             content = r.text
+    #             # 正则表达式
+    #             pattern = r'^jsonpgz\((.*)\)'
+    #             # 查找结果
+    #             result = re.findall(pattern, content)[0]
+    #             result = json.loads(result)
+    #             # 遍历结果
+    #             temp = {
+    #                 "code": result['fundcode'],
+    #                 "name": result['name'],
+    #                 "netWorth": result['dwjz'],
+    #                 "netWorthDate": result['jzrq'],
+    #                 "dayGrowth": "0.72",
+    #                 "expectWorth": result['gsz'],
+    #                 "expectWorthDate": result['gztime'],
+    #                 "expectGrowth": result['gszzl']
+    #             }
+    #
+    #             temp.update(self.get_fund_data_ttt_bak(fundCode, isOptional))
+    #
+    #             # temp.update(self.query_update_worth(temp))
+    #
+    #             # if isOptional:
+    #             #     temp.update(self.get_fund_growth(fundCode))
+    #             # temp.
+    #             data.append(temp)
+    #         return data
+    #     except Exception as e:
+    #         print(e)
+    #         return data
+
+    def get_funds_data_ttt(self, fundCodes: list, isOptional: bool = False):
         data = []
         try:
-            for fundCode in fundCodes:
-                url = "http://fundgz.1234567.com.cn/js/%s.js" % fundCode
-                # 浏览器头
-                headers = {
-                    'content-type': 'application/json',
-                    'User-Agent': self.get_fake_ua()
-                }
-                r = requests.get(url, headers=headers)
-                # 返回信息
-                content = r.text
-                # 正则表达式
-                pattern = r'^jsonpgz\((.*)\)'
-                # 查找结果
-                result = re.findall(pattern, content)[0]
-                result = json.loads(result)
-                # 遍历结果
-                temp = {
-                    "code": result['fundcode'],
-                    "name": result['name'],
-                    "netWorth": result['dwjz'],
-                    "netWorthDate": result['jzrq'],
-                    "dayGrowth": "0.72",
-                    "expectWorth": result['gsz'],
-                    "expectWorthDate": result['gztime'],
-                    "expectGrowth": result['gszzl']
-                }
-
-                temp.update(self.get_fund_data_ttt_bak(fundCode, isOptional))
-
-                # temp.update(self.query_update_worth(temp))
-
-                # if isOptional:
-                #     temp.update(self.get_fund_growth(fundCode))
-                # temp.
-                data.append(temp)
-            return data
-        except Exception as e:
-            print(e)
-            return data
+            url = 'https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo'
+            headers = {
+                'Host': 'fundmobapi.eastmoney.com',
+                'User-Agent': self.get_fake_ua()
+            }
+            params = {
+                'pageIndex': 1,
+                'pageSize': 100,
+                'plat': 'Android',
+                'appType': 'ttjj',
+                'product': 'EFund',
+                'Version': '1',
+                'deviceid': str(uuid.uuid4()),
+                'Fcodes': ','.join(fundCodes)
+            }
+            resp = requests.get(url, headers=headers, params=params)
+            resp_json = resp.json()
+            for item in resp_json['Datas']:
+                data.append({
+                    "code": item['FCODE'],
+                    "name": item['SHORTNAME'],
+                    "netWorth": item['NAV'],
+                    "netWorthDate": item['PDATE'],
+                    "dayGrowth": item['NAVCHGRT'],
+                    "expectWorth": item['GSZ'],
+                    "expectWorthDate": item['GZTIME'],
+                    "expectGrowth": item['GSZZL']
+                })
+            if isOptional:
+                growth = get_funds_growth(fundCodes)
+                for index, item in enumerate(data):
+                    item.update(growth[index])
+            print(data)
+        except:
+            pass
+        return data
 
     def get_fund_data_ttt_bak(self, fundCode: str, isOptional: bool = False):
         fundData = {}
@@ -236,7 +276,7 @@ class FundCrawler:
                 'Host': 'fund.eastmoney.com',
                 'Referer': url
             }
-            html = requests.get(url, headers=headers)
+            html = self.http_get(url, headers=headers)
             html = html.content.decode('utf-8')
             soup = BeautifulSoup(html, "lxml")
 
@@ -275,7 +315,19 @@ class FundCrawler:
             print(e)
         return fundData
 
-
+    def get_funds_data_ant(self, fundCodes: [], isOptional: bool = False):
+        from concurrent.futures import ThreadPoolExecutor
+        startTime = time.time()
+        threadPool = ThreadPoolExecutor(max_workers=10, thread_name_prefix="thread")
+        results = []
+        fundAnt = FundAnt()
+        for result in threadPool.map(lambda fundCode: fundAnt.get_fund_data(fundCode, isOptional), fundCodes):
+            results.append(result)
+            print(result)
+        endTime = time.time()
+        print('执行耗时：{}'.format(endTime - startTime))
+        print(results)
+        return results
 
     def get_funds_data(self, fundCodes: [], isOptional: bool = False):
         """
@@ -289,6 +341,8 @@ class FundCrawler:
             return self.get_funds_data_ydi(fundCodes, isOptional)
         elif FundConfig.DB_SWITCH == DBSource.OTH:
             return self.get_funds_data_oth(fundCodes)
+        elif FundConfig.DB_SWITCH == DBSource.ANT:
+            return self.get_funds_data_ant(fundCodes, isOptional)
         else:
             return self.get_funds_data_ttt(fundCodes, isOptional)
 
@@ -299,7 +353,6 @@ class FundCrawler:
             if resp.status_code == 200:
                 resp_json = resp.json()
                 data = resp_json['data']
-
                 return data
         except Exception as e:
             print(e)
