@@ -9,6 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from chinese_calendar import is_workday
 
+from newFundCrawler import get_funds_growth
 from src.fundEnum import DBSource
 from src.fundConfig import FundConfig
 from src.fundCrawlerAnt import FundAnt
@@ -259,6 +260,7 @@ class FundCrawler:
                     "expectGrowth": item['GSZZL']
                 })
             if isOptional:
+                # TODO 移植
                 growth = get_funds_growth(fundCodes)
                 for index, item in enumerate(data):
                     item.update(growth[index])
