@@ -9,7 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from chinese_calendar import is_workday
 
-from newFundCrawler import get_funds_growth
+from src.newFundCrawler import get_funds_growth
 from src.fundEnum import DBSource
 from src.fundConfig import FundConfig
 from src.fundCrawlerAnt import FundAnt

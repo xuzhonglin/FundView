@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 
 from PyQt5.QtCore import Qt, QModelIndex, QTimer
-from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont
+from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QPalette, QBrush, QColor
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, QApplication, \
     QMessageBox
 from chinese_calendar import is_workday
@@ -872,3 +872,23 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
         err_msg = ''.join(traceback.format_exception(excType, excValue, traceBack))
         QMessageBox.critical(self, '异常', err_msg)
+
+    def setTheme(self):
+        selectedColor = '#2b2b2b'
+        palette = QPalette()
+        # palette.setBrush(QPalette.Background, QBrush(QColor('#2b2b2b')))
+        palette.setBrush(QPalette.Foreground, QBrush(QColor('#2b2b2b')))
+        for widget in self.parentWindow.allWidgets():
+            # widget.setPalette(palette)
+            widget.setStyleSheet("background-color:#2b2b2b;color:#adafb1")
+
+        self.tabWidget.setStyleSheet("QTabBar::tab{background-color:#2b2b2b;color:#adafb1};")
+        # self.tab.setStyleSheet("background-color:#2b2b2b;color:#adafb1")
+        self.positionTable.setAlternatingRowColors(False)
+        self.optionalTable.setAlternatingRowColors(False)
+        self.positionTable.setStyleSheet("QTableWidget::item:selected { background-color: #214283 }")
+        self.positionTable.horizontalHeader().setStyleSheet(
+            "QHeaderView::section {background-color: #2b2b2b;color: #adafb1;}")
+        self.optionalTable.setStyleSheet("QTableWidget::item:selected { background-color: #214283 }")
+        self.optionalTable.horizontalHeader().setStyleSheet(
+            "QHeaderView::section {background-color: #2b2b2b;color: #adafb1;}")

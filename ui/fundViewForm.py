@@ -33,8 +33,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
         self.tabWidget.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.tabWidget.setStyleSheet("QTabBar::tab{width:70}\n"
-"QTabBar::tab{height:24}")
+        self.tabWidget.setStyleSheet("")
         self.tabWidget.setTabShape(QtWidgets.QTabWidget.Rounded)
         self.tabWidget.setObjectName("tabWidget")
         self.tab = QtWidgets.QWidget()
@@ -345,4 +344,4 @@ class Ui_MainWindow(object):
         self.SZ_Price.setText(_translate("MainWindow", "6351.61"))
         self.SZ_PriceChange.setText(_translate("MainWindow", "+17.31"))
         self.SZ_ChangePercent.setText(_translate("MainWindow", "+0.27%"))
-import ui.fundViewResource_rc
+import fundViewResource_rc
