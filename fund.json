@@ -12,8 +12,8 @@
         },
         {
             "fundCode": "161725",
-            "fundCost": 1.0715,
-            "fundUnits": 700.0
+            "fundCost": 1.0657,
+            "fundUnits": 703.81
         },
         {
             "fundCode": "009777",
@@ -63,7 +63,8 @@
         "001508",
         "161725",
         "001595",
-        "005693"
+        "005693",
+        "470006"
     ],
     "source": 0,
     "fontName": "微软雅黑",
@@ -73,6 +74,6 @@
     "colorScheme": 0,
     "enableProxy": false,
     "proxyAddress": "",
-    "mid": "05db098a-3ea3-11eb-a768-f43909456196",
+    "mid": "487f22a6-4011-11eb-aeb8-f43909456196",
     "enableSync": false
 }

@@ -43,5 +43,5 @@ class CloudSync:
 
 
 sync = CloudSync('E:\\colinxu\\Python\\fundView\\fund.json')
-# sync.backup()
-sync.recovery()
+sync.backup()
+# sync.recovery()
