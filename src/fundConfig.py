@@ -4,7 +4,7 @@ from src.fundEnum import DBSource, ColorSwitch, _FundColor
 
 
 class FundConfig:
-    VERSION = '1.1.1'
+    VERSION = '1.1.2'
     # 平台 darwin/win32
     PLATFORM = sys.platform
 

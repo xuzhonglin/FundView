@@ -8,8 +8,8 @@ from datetime import datetime
 
 from PyQt5.QtCore import Qt, QModelIndex, QTimer
 from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QPalette, QBrush, QColor
-from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, QApplication, \
-    QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, \
+    QApplication, QMessageBox, QCompleter
 from chinese_calendar import is_workday
 
 from src.fundConfig import FundConfig, get_color
@@ -20,9 +20,9 @@ from src.myThread import MyThread
 from ui.addFundDialog import Ui_AddFundDialog
 from ui.fundViewForm import Ui_MainWindow
 from ui.fundImageDialog import Ui_FundImageDialog
+from ui.fundDealDialog import Ui_FundDealDialog
 from ui.fundTableMain import FundTableMain
 from src.fundCrawler import FundCrawler
-# import jpype
 import traceback
 
 
@@ -39,13 +39,16 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.fundConfigOrigin = {}
         self.positionFund = {}
         self.optionalFund = []
+        self.allFund = []
         self.spaceKeyTimes = 0
         self.firstStart = True
 
-        self.start_init()
-
         self.timer = QTimer()  # 初始化定时器
         self.timer.timeout.connect(self.timer_refresh)
+
+        self.dbSourceCob.setFont(QFont(FundConfig.FONT_NAME, FundConfig.FONT_SIZE - 1))
+
+        self.start_init()
 
         self.tabWidget.setCurrentIndex(0)
 
@@ -66,6 +69,20 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
     def start_done(self):
         self.firstStart = False
+        if FundConfig.AUTO_REFRESH_ENABLE:
+            print('启动定时任务')
+            self.timer.start(FundConfig.AUTO_REFRESH_TIMEOUT)
+
+        # 设置自选基金自动补全
+        completer = QCompleter(self.fundCrawler.get_all_fund())
+        # 设置匹配模式  有三种： Qt.MatchStartsWith 开头匹配（默认）  Qt.MatchContains 内容匹配  Qt.MatchEndsWith 结尾匹配
+        completer.setFilterMode(Qt.MatchContains)
+        # 设置补全模式  有三种： QCompleter.PopupCompletion（默认）  QCompleter.InlineCompletion
+        # QCompleter.UnfilteredPopupCompletion
+        completer.setCompletionMode(QCompleter.PopupCompletion)
+        # completer.activated.connect(lambda x: print(x.split('-')[0]))
+
+        self.optionalFundCodeTxt.setCompleter(completer)
 
     def init_slot(self):
         self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))
@@ -80,13 +97,6 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
     def db_source_changed(self, index):
         if self.firstStart: return
-        if index == 0:
-            FundConfig.DB_SWITCH = DBSource.YDI
-        elif index == 1:
-            FundConfig.DB_SWITCH = DBSource.TTT
-        elif index == 2:
-            FundConfig.DB_SWITCH = DBSource.OTH
-
         FundConfig.DB_SWITCH = DBSource(index)
         self.fundConfigOrigin['source'] = index
         self.write_local_config()
@@ -99,6 +109,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         nowTime = datetime.now()
         if nowTime.hour >= 15 and nowTime.minute >= 30 and is_workday(nowTime):
             FundConfig.AUTO_REFRESH_ENABLE = False
+            self.timer.stop()
             print('timer_refresh closed')
             return
         print('timer_refresh')
@@ -145,10 +156,10 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         """
         self.positionTable.clearContents()
         # 设置一共10列
-        self.positionTable.setColumnCount(11)
+        self.positionTable.setColumnCount(12)
         #  设置水平方向两个头标签文本内容
         self.positionTable.setHorizontalHeaderLabels(
-            ['基金名称', '基金编码', '持仓成本', '持有份额', '持有金额', '持有收益', '持有收益率', '单位净值', '净值估算', '估值涨幅', '预估收益'])
+            ['基金名称', '基金编码', '持仓成本', '持有份额', '持有金额', '持有收益', '持有收益率', '单位净值', '净值估算', '估值涨幅', '估值时间', '预估收益'])
         # 水平方向标签拓展剩下的窗口部分，填满表格
         # self.tableView.horizontalHeader().setStretchLastSection(True)
         # 水平方向，表格大小拓展到适当的尺寸
@@ -164,8 +175,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
         # 调整第 1-3列的宽度 为适应内容
         self.positionTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        # self.positionTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        # self.positionTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.positionTable.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        self.positionTable.horizontalHeader().setSectionResizeMode(10, QHeaderView.ResizeToContents)
 
         # 允许弹出菜单
         self.positionTable.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -213,8 +224,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         contextMenu.addSeparator()
 
         if curTabIndex == 0:
-            # menu6 = contextMenu.addAction('加仓')
-            # menu7 = contextMenu.addAction('减仓')
+            menu6 = contextMenu.addAction('加仓')
+            menu7 = contextMenu.addAction('减仓')
             screenPos = self.positionTable.mapToGlobal(pos)
         else:
             screenPos = self.optionalTable.mapToGlobal(pos)
@@ -262,6 +273,45 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 self.optionalTable.removeRow(selectedIndex)
                 self.optionalFund.remove(fundCode)
                 self.write_local_config(fundCode, isDelete=True, isOptional=True)
+        elif action == menu6:
+            title = '加仓：' + selectedItem[0].text()
+            dialog = QDialog(self.centralwidget)
+            ui = Ui_FundDealDialog()
+            ui.setupUi(dialog)
+            ui.saleUnitsLabel.hide()
+            ui.saleUnitsTxt.hide()
+            for i in range(ui.saleRateLayout.count()):
+                ui.saleRateLayout.itemAt(i).widget().hide()
+            ui.fundCodeTxt.setText(fundCode)
+            ui.fundCodeTxt.setEnabled(False)
+            netWorth = selectedItem[7].text().split('(')[0]
+            ui.netWorthTxt.setText(netWorth)
+            dialog.setWindowTitle(title)
+            dialog.exec_()
+        elif action == menu7:
+            title = '减仓：' + selectedItem[0].text()
+            dialog = QDialog(self.centralwidget)
+            ui = Ui_FundDealDialog()
+            ui.setupUi(dialog)
+
+            ui.formLayout.removeWidget(ui.netWorthLabel)
+            ui.formLayout.removeWidget(ui.netWorthTxt)
+            ui.formLayout.removeWidget(ui.buyRateLabel)
+            ui.formLayout.removeWidget(ui.buyRateTxt)
+            ui.formLayout.removeWidget(ui.buyAmountLabel)
+            ui.formLayout.removeWidget(ui.buyAmountTxt)
+
+            # ui.netWorthLabel.hide()
+            # ui.netWorthTxt.hide()
+            # ui.buyRateLabel.hide()
+            # ui.buyRateTxt.hide()
+            # ui.buyAmountLabel.hide()
+            # ui.buyAmountTxt.hide()
+
+            ui.fundCodeTxt.setText(fundCode)
+            ui.fundCodeTxt.setEnabled(False)
+            dialog.setWindowTitle(title)
+            dialog.exec_()
 
     def show_net_image(self, title, url):
         session = requests.Session()
@@ -415,11 +465,15 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             expectGrowthColor = get_color(float(item['expectGrowth']), 'brush')
             self.positionTable.item(index, 9).setForeground(expectGrowthColor)
 
+            # 预估时间
+            expectWorthItem = QTableWidgetItem(item['expectWorthDate'][:16])
+            self.positionTable.setItem(index, 10, expectWorthItem)
+
             # 11.预估收益
             checkTip = ''
             netWorthFloat = float(netWorth)
             # 当日净值已更新
-            if item['netWorthDate'] == item['expectWorthDate'][0:10]:
+            if item['netWorthDate'] == item['expectWorthDate'][:10]:
                 lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode)['netWorth']
                 lastDayNetWorthFloat = float(lastDayNetWorth)
                 expectIncome = (netWorthFloat - lastDayNetWorthFloat) * fundHoldUnits
@@ -431,14 +485,12 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             todayExpectIncome = todayExpectIncome + expectIncome
             prefix = '+' if expectIncome > 0 else ''
             expectIncomeItem = QTableWidgetItem('{} {}{}'.format(checkTip, prefix, round(expectIncome, 2)))
-            self.positionTable.setItem(index, 10, expectIncomeItem)
+            self.positionTable.setItem(index, 11, expectIncomeItem)
             expectIncomeColor = get_color(expectIncome, 'brush')
-            self.positionTable.item(index, 10).setForeground(expectIncomeColor)
+            self.positionTable.item(index, 11).setForeground(expectIncomeColor)
 
             totalIncome = totalIncome + (netWorthFloat - fundHold['fundCost']) * fundHold['fundUnits']
             holdAmount = holdAmount + fundHold['fundCost'] * fundHold['fundUnits']
-
-        self.positionTable.update()
 
         self.worthDateTxt.setText(worthDate)
 
@@ -446,13 +498,13 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         incomeTxt = '预估收益：{}'.format(round(todayExpectIncome, 2))
         incomeTxtColor = get_color(todayExpectIncome, 'style')
         self.incomeTxt.setText(incomeTxt)
-        self.incomeTxt.setStyleSheet(self.incomeTxt.styleSheet() + incomeTxtColor)
+        self.incomeTxt.setStyleSheet("margin-right:5px;" + incomeTxtColor)
 
         # 计算总收益
         totalIncomeTxt = '持有收益：{}'.format(round(totalIncome, 2))
         totalIncomeTxtColor = get_color(totalIncome, 'style')
         self.holdIncomeTxt.setText(totalIncomeTxt)
-        self.holdIncomeTxt.setStyleSheet(self.holdIncomeTxt.styleSheet() + totalIncomeTxtColor)
+        self.holdIncomeTxt.setStyleSheet("margin-right:5px;" + totalIncomeTxtColor)
 
         # 计算总金额
         holdAmountTxt = '持有金额：{}'.format(round(holdAmount + totalIncome, 2))
@@ -556,7 +608,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
             #  10.更新时间
             if 'expectWorthDate' in item:
-                expectWorthDateItem = QTableWidgetItem("{}".format(item['expectWorthDate']))
+                expectWorthDateItem = QTableWidgetItem("{}".format(item['expectWorthDate'][:16]))
                 self.optionalTable.setItem(index, 9, expectWorthDateItem)
             else:
                 self.optionalTable.setItem(index, 9, QTableWidgetItem("-"))
@@ -585,6 +637,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
     def optional_add_fund_clicked(self):
         fundCode = self.optionalFundCodeTxt.text()
+        if '-' in fundCode:
+            fundCode = fundCode.split('-')[0]
         if fundCode == '' or len(fundCode) != 6 or fundCode is None: return
         self.optionalFundCodeTxt.setText("")
 
@@ -689,6 +743,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.parentWindow.setFont(font)
             for child in self.parentWindow.allWidgets():
                 child.setFont(font)
+
+            self.dbSourceCob.setFont(QFont(FundConfig.FONT_NAME, FundConfig.FONT_SIZE - 1))
 
             self.fundConfigOrigin['fontName'] = FundConfig.FONT_NAME
             self.fundConfigOrigin['fontSize'] = FundConfig.FONT_SIZE
@@ -821,6 +877,11 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         else:
             self.optionalFund = []
 
+        # 如果是darwin平台 则重置字体
+        if FundConfig.PLATFORM == 'darwin':
+            self.fundConfigOrigin['fontName'] = ''
+            self.fundConfigOrigin['fontSize'] = ''
+
         FundConfig.DB_SWITCH = DBSource(int(self.getOrDefault('source', 0)))
         FundConfig.FONT_NAME = self.getOrDefault('fontName', FundConfig.FONT_NAME)
         FundConfig.FONT_SIZE = self.getOrDefault('fontSize', FundConfig.FONT_SIZE)
@@ -833,7 +894,6 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         FundConfig.ENABLE_SYNC = self.getOrDefault('enableSync', False)
 
         self.dbSourceCob.setCurrentIndex(FundConfig.DB_SWITCH.value)
-        # 检测键盘回车按键
 
     def getOrDefault(self, key, value):
         if key not in self.fundConfigOrigin \

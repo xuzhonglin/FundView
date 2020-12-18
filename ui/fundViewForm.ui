@@ -41,7 +41,7 @@
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tab">
          <property name="sizePolicy">
@@ -133,6 +133,12 @@
             </item>
             <item>
              <widget class="QComboBox" name="dbSourceCob">
+              <property name="minimumSize">
+               <size>
+                <width>80</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="currentIndex">
                <number>0</number>
               </property>
@@ -160,6 +166,17 @@
             </item>
             <item>
              <widget class="QToolButton" name="settingBtn">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
@@ -167,9 +184,10 @@
                <bool>false</bool>
               </property>
               <property name="styleSheet">
-               <string notr="true">padding-left:3px;
+               <string notr="true">padding-left:4px;
 padding-right:3px;
-padding-top:1px;</string>
+padding-top:2px;
+padding-bottom:1px;</string>
               </property>
               <property name="text">
                <string>设置</string>
@@ -177,6 +195,12 @@ padding-top:1px;</string>
               <property name="icon">
                <iconset resource="fundViewResource.qrc">
                 <normaloff>:/icon/setting/setting.png</normaloff>:/icon/setting/setting.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
               </property>
               <property name="checkable">
                <bool>false</bool>
@@ -325,18 +349,18 @@ padding-top:1px;</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="3">
-           <widget class="QPushButton" name="addOptionalFundBtn">
-            <property name="minimumSize">
+          <item row="0" column="1">
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
              <size>
-              <width>0</width>
-              <height>25</height>
+              <width>40</width>
+              <height>20</height>
              </size>
             </property>
-            <property name="text">
-             <string>添加</string>
-            </property>
-           </widget>
+           </spacer>
           </item>
           <item row="1" column="0" colspan="4">
            <widget class="QTableWidget" name="optionalTable">
@@ -352,6 +376,19 @@ padding-top:1px;</string>
             <attribute name="horizontalHeaderHighlightSections">
              <bool>false</bool>
             </attribute>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QPushButton" name="addOptionalFundBtn">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>添加</string>
+            </property>
            </widget>
           </item>
           <item row="0" column="2">
@@ -374,20 +411,10 @@ padding-top:1px;</string>
             <property name="placeholderText">
              <string>基金代码</string>
             </property>
+            <property name="clearButtonEnabled">
+             <bool>true</bool>
+            </property>
            </widget>
-          </item>
-          <item row="0" column="1">
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
         </widget>

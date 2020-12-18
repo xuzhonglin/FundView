@@ -512,6 +512,16 @@ class FundCrawler:
             print('出现异常：' + str(e))
         return fundData
 
+    def get_all_fund(self):
+        url = 'http://fund.eastmoney.com/js/fundcode_search.js'
+        resp = self.http_get(url)
+        resp = re.findall(r'var r = (.*);', resp.text)[0]
+        resp_json = json.loads(resp)
+        data = []
+        for item in resp_json:
+            data.append('{}-{}'.format(item[0], item[2]))
+        return data
+
     def get_fund_positions(self, fundCode: str):
         """
         获取基金的持仓
@@ -691,5 +701,6 @@ if __name__ == '__main__':
     # ret = fund.get_fund_performance_ydi('110011')
     # ret = fund.get_history_worth('110011', '2020-09-04', '2020-12-04', 93, 1)
     # ret = fund.get_fund_performance_ttt('110011', 'THREE_MONTH')
-    ret = fund.get_funds_data_ttt(['110011'])
+    # ret = fund.get_funds_data_ttt(['110011'])
+    ret = fund.get_all_fund()
     print(ret)

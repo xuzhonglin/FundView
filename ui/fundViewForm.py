@@ -70,6 +70,7 @@ class Ui_MainWindow(object):
         self.label_4.setObjectName("label_4")
         self.horizontalLayout_6.addWidget(self.label_4)
         self.dbSourceCob = QtWidgets.QComboBox(self.tab)
+        self.dbSourceCob.setMinimumSize(QtCore.QSize(80, 0))
         self.dbSourceCob.setObjectName("dbSourceCob")
         self.dbSourceCob.addItem("")
         self.dbSourceCob.addItem("")
@@ -77,14 +78,24 @@ class Ui_MainWindow(object):
         self.dbSourceCob.addItem("")
         self.horizontalLayout_6.addWidget(self.dbSourceCob)
         self.settingBtn = QtWidgets.QToolButton(self.tab)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.settingBtn.sizePolicy().hasHeightForWidth())
+        self.settingBtn.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setPointSize(9)
+        self.settingBtn.setFont(font)
         self.settingBtn.setFocusPolicy(QtCore.Qt.NoFocus)
         self.settingBtn.setAutoFillBackground(False)
-        self.settingBtn.setStyleSheet("padding-left:3px;\n"
-"padding-right:3px;\n"
-"padding-top:1px;")
+        self.settingBtn.setStyleSheet("padding-left:4px;\n"
+                                      "padding-right:3px;\n"
+                                      "padding-top:2px;\n"
+                                      "padding-bottom:1px;")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/icon/setting/setting.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.settingBtn.setIcon(icon)
+        self.settingBtn.setIconSize(QtCore.QSize(16, 16))
         self.settingBtn.setCheckable(False)
         self.settingBtn.setPopupMode(QtWidgets.QToolButton.DelayedPopup)
         self.settingBtn.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
@@ -135,10 +146,8 @@ class Ui_MainWindow(object):
         self.optionalRefreshBtn.setMinimumSize(QtCore.QSize(0, 25))
         self.optionalRefreshBtn.setObjectName("optionalRefreshBtn")
         self.gridLayout_3.addWidget(self.optionalRefreshBtn, 0, 0, 1, 1)
-        self.addOptionalFundBtn = QtWidgets.QPushButton(self.tab_2)
-        self.addOptionalFundBtn.setMinimumSize(QtCore.QSize(0, 25))
-        self.addOptionalFundBtn.setObjectName("addOptionalFundBtn")
-        self.gridLayout_3.addWidget(self.addOptionalFundBtn, 0, 3, 1, 1)
+        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_3.addItem(spacerItem2, 0, 1, 1, 1)
         self.optionalTable = QtWidgets.QTableWidget(self.tab_2)
         self.optionalTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.optionalTable.setAlternatingRowColors(True)
@@ -148,14 +157,17 @@ class Ui_MainWindow(object):
         self.optionalTable.setRowCount(0)
         self.optionalTable.horizontalHeader().setHighlightSections(False)
         self.gridLayout_3.addWidget(self.optionalTable, 1, 0, 1, 4)
+        self.addOptionalFundBtn = QtWidgets.QPushButton(self.tab_2)
+        self.addOptionalFundBtn.setMinimumSize(QtCore.QSize(0, 25))
+        self.addOptionalFundBtn.setObjectName("addOptionalFundBtn")
+        self.gridLayout_3.addWidget(self.addOptionalFundBtn, 0, 3, 1, 1)
         self.optionalFundCodeTxt = QtWidgets.QLineEdit(self.tab_2)
         self.optionalFundCodeTxt.setMinimumSize(QtCore.QSize(0, 23))
         self.optionalFundCodeTxt.setMaximumSize(QtCore.QSize(200, 16777215))
         self.optionalFundCodeTxt.setStyleSheet("padding-left:3px;")
+        self.optionalFundCodeTxt.setClearButtonEnabled(True)
         self.optionalFundCodeTxt.setObjectName("optionalFundCodeTxt")
         self.gridLayout_3.addWidget(self.optionalFundCodeTxt, 0, 2, 1, 1)
-        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_3.addItem(spacerItem2, 0, 1, 1, 1)
         self.tabWidget.addTab(self.tab_2, "")
         self.horizontalLayout_8.addWidget(self.tabWidget)
         self.gridLayout_2.addLayout(self.horizontalLayout_8, 1, 0, 1, 1)
@@ -297,7 +309,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         self.dbSourceCob.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -344,4 +356,6 @@ class Ui_MainWindow(object):
         self.SZ_Price.setText(_translate("MainWindow", "6351.61"))
         self.SZ_PriceChange.setText(_translate("MainWindow", "+17.31"))
         self.SZ_ChangePercent.setText(_translate("MainWindow", "+0.27%"))
-import fundViewResource_rc
+
+
+import ui.fundViewResource_rc
