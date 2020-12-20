@@ -70,38 +70,26 @@ class Ui_MainWindow(object):
         self.label_4.setObjectName("label_4")
         self.horizontalLayout_6.addWidget(self.label_4)
         self.dbSourceCob = QtWidgets.QComboBox(self.tab)
-        self.dbSourceCob.setMinimumSize(QtCore.QSize(80, 0))
+        self.dbSourceCob.setMinimumSize(QtCore.QSize(100, 0))
         self.dbSourceCob.setObjectName("dbSourceCob")
         self.dbSourceCob.addItem("")
         self.dbSourceCob.addItem("")
         self.dbSourceCob.addItem("")
         self.dbSourceCob.addItem("")
         self.horizontalLayout_6.addWidget(self.dbSourceCob)
-        self.settingBtn = QtWidgets.QToolButton(self.tab)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.settingBtn.sizePolicy().hasHeightForWidth())
-        self.settingBtn.setSizePolicy(sizePolicy)
-        font = QtGui.QFont()
-        font.setPointSize(9)
-        self.settingBtn.setFont(font)
-        self.settingBtn.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.settingBtn.setAutoFillBackground(False)
-        self.settingBtn.setStyleSheet("padding-left:4px;\n"
-                                      "padding-right:3px;\n"
-                                      "padding-top:2px;\n"
-                                      "padding-bottom:1px;")
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/icon/setting/setting.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.settingBtn.setIcon(icon)
-        self.settingBtn.setIconSize(QtCore.QSize(16, 16))
-        self.settingBtn.setCheckable(False)
-        self.settingBtn.setPopupMode(QtWidgets.QToolButton.DelayedPopup)
-        self.settingBtn.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.settingBtn.setArrowType(QtCore.Qt.NoArrow)
-        self.settingBtn.setObjectName("settingBtn")
-        self.horizontalLayout_6.addWidget(self.settingBtn)
+        self.settingLabel = ClickableLabel(self.tab)
+        self.settingLabel.setMinimumSize(QtCore.QSize(20, 20))
+        self.settingLabel.setMaximumSize(QtCore.QSize(20, 20))
+        self.settingLabel.setStyleSheet("QLabel:hover{\n"
+"background-color: #ffffff;\n"
+"border-radius:5px;\n"
+"}")
+        self.settingLabel.setText("")
+        self.settingLabel.setPixmap(QtGui.QPixmap(":/icon/setting/setting.png"))
+        self.settingLabel.setScaledContents(False)
+        self.settingLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.settingLabel.setObjectName("settingLabel")
+        self.horizontalLayout_6.addWidget(self.settingLabel)
         self.gridLayout.addLayout(self.horizontalLayout_6, 3, 0, 1, 6)
         self.editFundBtn = QtWidgets.QPushButton(self.tab)
         self.editFundBtn.setMinimumSize(QtCore.QSize(0, 25))
@@ -309,7 +297,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         self.dbSourceCob.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -325,7 +313,6 @@ class Ui_MainWindow(object):
         self.dbSourceCob.setItemText(1, _translate("MainWindow", "天天基金"))
         self.dbSourceCob.setItemText(2, _translate("MainWindow", "小熊同学"))
         self.dbSourceCob.setItemText(3, _translate("MainWindow", "蚂蚁财富"))
-        self.settingBtn.setText(_translate("MainWindow", "设置"))
         self.editFundBtn.setText(_translate("MainWindow", "编辑"))
         self.positionTable.setSortingEnabled(True)
         self.worthDateTxt.setText(_translate("MainWindow", "2020-11-30 12:20:20"))
@@ -356,6 +343,5 @@ class Ui_MainWindow(object):
         self.SZ_Price.setText(_translate("MainWindow", "6351.61"))
         self.SZ_PriceChange.setText(_translate("MainWindow", "+17.31"))
         self.SZ_ChangePercent.setText(_translate("MainWindow", "+0.27%"))
-
-
+from ui.ClickableQLabel import ClickableLabel
 import ui.fundViewResource_rc

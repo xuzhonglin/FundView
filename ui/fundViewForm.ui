@@ -41,7 +41,7 @@
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab">
          <property name="sizePolicy">
@@ -135,7 +135,7 @@
              <widget class="QComboBox" name="dbSourceCob">
               <property name="minimumSize">
                <size>
-                <width>80</width>
+                <width>100</width>
                 <height>0</height>
                </size>
               </property>
@@ -165,54 +165,36 @@
              </widget>
             </item>
             <item>
-             <widget class="QToolButton" name="settingBtn">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>9</pointsize>
-               </font>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="autoFillBackground">
-               <bool>false</bool>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">padding-left:4px;
-padding-right:3px;
-padding-top:2px;
-padding-bottom:1px;</string>
-              </property>
-              <property name="text">
-               <string>设置</string>
-              </property>
-              <property name="icon">
-               <iconset resource="fundViewResource.qrc">
-                <normaloff>:/icon/setting/setting.png</normaloff>:/icon/setting/setting.png</iconset>
-              </property>
-              <property name="iconSize">
+             <widget class="ClickableLabel" name="settingLabel">
+              <property name="minimumSize">
                <size>
-                <width>16</width>
-                <height>16</height>
+                <width>20</width>
+                <height>20</height>
                </size>
               </property>
-              <property name="checkable">
+              <property name="maximumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QLabel:hover{
+background-color: #ffffff;
+border-radius:5px;
+}</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap resource="fundViewResource.qrc">:/icon/setting/setting.png</pixmap>
+              </property>
+              <property name="scaledContents">
                <bool>false</bool>
               </property>
-              <property name="popupMode">
-               <enum>QToolButton::DelayedPopup</enum>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonIconOnly</enum>
-              </property>
-              <property name="arrowType">
-               <enum>Qt::NoArrow</enum>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -712,6 +694,13 @@ padding-bottom:1px;</string>
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ClickableLabel</class>
+   <extends>QLabel</extends>
+   <header>ui.ClickableQLabel.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="fundViewResource.qrc"/>
  </resources>

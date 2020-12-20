@@ -23,7 +23,7 @@ if __name__ == '__main__':
     # app.setStyleSheet(stream.readAll())
 
     # qss = ''
-    # with open('new1.qss', 'r') as f:
+    # with open('new1.qss', 'r',encoding='gbk') as f:
     #     qss = f.read()
     #     app.setStyleSheet(qss)
 

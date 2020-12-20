@@ -92,8 +92,10 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.addOptionalFundBtn.clicked.connect(self.optional_add_fund_clicked)
         self.positionTable.doubleClicked.connect(self.fund_double_clicked)
         self.optionalTable.doubleClicked.connect(self.fund_double_clicked)
-        self.settingBtn.clicked.connect(self.setting_btn_clicked)
+        # self.settingBtn.clicked.connect(self.setting_btn_clicked)
         self.dbSourceCob.currentIndexChanged.connect(self.db_source_changed)
+
+        self.settingLabel.clicked.connect(self.setting_btn_clicked)
 
     def db_source_changed(self, index):
         if self.firstStart: return
