@@ -8,19 +8,20 @@ from src.fundConfig import FundConfig
 
 
 class CloudSync:
-    def __init__(self, local_path: str):
+    def __init__(self, local_path: str, config_id: str):
         options = {
             'webdav_hostname': "https://dav.jianguoyun.com/dav",
             'webdav_login': "xuzhonglin@outlook.com",
             'webdav_password': "a3jubjdwhjhd9sn6",
             'disable_check': True
         }
+        self.config_id = config_id
         self.backup_dir = 'LeekBox'
         self.local_file_name = local_path
-        self.remote_file_name = self.backup_dir + '/' + '64812c4b-61d7-446e-8fcf-6c41a21a9a73.json'
+        self.remote_file_name = self.backup_dir + '/' + self.config_id + '.json'
         self.client = Client(options)
 
-    def backup(self, ):
+    def backup(self):
         if not self.client.mkdir(self.backup_dir):
             raise Exception('please create dir first')
         try:
@@ -40,8 +41,6 @@ class CloudSync:
             return False
         return True
 
-
-
-sync = CloudSync('E:\\colinxu\\Python\\fundView\\fund.json')
-sync.backup()
+# sync = CloudSync('E:\\colinxu\\Python\\fundView\\fund.json', '64812c4b-61d7-446e-8fcf-6c41a21a9a73')
+# sync.backup()
 # sync.recovery()

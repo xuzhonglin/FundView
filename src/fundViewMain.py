@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableW
     QApplication, QMessageBox, QCompleter
 from chinese_calendar import is_workday
 
+from src.cloudSync import CloudSync
 from src.fundConfig import FundConfig, get_color
 from src.fundEnum import DBSource, ColorSwitch
 from ui.fundChartMain import FundChartMain
@@ -36,6 +37,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.init_slot()
         self.fundCrawler = FundCrawler()
         self.positionModel = QStandardItemModel(0, 11)
+        self.runDir = os.getcwd()
         self.fundConfigOrigin = {}
         self.positionFund = {}
         self.optionalFund = []
@@ -49,6 +51,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.dbSourceCob.setFont(QFont(FundConfig.FONT_NAME, FundConfig.FONT_SIZE - 1))
 
         self.start_init()
+        self.sync = CloudSync(self.runDir + '/fund.json', FundConfig.FUND_MID)
 
         self.tabWidget.setCurrentIndex(0)
 
@@ -280,14 +283,32 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             dialog = QDialog(self.centralwidget)
             ui = Ui_FundDealDialog()
             ui.setupUi(dialog)
-            ui.saleUnitsLabel.hide()
-            ui.saleUnitsTxt.hide()
+
+            ui.saleUnitsLabel.setParent(None)
+            ui.saleUnitsTxt.setParent(None)
+            ui.allUnitsLabel.setParent(None)
+            ui.allUnitsTxt.setParent(None)
+            ui.saleRateLayout.setParent(None)
+
             for i in range(ui.saleRateLayout.count()):
                 ui.saleRateLayout.itemAt(i).widget().hide()
+
             ui.fundCodeTxt.setText(fundCode)
             ui.fundCodeTxt.setEnabled(False)
             netWorth = selectedItem[7].text().split('(')[0]
             ui.netWorthTxt.setText(netWorth)
+
+            fundInfo = self.fundCrawler.get_fund_info(fundCode)
+            ui.netWorthTxt.setText(fundInfo['DWJZ'])
+            ui.buyRateTxt.setText(fundInfo['RATE'])
+
+            dialog.accepted.connect(
+                lambda: self.buy_sale_fund(fundCode, True,
+                                           netWorth=ui.netWorthTxt.text(),
+                                           buyAmount=ui.buyAmountTxt.text(),
+                                           buyRate=ui.buyRateTxt.text(),
+                                           selectedItem=selectedItem))
+            dialog.setFixedHeight(dialog.height() - 30 * 2)
             dialog.setWindowTitle(title)
             dialog.exec_()
         elif action == menu7:
@@ -296,24 +317,44 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             ui = Ui_FundDealDialog()
             ui.setupUi(dialog)
 
-            ui.formLayout.removeWidget(ui.netWorthLabel)
-            ui.formLayout.removeWidget(ui.netWorthTxt)
-            ui.formLayout.removeWidget(ui.buyRateLabel)
-            ui.formLayout.removeWidget(ui.buyRateTxt)
-            ui.formLayout.removeWidget(ui.buyAmountLabel)
-            ui.formLayout.removeWidget(ui.buyAmountTxt)
+            ui.netWorthLabel.setParent(None)
+            ui.netWorthTxt.setParent(None)
+            ui.buyRateLabel.setParent(None)
+            ui.buyRateTxt.setParent(None)
+            ui.buyAmountLabel.setParent(None)
+            ui.buyAmountTxt.setParent(None)
 
-            # ui.netWorthLabel.hide()
-            # ui.netWorthTxt.hide()
-            # ui.buyRateLabel.hide()
-            # ui.buyRateTxt.hide()
-            # ui.buyAmountLabel.hide()
-            # ui.buyAmountTxt.hide()
-
+            allUnits = selectedItem[3].text()
             ui.fundCodeTxt.setText(fundCode)
             ui.fundCodeTxt.setEnabled(False)
+            ui.allUnitsTxt.setText(allUnits)
+            ui.allUnitsTxt.setEnabled(False)
+
+            allUnitsFloat = float(allUnits)
+
+            ui.rate20Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.2, '.2f')))
+            ui.rate30Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.3, '.2f')))
+            ui.rate50Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.5, '.2f')))
+            ui.rate100Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat, '.2f')))
+
+            dialog.setFixedHeight(dialog.height() - 30 * 2)
             dialog.setWindowTitle(title)
             dialog.exec_()
+
+    def buy_sale_fund(self, fundCode: str, buyOrSale: bool, netWorth: str = None, buyAmount: str = None,
+                      buyRate: str = None, allUnits: str = None, saleUnits: str = None, selectedItem: list = None):
+        print(fundCode, netWorth, buyAmount, buyRate, allUnits, saleUnits)
+        if buyOrSale:
+            buyRate = float(buyRate.replace('%', '')) / 100
+            buyAmount = float(buyAmount)
+            buyAmount = buyAmount - buyAmount * buyRate
+            buyUnits = buyAmount / float(netWorth)
+            positionAmount = float(selectedItem[2].text()) * float(selectedItem[3].text())
+
+            finalPositionAmount = positionAmount + buyAmount
+            finalPositionUnits = float(selectedItem[3].text()) + buyUnits
+            finalPositionCost = finalPositionAmount / finalPositionUnits
+            print(finalPositionCost, finalPositionUnits)
 
     def show_net_image(self, title, url):
         session = requests.Session()
@@ -712,9 +753,11 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         ui.refreshTimeoutTxt.setValue(FundConfig.AUTO_REFRESH_TIMEOUT)
         ui.enableProxyChb.setChecked(FundConfig.ENABLE_PROXY)
         ui.colorCob.setCurrentIndex(FundConfig.FUND_COLOR.value)
-        ui.midTxt.setText(str(uuid.uuid1()))
+        ui.midTxt.setText(FundConfig.FUND_MID)
         ui.midTxt.setCursorPosition(0)
         ui.saveBtn.clicked.connect(lambda: self.save_program_setting(ui))
+        ui.syncBtn.clicked.connect(lambda: self.sync.backup())
+        ui.recoveryBtn.clicked.connect(lambda: self.sync.recovery())
         dialog.setWindowTitle("程序设置")
         dialog.exec_()
 

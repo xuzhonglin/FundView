@@ -9,7 +9,6 @@ import requests
 from bs4 import BeautifulSoup
 from chinese_calendar import is_workday
 
-from src.newFundCrawler import get_funds_growth
 from src.fundEnum import DBSource
 from src.fundConfig import FundConfig
 from src.fundCrawlerAnt import FundAnt
@@ -261,7 +260,7 @@ class FundCrawler:
                 })
             if isOptional:
                 # TODO 移植
-                growth = get_funds_growth(fundCodes)
+                growth = self.get_funds_growth(fundCodes)
                 for index, item in enumerate(data):
                     item.update(growth[index])
             print(data)
@@ -316,6 +315,62 @@ class FundCrawler:
         except Exception as e:
             print(e)
         return fundData
+
+    def get_funds_growth(self, fundCodes: list):
+        from concurrent.futures import ThreadPoolExecutor
+        startTime = time.time()
+        threadPool = ThreadPoolExecutor(max_workers=10, thread_name_prefix="thread")
+        results = []
+        for result in threadPool.map(self.get_fund_growth, fundCodes):
+            results.append(result)
+        endTime = time.time()
+        print('执行耗时：{}'.format(endTime - startTime))
+        return results
+
+    def get_fund_growth(self, fundCode: str):
+        """
+        获取基金近期涨幅
+        :param fundCode: 基金代码
+        :return:
+        """
+        growth = {}
+        try:
+            url = 'https://fundmobapi.eastmoney.com/FundMNewApi/FundMNPeriodIncrease'
+            headers = {
+                'Host': 'fundmobapi.eastmoney.com',
+                'User-Agent': self.get_fake_ua()
+            }
+            params = {
+                'deviceid': str(uuid.uuid4()),
+                'version': '6.3.5',
+                'appVersion': '6.0.0',
+                'product': 'EFund',
+                'plat': 'Iphone',
+                'FCODE': fundCode,
+            }
+            resp = requests.get(url, headers=headers, params=params)
+            resp_json = resp.json()
+            for item in resp_json['Datas']:
+                key_name = item['title']
+                if key_name == 'Z':
+                    growth['lastWeekGrowth'] = item['syl'] if item['syl'] != '' else '--'
+                elif key_name == 'Y':
+                    growth['lastMonthGrowth'] = item['syl'] if item['syl'] != '' else '--'
+                elif key_name == '3Y':
+                    growth['lastThreeMonthsGrowth'] = item['syl'] if item['syl'] != '' else '--'
+                elif key_name == '6Y':
+                    growth['lastSixMonthsGrowth'] = item['syl'] if item['syl'] != '' else '--'
+                elif key_name == '1N':
+                    growth['lastYearGrowth'] = item['syl'] if item['syl'] != '' else '--'
+        except:
+            growth = {
+                "lastWeekGrowth": "--",
+                "lastMonthGrowth": "--",
+                "lastThreeMonthsGrowth": "--",
+                "lastSixMonthsGrowth": "--",
+                "lastYearGrowth": "--"
+            }
+        return growth
 
     def get_funds_data_ant(self, fundCodes: [], isOptional: bool = False):
         from concurrent.futures import ThreadPoolExecutor
@@ -457,44 +512,44 @@ class FundCrawler:
             print(e)
             return []
 
-    def get_fund_growth(self, fundCode):
-        """
-        获取基金近期涨幅
-        :param fundCode: 基金代码
-        :return:
-        """
-        try:
-            url = 'http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jdzf&code={}&rt={}'.format(fundCode,
-                                                                                                       random.random())
-            headers = {
-                'User-Agent': self.get_fake_ua(),
-                'Host': 'fundf10.eastmoney.com',
-                'Referer': 'http://fundf10.eastmoney.com/jdzf_{}.html'.format(fundCode)
-            }
-            html = self.http_get(url, headers=headers)
-            html = html.content.decode('utf-8')
-            html = re.findall(r'content:"(.*)"};', html)[0]
-            soup = BeautifulSoup(html, "lxml")
-            growth = []
-            for i in soup.select('ul li:nth-child(2)'):
-                growth.append(i.text.replace('%', ''))
-            ret = {
-                "lastWeekGrowth": growth[2],
-                "lastMonthGrowth": growth[3],
-                "lastThreeMonthsGrowth": growth[4],
-                "lastSixMonthsGrowth": growth[5],
-                "lastYearGrowth": growth[6]
-            }
-            return ret
-        except:
-            ret = {
-                "lastWeekGrowth": '0',
-                "lastMonthGrowth": '0',
-                "lastThreeMonthsGrowth": '0',
-                "lastSixMonthsGrowth": '0',
-                "lastYearGrowth": '0'
-            }
-            return ret
+    # def get_fund_growth(self, fundCode):
+    #     """
+    #     获取基金近期涨幅
+    #     :param fundCode: 基金代码
+    #     :return:
+    #     """
+    #     try:
+    #         url = 'http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jdzf&code={}&rt={}'.format(fundCode,
+    #                                                                                                    random.random())
+    #         headers = {
+    #             'User-Agent': self.get_fake_ua(),
+    #             'Host': 'fundf10.eastmoney.com',
+    #             'Referer': 'http://fundf10.eastmoney.com/jdzf_{}.html'.format(fundCode)
+    #         }
+    #         html = self.http_get(url, headers=headers)
+    #         html = html.content.decode('utf-8')
+    #         html = re.findall(r'content:"(.*)"};', html)[0]
+    #         soup = BeautifulSoup(html, "lxml")
+    #         growth = []
+    #         for i in soup.select('ul li:nth-child(2)'):
+    #             growth.append(i.text.replace('%', ''))
+    #         ret = {
+    #             "lastWeekGrowth": growth[2],
+    #             "lastMonthGrowth": growth[3],
+    #             "lastThreeMonthsGrowth": growth[4],
+    #             "lastSixMonthsGrowth": growth[5],
+    #             "lastYearGrowth": growth[6]
+    #         }
+    #         return ret
+    #     except:
+    #         ret = {
+    #             "lastWeekGrowth": '0',
+    #             "lastMonthGrowth": '0',
+    #             "lastThreeMonthsGrowth": '0',
+    #             "lastSixMonthsGrowth": '0',
+    #             "lastYearGrowth": '0'
+    #         }
+    #         return ret
 
     def query_update_worth(self, fundData: dict):
         """
@@ -561,6 +616,35 @@ class FundCrawler:
         except Exception as e:
             print(e)
         return []
+
+    def get_fund_info(self, fundCode: str):
+        """
+        获取基金的基础信息
+        :param fundCode:
+        :return:
+        """
+        data = {}
+        try:
+            url = 'https://fundmobapi.eastmoney.com/FundMApi/FundBaseTypeInformation.ashx'
+            headers = {
+                'Host': 'fundmobapi.eastmoney.com',
+                'User-Agent': self.get_fake_ua()
+            }
+            params = {
+                'plat': 'Android',
+                'appType': 'ttjj',
+                'product': 'EFund',
+                'Version': '1',
+                'deviceid': 'Wap',
+                'FCODE': fundCode,
+                '_': self.get_now_timestamp()
+            }
+            resp = requests.get(url, headers=headers, params=params)
+            resp_json = resp.json()
+            return resp_json['Datas']
+        except:
+            pass
+        return data
 
     def http_get(self, url: str, headers: dict = None, params: dict = None):
         """
@@ -702,5 +786,6 @@ if __name__ == '__main__':
     # ret = fund.get_history_worth('110011', '2020-09-04', '2020-12-04', 93, 1)
     # ret = fund.get_fund_performance_ttt('110011', 'THREE_MONTH')
     # ret = fund.get_funds_data_ttt(['110011'])
-    ret = fund.get_all_fund()
+    # ret = fund.get_all_fund()
+    ret = fund.get_fund_info('110011')
     print(ret)
