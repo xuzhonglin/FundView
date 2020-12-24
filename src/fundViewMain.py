@@ -182,6 +182,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.positionTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.positionTable.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
         self.positionTable.horizontalHeader().setSectionResizeMode(10, QHeaderView.ResizeToContents)
+        self.positionTable.horizontalHeader().setSectionResizeMode(11, QHeaderView.ResizeToContents)
 
         # 允许弹出菜单
         self.positionTable.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -519,7 +520,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.positionTable.item(index, 9).setForeground(expectGrowthColor)
 
             # 预估时间
-            expectWorthItem = QTableWidgetItem(item['expectWorthDate'][:16])
+            expectWorthItem = QTableWidgetItem(item['expectWorthDate'][5:16])
             self.positionTable.setItem(index, 10, expectWorthItem)
 
             # 11.预估收益
@@ -759,6 +760,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         ui = Ui_FundSettingDialog()
         ui.setupUi(dialog)
 
+        ui.isRecoveryTxt.hide()
         ui.fontNameCob.setCurrentText(FundConfig.FONT_NAME)
         ui.fontSizeCob.setCurrentText(str(FundConfig.FONT_SIZE))
         ui.enableRefreshChb.setChecked(FundConfig.AUTO_REFRESH_ENABLE)
@@ -772,6 +774,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         ui.recoveryBtn.clearFocus()
         ui.saveBtn.setFocus()
         ui.saveBtn.clicked.connect(lambda: self.save_program_setting(ui))
+        ui.recoveryBtn.clicked.connect(lambda: ui.isRecoveryTxt.setText('1'))
         ui.syncBtn.clicked.connect(
             lambda: QMessageBox.information(dialog, '提示', '同步成功\t\t\n') if self.sync.backup(
                 ui.midTxt.text()) else QMessageBox.warning(
@@ -804,7 +807,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             oldFundMid = FundConfig.FUND_MID
             newFundMid = dialog.midTxt.text()
             FundConfig.FUND_MID = newFundMid
-            rebootFlag = oldFundMid != newFundMid
+            refreshDataFlag = oldFundMid != newFundMid
 
             # 更新自动刷新
             if lastAutoRefreshEnable and FundConfig.AUTO_REFRESH_ENABLE:
@@ -832,7 +835,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.fundConfigOrigin['mid'] = FundConfig.FUND_MID
             self.fundConfigOrigin['enableSync'] = FundConfig.ENABLE_SYNC
 
-            if rebootFlag:
+            # mid变化了 或者 点击过恢复按钮
+            if refreshDataFlag or dialog.isRecoveryTxt.text() == '1':
                 print('配置文件发生变化')
                 self.start_init()
             else:
