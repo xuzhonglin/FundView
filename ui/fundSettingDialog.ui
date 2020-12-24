@@ -129,6 +129,9 @@
             <height>0</height>
            </size>
           </property>
+          <property name="focusPolicy">
+           <enum>Qt::ClickFocus</enum>
+          </property>
           <property name="text">
            <string>恢复</string>
           </property>
@@ -175,8 +178,11 @@
           <property name="enabled">
            <bool>false</bool>
           </property>
+          <property name="focusPolicy">
+           <enum>Qt::ClickFocus</enum>
+          </property>
           <property name="text">
-           <string>同步</string>
+           <string>备份</string>
           </property>
          </widget>
         </item>
@@ -223,7 +229,7 @@
    <item row="2" column="1">
     <widget class="QPushButton" name="saveBtn">
      <property name="focusPolicy">
-      <enum>Qt::ClickFocus</enum>
+      <enum>Qt::StrongFocus</enum>
      </property>
      <property name="text">
       <string>保存</string>
@@ -530,12 +536,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>122</x>
-     <y>184</y>
+     <x>108</x>
+     <y>183</y>
     </hint>
     <hint type="destinationlabel">
-     <x>122</x>
-     <y>204</y>
+     <x>108</x>
+     <y>208</y>
     </hint>
    </hints>
   </connection>

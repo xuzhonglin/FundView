@@ -8,7 +8,7 @@
         {
             "fundCode": "007020",
             "fundCost": 1.0502,
-            "fundUnits": 3491.39
+            "fundUnits": 1491.39
         },
         {
             "fundCode": "161725",
@@ -22,13 +22,13 @@
         },
         {
             "fundCode": "260108",
-            "fundCost": 2.6945,
-            "fundUnits": 742.26
+            "fundCost": 2.7208,
+            "fundUnits": 808.58
         },
         {
             "fundCode": "110011",
-            "fundCost": 8.0441,
-            "fundUnits": 87.02
+            "fundCost": 8.4177,
+            "fundUnits": 194.26
         },
         {
             "fundCode": "001595",
@@ -37,8 +37,18 @@
         },
         {
             "fundCode": "004854",
-            "fundCost": 1.303,
-            "fundUnits": 1151.22
+            "fundCost": 1.3087,
+            "fundUnits": 1451.85
+        },
+        {
+            "fundCode": "540008",
+            "fundCost": 2.9331,
+            "fundUnits": 170.47
+        },
+        {
+            "fundCode": "470006",
+            "fundCost": 2.9705,
+            "fundUnits": 314.85
         }
     ],
     "optional": [
@@ -64,9 +74,10 @@
         "161725",
         "001595",
         "005693",
-        "470006"
+        "470006",
+        "001606"
     ],
-    "source": 0,
+    "source": 1,
     "fontName": "微软雅黑",
     "fontSize": 9,
     "enableAutoRefresh": true,
@@ -74,6 +85,6 @@
     "colorScheme": 0,
     "enableProxy": false,
     "proxyAddress": "",
-    "mid": "487f22a6-4011-11eb-aeb8-f43909456196",
-    "enableSync": false
+    "mid": "a01cb17e-44bf-11eb-8d89-f43909456196",
+    "enableSync": true
 }

@@ -6,7 +6,7 @@ import sys
 import uuid
 from datetime import datetime
 
-from PyQt5.QtCore import Qt, QModelIndex, QTimer
+from PyQt5.QtCore import Qt, QModelIndex, QTimer, QProcess
 from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QPalette, QBrush, QColor
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, \
     QApplication, QMessageBox, QCompleter
@@ -308,7 +308,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                                            buyAmount=ui.buyAmountTxt.text(),
                                            buyRate=ui.buyRateTxt.text(),
                                            selectedItem=selectedItem))
-            dialog.setFixedHeight(dialog.height() - 30 * 2)
+            dialog.setFixedHeight(dialog.height() - 30 * 3 + 10)
             dialog.setWindowTitle(title)
             dialog.exec_()
         elif action == menu7:
@@ -337,7 +337,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             ui.rate50Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.5, '.2f')))
             ui.rate100Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat, '.2f')))
 
-            dialog.setFixedHeight(dialog.height() - 30 * 2)
+            dialog.setFixedHeight(dialog.height() - 30 * 3 + 10)
             dialog.setWindowTitle(title)
             dialog.exec_()
 
@@ -463,9 +463,19 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.positionTable.setItem(index, 4, fundHoldAmountItem)
 
             # 6.持有收益
-            fundHoldIncome = (float(item['netWorth']) - fundHold['fundCost']) * fundHold['fundUnits']
+            costAmount = round(fundHold['fundCost'] * fundHold['fundUnits'], 0)
+            if costAmount % 5 == 0:
+                fundHoldIncome = float(item['netWorth']) * fundHold['fundUnits'] \
+                                 - costAmount
+            else:
+                fundHoldIncome = float(item['netWorth']) * fundHold['fundUnits'] \
+                                 - fundHold['fundCost'] * fundHold['fundUnits']
             fundHoldIncomeItem = QTableWidgetItem("{}".format(round(fundHoldIncome, 2)))
             self.positionTable.setItem(index, 5, fundHoldIncomeItem)
+
+            # fundHoldIncome = (float(item['netWorth']) - fundHold['fundCost']) * fundHold['fundUnits']
+            # fundHoldIncomeItem = QTableWidgetItem("{}".format(round(fundHoldIncome, 2)))
+            # self.positionTable.setItem(index, 5, fundHoldIncomeItem)
 
             # 7.持有收益率
             if fundHold['fundCost'] != float(0):
@@ -517,7 +527,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             netWorthFloat = float(netWorth)
             # 当日净值已更新
             if item['netWorthDate'] == item['expectWorthDate'][:10]:
-                lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode)['netWorth']
+                lastDayTime = self.fundCrawler.get_last_work_day(item['netWorthDate'])
+                lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode, lastDayTime)['netWorth']
                 lastDayNetWorthFloat = float(lastDayNetWorth)
                 expectIncome = (netWorthFloat - lastDayNetWorthFloat) * fundHoldUnits
                 checkTip = '√'  # 已结算标记
@@ -535,7 +546,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             totalIncome = totalIncome + (netWorthFloat - fundHold['fundCost']) * fundHold['fundUnits']
             holdAmount = holdAmount + fundHold['fundCost'] * fundHold['fundUnits']
 
-        self.worthDateTxt.setText(worthDate)
+        self.worthDateTxt.setText(worthDate[:16])
 
         # 计算今日收益
         incomeTxt = '预估收益：{}'.format(round(todayExpectIncome, 2))
@@ -747,6 +758,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         dialog = QDialog(self.centralwidget)
         ui = Ui_FundSettingDialog()
         ui.setupUi(dialog)
+
         ui.fontNameCob.setCurrentText(FundConfig.FONT_NAME)
         ui.fontSizeCob.setCurrentText(str(FundConfig.FONT_SIZE))
         ui.enableRefreshChb.setChecked(FundConfig.AUTO_REFRESH_ENABLE)
@@ -755,9 +767,24 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         ui.colorCob.setCurrentIndex(FundConfig.FUND_COLOR.value)
         ui.midTxt.setText(FundConfig.FUND_MID)
         ui.midTxt.setCursorPosition(0)
+        ui.cloudSyncChb.setChecked(FundConfig.ENABLE_SYNC)
+
+        ui.recoveryBtn.clearFocus()
+        ui.saveBtn.setFocus()
         ui.saveBtn.clicked.connect(lambda: self.save_program_setting(ui))
-        ui.syncBtn.clicked.connect(lambda: self.sync.backup())
-        ui.recoveryBtn.clicked.connect(lambda: self.sync.recovery())
+        ui.syncBtn.clicked.connect(
+            lambda: QMessageBox.information(dialog, '提示', '同步成功\t\t\n') if self.sync.backup(
+                ui.midTxt.text()) else QMessageBox.warning(
+                dialog,
+                '提示',
+                '同步失败\t\t\n'))
+        ui.recoveryBtn.clicked.connect(
+            lambda: QMessageBox.information(dialog, '提示',
+                                            '恢复成功\t\t\n') if self.sync.recovery(
+                ui.midTxt.text()) else QMessageBox.warning(
+                dialog,
+                '提示',
+                '恢复失败\t\t\n'))
         dialog.setWindowTitle("程序设置")
         dialog.exec_()
 
@@ -772,8 +799,12 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             FundConfig.FUND_COLOR = ColorSwitch(dialog.colorCob.currentIndex())
             FundConfig.ENABLE_PROXY = dialog.enableProxyChb.isChecked()
             FundConfig.PROXY_POOL = dialog.proxyUrlTxt.text()
-            FundConfig.FUND_MID = dialog.midTxt.text()
             FundConfig.ENABLE_SYNC = dialog.cloudSyncChb.isChecked()
+
+            oldFundMid = FundConfig.FUND_MID
+            newFundMid = dialog.midTxt.text()
+            FundConfig.FUND_MID = newFundMid
+            rebootFlag = oldFundMid != newFundMid
 
             # 更新自动刷新
             if lastAutoRefreshEnable and FundConfig.AUTO_REFRESH_ENABLE:
@@ -801,7 +832,12 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.fundConfigOrigin['mid'] = FundConfig.FUND_MID
             self.fundConfigOrigin['enableSync'] = FundConfig.ENABLE_SYNC
 
-            self.write_local_config()
+            if rebootFlag:
+                print('配置文件发生变化')
+                self.start_init()
+            else:
+                self.write_local_config()
+
 
         except Exception as e:
             print(e)

@@ -21,10 +21,12 @@ class CloudSync:
         self.remote_file_name = self.backup_dir + '/' + self.config_id + '.json'
         self.client = Client(options)
 
-    def backup(self):
+    def backup(self, config_id: str = None):
         if not self.client.mkdir(self.backup_dir):
             raise Exception('please create dir first')
         try:
+            if config_id is not None:
+                self.remote_file_name = self.backup_dir + '/' + config_id + '.json'
             self.client.upload(self.remote_file_name, self.local_file_name)
             # 打印结果，之后会重定向到log
             print('upload success %s' % self.remote_file_name)
@@ -33,14 +35,12 @@ class CloudSync:
             return False
         return True
 
-    def recovery(self):
+    def recovery(self, config_id: str = None):
         try:
+            if config_id is not None:
+                self.remote_file_name = self.backup_dir + '/' + config_id + '.json'
             self.client.download(self.remote_file_name, self.local_file_name)
         except Exception as ex:
             print(ex)
             return False
         return True
-
-# sync = CloudSync('E:\\colinxu\\Python\\fundView\\fund.json', '64812c4b-61d7-446e-8fcf-6c41a21a9a73')
-# sync.backup()
-# sync.recovery()

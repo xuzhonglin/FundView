@@ -3,7 +3,7 @@ import random
 import re
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 from bs4 import BeautifulSoup
@@ -577,45 +577,112 @@ class FundCrawler:
             data.append('{}-{}'.format(item[0], item[2]))
         return data
 
+    # def get_fund_positions(self, fundCode: str):
+    #     """
+    #     获取基金的持仓
+    #     :param fundCode: 基金代码
+    #     :return: []
+    #     """
+    #
+    #     try:
+    #         url = FundConfig.YDI_URL + '/fund/position?code=' + fundCode
+    #         resp = self.http_get(url)
+    #         if resp.status_code == 200:
+    #             resp_json = resp.json()
+    #             data = resp_json['data']
+    #             ret = []
+    #             stock_codes = []
+    #             for item in data['stockList']:
+    #                 stock_codes.append(item[0])
+    #                 ret.append({
+    #                     'code': item[0],
+    #                     'name': item[1],
+    #                     'proportion': item[2],
+    #                     'holdUnits': item[3],
+    #                     'holdAmount': item[4]
+    #                 })
+    #             stock_codes = ','.join(stock_codes)
+    #             url = FundConfig.YDI_URL + '/stock?code=' + stock_codes
+    #             resp = self.http_get(url)
+    #             resp_json = resp.json()
+    #             data = resp_json['data']
+    #             for index, item in enumerate(ret):
+    #                 item['changePercent'] = data[index]['changePercent']
+    #             # print(ret)
+    #             return ret
+    #     except Exception as e:
+    #         print(e)
+    #     return []
+
     def get_fund_positions(self, fundCode: str):
         """
         获取基金的持仓
         :param fundCode: 基金代码
         :return: []
         """
-        if FundConfig.DB_SWITCH == DBSource.YDI:
-            apiUrl = FundConfig.YDI_URL
-        else:
-            apiUrl = FundConfig.OTHER_URL
         try:
-            url = apiUrl + '/fund/position?code=' + fundCode
-            resp = self.http_get(url)
+            url = 'https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition'
+            headers = {
+                'Host': 'fundmobapi.eastmoney.com',
+                'User-Agent': self.get_fake_ua()
+            }
+            params = {
+                'plat': 'Android',
+                'appType': 'ttjj',
+                'product': 'EFund',
+                'Version': '2.0.0',
+                'deviceid': 'Wap',
+                'FCODE': fundCode,
+                '_': self.get_now_timestamp()
+            }
+            resp = self.http_get(url, params=params, headers=headers)
             if resp.status_code == 200:
                 resp_json = resp.json()
-                data = resp_json['data']
+                data = resp_json['Datas']['fundStocks']
                 ret = []
                 stock_codes = []
-                for item in data['stockList']:
-                    stock_codes.append(item[0])
+                for item in data:
+                    stock_codes.append(item['NEWTEXCH'] + '.' + item['GPDM'])
                     ret.append({
-                        'code': item[0],
-                        'name': item[1],
-                        'proportion': item[2],
-                        'holdUnits': item[3],
-                        'holdAmount': item[4]
+                        'code': item['GPDM'],
+                        'name': item['GPJC'],
+                        'proportion': item['JZBL'],
+                        'holdUnits': 0,
+                        'holdAmount': 0,
+                        'changePercent': item['PCTNVCHG']
                     })
                 stock_codes = ','.join(stock_codes)
-                url = FundConfig.OTHER_URL + '/stock?code=' + stock_codes
-                resp = self.http_get(url)
-                resp_json = resp.json()
-                data = resp_json['data']
+                stock_info = self.get_stocks_info(stock_codes)
                 for index, item in enumerate(ret):
-                    item['changePercent'] = data[index]['changePercent']
-                # print(ret)
+                    item['changePercent'] = stock_info[index]['f3']
                 return ret
         except Exception as e:
             print(e)
         return []
+
+    def get_stocks_info(self, stock_codes: str):
+        try:
+            url = 'https://push2.eastmoney.com/api/qt/ulist.np/get'
+            headers = {
+                'Host': 'push2.eastmoney.com',
+                'User-Agent': self.get_fake_ua()
+            }
+            params = {
+                'fields': 'f1,f2,f3,f4,f12,f13,f14,f292',
+                'fltt': '2',
+                'secids': stock_codes,
+                'deviceid': 'Wap',
+                'plat': 'Wap',
+                'product': 'EFund',
+                'version': '2.0.0',
+                'Uid': ''
+            }
+            resp = self.http_get(url, headers=headers, params=params)
+            resp_json = resp.json()
+            return resp_json['data']['diff']
+        except:
+            pass
+            return []
 
     def get_fund_info(self, fundCode: str):
         """
@@ -775,11 +842,20 @@ class FundCrawler:
         nowTime = datetime.now()
         return is_workday(nowTime) and nowTime.hour >= 19 and nowTime.minute >= 0
 
+    def get_last_work_day(self, curDate: str):
+        curDatetime = datetime.strptime(curDate, '%Y-%m-%d')
+        i = -1
+        yesterday = curDatetime + timedelta(days=i)  # 昨天日期
+        while not is_workday(yesterday):
+            i = i - 1
+            yesterday = curDatetime + timedelta(days=i)  # 昨天日期
+        return yesterday.strftime('%Y-%m-%d')
+
 
 if __name__ == '__main__':
     # pass
     fund = FundCrawler()
-    # ret = fund.get_day_worth('110011', '2020-12-03')
+    # ret = fund.get_day_worth('009777', '2020-12-23')
     # ret = fund.get_funds_data(['110011'])
     # ret = fund.get_board_data_bak()
     # ret = fund.get_fund_performance_ydi('110011')
@@ -787,5 +863,6 @@ if __name__ == '__main__':
     # ret = fund.get_fund_performance_ttt('110011', 'THREE_MONTH')
     # ret = fund.get_funds_data_ttt(['110011'])
     # ret = fund.get_all_fund()
-    ret = fund.get_fund_info('110011')
+    # ret = fund.get_fund_positions('110011')
+    ret = fund.get_last_work_day('2020-12-20')
     print(ret)

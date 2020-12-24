@@ -25,7 +25,6 @@ class FundConfig:
     # tt 天天基金
     # ant 蚂蚁财富
     # ydi 易读优
-    # other 熊博士
     DB_SWITCH = DBSource.YDI
 
     # 字体
