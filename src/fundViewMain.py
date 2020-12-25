@@ -76,16 +76,18 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             print('启动定时任务')
             self.timer.start(FundConfig.AUTO_REFRESH_TIMEOUT)
 
-        # 设置自选基金自动补全
-        completer = QCompleter(self.fundCrawler.get_all_fund())
-        # 设置匹配模式  有三种： Qt.MatchStartsWith 开头匹配（默认）  Qt.MatchContains 内容匹配  Qt.MatchEndsWith 结尾匹配
-        completer.setFilterMode(Qt.MatchContains)
-        # 设置补全模式  有三种： QCompleter.PopupCompletion（默认）  QCompleter.InlineCompletion
-        # QCompleter.UnfilteredPopupCompletion
-        completer.setCompletionMode(QCompleter.PopupCompletion)
-        # completer.activated.connect(lambda x: print(x.split('-')[0]))
-
-        self.optionalFundCodeTxt.setCompleter(completer)
+        try:
+            # 设置自选基金自动补全
+            completer = QCompleter(self.fundCrawler.get_all_fund())
+            # 设置匹配模式  有三种： Qt.MatchStartsWith 开头匹配（默认）  Qt.MatchContains 内容匹配  Qt.MatchEndsWith 结尾匹配
+            completer.setFilterMode(Qt.MatchContains)
+            # 设置补全模式  有三种： QCompleter.PopupCompletion（默认）  QCompleter.InlineCompletion
+            # QCompleter.UnfilteredPopupCompletion
+            completer.setCompletionMode(QCompleter.PopupCompletion)
+            # completer.activated.connect(lambda x: print(x.split('-')[0]))
+            self.optionalFundCodeTxt.setCompleter(completer)
+        except Exception as e:
+            print("设置自动补全失败：" + e)
 
     def init_slot(self):
         self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))
@@ -210,6 +212,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
         # 调整第 1-3列的宽度 为适应内容
         self.optionalTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.optionalTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.optionalTable.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.optionalTable.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
         # self.positionTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
@@ -663,7 +667,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
             #  10.更新时间
             if 'expectWorthDate' in item:
-                expectWorthDateItem = QTableWidgetItem("{}".format(item['expectWorthDate'][:16]))
+                expectWorthDateItem = QTableWidgetItem("{}".format(item['expectWorthDate'][5:16]))
                 self.optionalTable.setItem(index, 9, expectWorthDateItem)
             else:
                 self.optionalTable.setItem(index, 9, QTableWidgetItem("-"))
