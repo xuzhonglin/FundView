@@ -87,7 +87,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             # completer.activated.connect(lambda x: print(x.split('-')[0]))
             self.optionalFundCodeTxt.setCompleter(completer)
         except Exception as e:
-            print("设置自动补全失败：" + e)
+            print("设置自动补全失败：" + str(e))
 
     def init_slot(self):
         self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))
