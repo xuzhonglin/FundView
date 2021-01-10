@@ -443,9 +443,12 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             worthDate = item['expectWorthDate']
 
             fundHold = self.positionFund[fundCode]
-
             # 1.基金名称
-            fundNameItem = QTableWidgetItem(item['name'])
+            fundName = item['name']
+            # if len(fundName) > 10:
+            #     fundName = fundName[:10] + '...'
+            fundNameItem = QTableWidgetItem(fundName)
+
             self.positionTable.setItem(index, 0, fundNameItem)
 
             # 2.基金代码

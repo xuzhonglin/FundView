@@ -228,6 +228,12 @@ class FundCrawler:
     #         return data
 
     def get_funds_data_ttt(self, fundCodes: list, isOptional: bool = False):
+        """
+        获取基金的基础信息[天天基金]
+        :param fundCodes: 基金编码
+        :param isOptional: 是否自选
+        :return: []
+        """
         data = []
         try:
             url = 'https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo'
@@ -237,7 +243,7 @@ class FundCrawler:
             }
             params = {
                 'pageIndex': 1,
-                'pageSize': 100,
+                'pageSize': len(fundCodes),
                 'plat': 'Android',
                 'appType': 'ttjj',
                 'product': 'EFund',
@@ -264,11 +270,18 @@ class FundCrawler:
                 for index, item in enumerate(data):
                     item.update(growth[index])
             print(data)
-        except:
+        except Exception as ex:
+            print(ex)
             pass
         return data
 
-    def get_fund_data_ttt_bak(self, fundCode: str, isOptional: bool = False):
+    def _get_fund_data_ttt_bak(self, fundCode: str, isOptional: bool = False):
+        """
+        废弃-获取基金的基础信息[天天基金]
+        :param fundCodes: 基金编码
+        :param isOptional: 是否自选
+        :return: []
+        """
         fundData = {}
         try:
             url = 'http://fund.eastmoney.com/{}.html'.format(fundCode)
@@ -317,6 +330,11 @@ class FundCrawler:
         return fundData
 
     def get_funds_growth(self, fundCodes: list):
+        """
+        查询基金的阶段涨幅[天天基金]
+        :param fundCodes: 基金编码
+        :return:
+        """
         from concurrent.futures import ThreadPoolExecutor
         startTime = time.time()
         threadPool = ThreadPoolExecutor(max_workers=10, thread_name_prefix="thread")
@@ -329,7 +347,7 @@ class FundCrawler:
 
     def get_fund_growth(self, fundCode: str):
         """
-        获取基金近期涨幅
+        查询单个基金的阶段涨幅[天天基金]
         :param fundCode: 基金代码
         :return:
         """
@@ -373,6 +391,12 @@ class FundCrawler:
         return growth
 
     def get_funds_data_ant(self, fundCodes: [], isOptional: bool = False):
+        """
+        获取基金的基础信息[蚂蚁财富]
+        :param fundCodes: 基金编码
+        :param isOptional: 是否自选
+        :return:
+        """
         from concurrent.futures import ThreadPoolExecutor
         startTime = time.time()
         threadPool = ThreadPoolExecutor(max_workers=10, thread_name_prefix="thread")
