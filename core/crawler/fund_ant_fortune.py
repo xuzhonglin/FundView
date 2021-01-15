@@ -16,6 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from config import FundConfig
 from utils.proxy_http import ProxyHttp
+from utils.other import *
 from crawler.fund_abstract import Fund
 
 
@@ -80,7 +81,7 @@ class AntCrawler:
                 'Cookie': cookies,
                 "Origin": "http://www.fund123.cn",
                 "Referer": "http://www.fund123.cn/matiaria?fundCode={}".format(fundCode),
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
+                "User-Agent": get_fake_ua()
             }
             data = {
                 "startTime": "2020-12-03",

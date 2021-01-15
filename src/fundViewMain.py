@@ -6,10 +6,10 @@ import sys
 import uuid
 from datetime import datetime
 
-from PyQt5.QtCore import Qt, QModelIndex, QTimer, QProcess
-from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QPalette, QBrush, QColor
+from PyQt5.QtCore import Qt, QModelIndex, QTimer
+from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QPalette, QBrush, QColor, QIcon
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, \
-    QApplication, QMessageBox, QCompleter
+    QApplication, QMessageBox, QCompleter, QSystemTrayIcon
 from chinese_calendar import is_workday
 
 from src.cloudSync import CloudSync
@@ -24,6 +24,7 @@ from ui.fundImageDialog import Ui_FundImageDialog
 from ui.fundDealDialog import Ui_FundDealDialog
 from ui.fundTableMain import FundTableMain
 from src.fundCrawler import FundCrawler
+from src.fundUtils import *
 import traceback
 
 
@@ -75,6 +76,9 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         if FundConfig.AUTO_REFRESH_ENABLE:
             print('启动定时任务')
             self.timer.start(FundConfig.AUTO_REFRESH_TIMEOUT)
+            self.setIcon(QIcon(':/icon/windows/icon_windows.ico'))
+            icon = self.MessageIcon()
+            self.showMessage('韭菜盒子', '涨了涨了', icon)
 
         try:
             # 设置自选基金自动补全
@@ -113,19 +117,16 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
     def timer_refresh(self):
         if not FundConfig.AUTO_REFRESH_ENABLE: return
         # 交易日15:30后自动关闭定时刷新
-        nowTime = datetime.now()
-        if nowTime.hour >= 15 and nowTime.minute >= 30 and is_workday(nowTime):
-            FundConfig.AUTO_REFRESH_ENABLE = False
-            self.timer.stop()
-            print('timer_refresh closed')
-            return
-        print('timer_refresh')
-        if self.tabWidget.currentIndex() == 0:
-            self.positionRefreshBtn.setText('自动刷新...')
-            self.refresh_btn_clicked()
-        else:
-            self.optionalRefreshBtn.setText('自动刷新...')
-            self.refresh_btn_clicked(True)
+        nowTime = datetime.datetime.now()
+        if is_workday(nowTime) and judge_time('9:20:00') and not judge_time('15:20:00'):
+            print('timer_refresh')
+            if self.tabWidget.currentIndex() == 0:
+                self.positionRefreshBtn.setText('自动刷新...')
+                self.refresh_btn_clicked()
+            else:
+                self.optionalRefreshBtn.setText('自动刷新...')
+                self.refresh_btn_clicked(True)
+        print('timer_refresh passed')
 
     def refresh_btn_clicked(self, isOptional: bool = False):
         print('refresh_btn_click')
@@ -234,8 +235,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         contextMenu.addSeparator()
 
         if curTabIndex == 0:
-            menu6 = contextMenu.addAction('加仓')
-            menu7 = contextMenu.addAction('减仓')
+            # menu6 = contextMenu.addAction('加仓')
+            # menu7 = contextMenu.addAction('减仓')
             screenPos = self.positionTable.mapToGlobal(pos)
         else:
             screenPos = self.optionalTable.mapToGlobal(pos)
@@ -283,68 +284,68 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 self.optionalTable.removeRow(selectedIndex)
                 self.optionalFund.remove(fundCode)
                 self.write_local_config(fundCode, isDelete=True, isOptional=True)
-        elif action == menu6:
-            title = '加仓：' + selectedItem[0].text()
-            dialog = QDialog(self.centralwidget)
-            ui = Ui_FundDealDialog()
-            ui.setupUi(dialog)
-
-            ui.saleUnitsLabel.setParent(None)
-            ui.saleUnitsTxt.setParent(None)
-            ui.allUnitsLabel.setParent(None)
-            ui.allUnitsTxt.setParent(None)
-            ui.saleRateLayout.setParent(None)
-
-            for i in range(ui.saleRateLayout.count()):
-                ui.saleRateLayout.itemAt(i).widget().hide()
-
-            ui.fundCodeTxt.setText(fundCode)
-            ui.fundCodeTxt.setEnabled(False)
-            netWorth = selectedItem[7].text().split('(')[0]
-            ui.netWorthTxt.setText(netWorth)
-
-            fundInfo = self.fundCrawler.get_fund_info(fundCode)
-            ui.netWorthTxt.setText(fundInfo['DWJZ'])
-            ui.buyRateTxt.setText(fundInfo['RATE'])
-
-            dialog.accepted.connect(
-                lambda: self.buy_sale_fund(fundCode, True,
-                                           netWorth=ui.netWorthTxt.text(),
-                                           buyAmount=ui.buyAmountTxt.text(),
-                                           buyRate=ui.buyRateTxt.text(),
-                                           selectedItem=selectedItem))
-            dialog.setFixedHeight(dialog.height() - 30 * 3 + 10)
-            dialog.setWindowTitle(title)
-            dialog.exec_()
-        elif action == menu7:
-            title = '减仓：' + selectedItem[0].text()
-            dialog = QDialog(self.centralwidget)
-            ui = Ui_FundDealDialog()
-            ui.setupUi(dialog)
-
-            ui.netWorthLabel.setParent(None)
-            ui.netWorthTxt.setParent(None)
-            ui.buyRateLabel.setParent(None)
-            ui.buyRateTxt.setParent(None)
-            ui.buyAmountLabel.setParent(None)
-            ui.buyAmountTxt.setParent(None)
-
-            allUnits = selectedItem[3].text()
-            ui.fundCodeTxt.setText(fundCode)
-            ui.fundCodeTxt.setEnabled(False)
-            ui.allUnitsTxt.setText(allUnits)
-            ui.allUnitsTxt.setEnabled(False)
-
-            allUnitsFloat = float(allUnits)
-
-            ui.rate20Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.2, '.2f')))
-            ui.rate30Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.3, '.2f')))
-            ui.rate50Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.5, '.2f')))
-            ui.rate100Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat, '.2f')))
-
-            dialog.setFixedHeight(dialog.height() - 30 * 3 + 10)
-            dialog.setWindowTitle(title)
-            dialog.exec_()
+        # elif action == menu6:
+        #     title = '加仓：' + selectedItem[0].text()
+        #     dialog = QDialog(self.centralwidget)
+        #     ui = Ui_FundDealDialog()
+        #     ui.setupUi(dialog)
+        #
+        #     ui.saleUnitsLabel.setParent(None)
+        #     ui.saleUnitsTxt.setParent(None)
+        #     ui.allUnitsLabel.setParent(None)
+        #     ui.allUnitsTxt.setParent(None)
+        #     ui.saleRateLayout.setParent(None)
+        #
+        #     for i in range(ui.saleRateLayout.count()):
+        #         ui.saleRateLayout.itemAt(i).widget().hide()
+        #
+        #     ui.fundCodeTxt.setText(fundCode)
+        #     ui.fundCodeTxt.setEnabled(False)
+        #     netWorth = selectedItem[7].text().split('(')[0]
+        #     ui.netWorthTxt.setText(netWorth)
+        #
+        #     fundInfo = self.fundCrawler.get_fund_info(fundCode)
+        #     ui.netWorthTxt.setText(fundInfo['DWJZ'])
+        #     ui.buyRateTxt.setText(fundInfo['RATE'])
+        #
+        #     dialog.accepted.connect(
+        #         lambda: self.buy_sale_fund(fundCode, True,
+        #                                    netWorth=ui.netWorthTxt.text(),
+        #                                    buyAmount=ui.buyAmountTxt.text(),
+        #                                    buyRate=ui.buyRateTxt.text(),
+        #                                    selectedItem=selectedItem))
+        #     dialog.setFixedHeight(dialog.height() - 30 * 3 + 10)
+        #     dialog.setWindowTitle(title)
+        #     dialog.exec_()
+        # elif action == menu7:
+        #     title = '减仓：' + selectedItem[0].text()
+        #     dialog = QDialog(self.centralwidget)
+        #     ui = Ui_FundDealDialog()
+        #     ui.setupUi(dialog)
+        #
+        #     ui.netWorthLabel.setParent(None)
+        #     ui.netWorthTxt.setParent(None)
+        #     ui.buyRateLabel.setParent(None)
+        #     ui.buyRateTxt.setParent(None)
+        #     ui.buyAmountLabel.setParent(None)
+        #     ui.buyAmountTxt.setParent(None)
+        #
+        #     allUnits = selectedItem[3].text()
+        #     ui.fundCodeTxt.setText(fundCode)
+        #     ui.fundCodeTxt.setEnabled(False)
+        #     ui.allUnitsTxt.setText(allUnits)
+        #     ui.allUnitsTxt.setEnabled(False)
+        #
+        #     allUnitsFloat = float(allUnits)
+        #
+        #     ui.rate20Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.2, '.2f')))
+        #     ui.rate30Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.3, '.2f')))
+        #     ui.rate50Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.5, '.2f')))
+        #     ui.rate100Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat, '.2f')))
+        #
+        #     dialog.setFixedHeight(dialog.height() - 30 * 3 + 10)
+        #     dialog.setWindowTitle(title)
+        #     dialog.exec_()
 
     def buy_sale_fund(self, fundCode: str, buyOrSale: bool, netWorth: str = None, buyAmount: str = None,
                       buyRate: str = None, allUnits: str = None, saleUnits: str = None, selectedItem: list = None):
@@ -600,8 +601,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.optionalTable.setItem(index, 1, fundCodeItem)
 
             # 3.基金估值
-            fundExpectWorth = float(item['expectWorth'])
-            fundExpectGrowth = float(item['expectGrowth'])
+            fundExpectWorth = float(item['expectWorth']) if '--' not in item['expectWorth'] else 0
+            fundExpectGrowth = float(item['expectGrowth']) if '--' not in item['expectGrowth'] else 0
             fundExpectWorthColor = get_color(fundExpectGrowth, 'brush')
             fundExpectWorthItem = QTableWidgetItem(
                 "{}% ({})".format(format(fundExpectGrowth, '.2f'), format(fundExpectWorth, '.4f')))
@@ -670,7 +671,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
             #  10.更新时间
             if 'expectWorthDate' in item:
-                expectWorthDateItem = QTableWidgetItem("{}".format(item['expectWorthDate'][5:16]))
+                expectWorthDate = item['expectWorthDate'][5:16] if '--' not in item['expectWorthDate'] else '-'
+                expectWorthDateItem = QTableWidgetItem("{}".format(expectWorthDate))
                 self.optionalTable.setItem(index, 9, expectWorthDateItem)
             else:
                 self.optionalTable.setItem(index, 9, QTableWidgetItem("-"))

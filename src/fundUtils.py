@@ -53,3 +53,11 @@ def get_last_trading_day(type: str):
         trading_day_date, trading_day_length = _correct_trading_day(trading_day, last_work_day)
 
     return trading_day_date.strftime('%Y-%m-%d'), trading_day_length
+
+
+def judge_time(target_time: str):
+    nowTime = datetime.datetime.now()
+    hour = int(target_time.split(':')[0])
+    minute = int(target_time.split(':')[1])
+    seconds = int(target_time.split(':')[2])
+    return nowTime.hour >= hour and nowTime.minute >= minute and nowTime.second >= seconds

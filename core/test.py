@@ -9,10 +9,12 @@
 """
 
 from core.crawler.fund_ant_fortune import FundAntFortune
+from core.crawler.fund_east_money import FundEastMoney
 
-fund_ant = FundAntFortune()
-# result = fund_ant.get_networth('110011')
-result = fund_ant.get_networth_batch([
+# fund = FundAntFortune()
+fund = FundEastMoney()
+# result = fund.get_networth('110011')
+result = fund.get_networth_batch([
     "002190",
     "007824",
     "001510",
