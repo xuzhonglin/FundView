@@ -45,6 +45,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.allFund = []
         self.spaceKeyTimes = 0
         self.firstStart = True
+        self.trayIcon = QSystemTrayIcon(self)
+        self.icon = QIcon(":/icon/windows/icon_windows.ico")
 
         self.timer = QTimer()  # 初始化定时器
         self.timer.timeout.connect(self.timer_refresh)
@@ -71,14 +73,18 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
         self.thread.StartDone.connect(self.start_done)
 
+    def init_tray_icon(self):
+        self.trayIcon.setIcon(self.icon)
+        self.trayIcon.setToolTip("韭菜盒子")
+        self.trayIcon.show()
+
     def start_done(self):
         self.firstStart = False
         if FundConfig.AUTO_REFRESH_ENABLE:
             print('启动定时任务')
             self.timer.start(FundConfig.AUTO_REFRESH_TIMEOUT)
-            self.setIcon(QIcon(':/icon/windows/icon_windows.ico'))
-            icon = self.MessageIcon()
-            self.showMessage('韭菜盒子', '涨了涨了', icon)
+            self.init_tray_icon()
+            self.trayIcon.showMessage(FundConfig.APP_NAME, '系统加载完毕', self.icon)
 
         try:
             # 设置自选基金自动补全

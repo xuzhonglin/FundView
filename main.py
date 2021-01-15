@@ -16,7 +16,7 @@ if __name__ == '__main__':
     font = QFont(FundConfig.FONT_NAME, FundConfig.FONT_SIZE)
     app.setFont(font)
 
-    w.setWindowTitle('韭菜盒子 ' + FundConfig.VERSION)
+    w.setWindowTitle(FundConfig.APP_NAME + ' ' + FundConfig.VERSION)
     w.setWindowIcon(QIcon(':/icon/windows/icon_windows.ico'))
     w.show()
 
