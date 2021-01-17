@@ -133,6 +133,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 self.optionalRefreshBtn.setText('自动刷新...')
                 self.refresh_btn_clicked(True)
         print('timer_refresh passed')
+        # self.trayIcon.showMessage(FundConfig.APP_NAME, '定时刷新', self.icon)
 
     def refresh_btn_clicked(self, isOptional: bool = False):
         print('refresh_btn_click')
