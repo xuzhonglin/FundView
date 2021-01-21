@@ -11,6 +11,7 @@ from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QPalette, QB
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, \
     QApplication, QMessageBox, QCompleter, QSystemTrayIcon
 from chinese_calendar import is_workday
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from src.cloudSync import CloudSync
 from src.fundConfig import FundConfig, get_color
@@ -29,6 +30,7 @@ import traceback
 
 
 class FundViewMain(QMainWindow, Ui_MainWindow):
+    scheduler = BackgroundScheduler()
 
     def __init__(self, parent: QApplication):
         super().__init__()
@@ -80,11 +82,13 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
 
     def start_done(self):
         self.firstStart = False
+        self.scheduler.add_job(self.scheduler_job, 'cron', hour='14', minute='50')
+        self.scheduler.start()
         if FundConfig.AUTO_REFRESH_ENABLE:
             print('启动定时任务')
             self.timer.start(FundConfig.AUTO_REFRESH_TIMEOUT)
             self.init_tray_icon()
-            self.trayIcon.showMessage(FundConfig.APP_NAME, '系统加载完毕', self.icon)
+            # self.trayIcon.showMessage(FundConfig.APP_NAME, '系统加载完毕', self.icon)
 
         try:
             # 设置自选基金自动补全
@@ -98,6 +102,9 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             self.optionalFundCodeTxt.setCompleter(completer)
         except Exception as e:
             print("设置自动补全失败：" + str(e))
+
+    def scheduler_job(self):
+        self.trayIcon.showMessage(FundConfig.APP_NAME, '已结 14:50 了，快去加仓', self.icon)
 
     def init_slot(self):
         self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))
@@ -124,6 +131,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         if not FundConfig.AUTO_REFRESH_ENABLE: return
         # 交易日15:30后自动关闭定时刷新
         nowTime = datetime.datetime.now()
+        print(nowTime)
         if is_workday(nowTime) and judge_time('9:20:00') and not judge_time('15:20:00'):
             print('timer_refresh')
             if self.tabWidget.currentIndex() == 0:

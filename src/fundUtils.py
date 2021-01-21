@@ -61,3 +61,10 @@ def judge_time(target_time: str):
     minute = int(target_time.split(':')[1])
     seconds = int(target_time.split(':')[2])
     return nowTime.hour >= hour and nowTime.minute >= minute and nowTime.second >= seconds
+
+
+def get_or_default(string: str, default=0):
+    if string == '' or string.replace(' ', '') == '' or string is None or '--' in string:
+        return default
+    else:
+        return string

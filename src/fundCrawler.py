@@ -1,4 +1,5 @@
 import json
+import os
 import random
 import re
 import time
@@ -761,6 +762,7 @@ class FundCrawler:
             self.delete_proxy(proxy)
             return None
         else:
+            os.environ['no_proxy'] = '*'
             return session.get(url, timeout=5, headers=headers, params=params)
 
     def http_post(self, url: str, data: dict = None, headers: dict = None):
@@ -789,6 +791,7 @@ class FundCrawler:
             self.delete_proxy(proxy)
             return None
         else:
+            os.environ['no_proxy'] = '*'
             return session.post(url, data, headers=headers, timeout=5)
 
     def get_proxy(self):
