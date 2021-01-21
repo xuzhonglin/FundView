@@ -6,7 +6,7 @@ from src.fundEnum import DBSource, ColorSwitch, _FundColor
 class FundConfig:
     APP_NAME = '韭菜盒子'
 
-    VERSION = '1.1.3'
+    VERSION = '1.1.4'
     # 平台 darwin/win32
     PLATFORM = sys.platform
 
@@ -55,6 +55,8 @@ class FundConfig:
 
 
 def get_color(value, colorType):
+    if type(value) == str:
+        value = float(value)
     is_black = FundConfig.FUND_COLOR != ColorSwitch.BLACK_ONLY
     is_green_red = FundConfig.FUND_COLOR == ColorSwitch.GREEN_RED
 

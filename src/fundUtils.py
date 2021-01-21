@@ -63,8 +63,14 @@ def judge_time(target_time: str):
     return nowTime.hour >= hour and nowTime.minute >= minute and nowTime.second >= seconds
 
 
-def get_or_default(string: str, default=0):
-    if string == '' or string.replace(' ', '') == '' or string is None or '--' in string:
+def get_or_default(string, default='0'):
+    try:
+        if type(string) == str:
+            string = string.strip()
+        if string == '' or string is None or '--' in str(string):
+            return default
+        else:
+            return string
+    except Exception as e:
+        print('转换值异常' + str(e))
         return default
-    else:
-        return string
