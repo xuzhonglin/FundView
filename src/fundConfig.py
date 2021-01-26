@@ -7,6 +7,9 @@ class FundConfig:
     APP_NAME = '韭菜盒子'
 
     VERSION = '1.1.4'
+
+    UPDATE_URL = 'http://api.colinxu.cn/leekbox/update.json'
+
     # 平台 darwin/win32
     PLATFORM = sys.platform
 

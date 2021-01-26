@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableW
 from chinese_calendar import is_workday
 from apscheduler.schedulers.background import BackgroundScheduler
 
+from fund_update import FundUpdate
 from src.cloudSync import CloudSync
 from src.fundConfig import FundConfig, get_color
 from src.fundEnum import DBSource, ColorSwitch
@@ -46,9 +47,10 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.optionalFund = []
         self.allFund = []
         self.spaceKeyTimes = 0
-        self.firstStart = True
+        self.is_start_done = False
         self.trayIcon = QSystemTrayIcon(self)
         self.icon = QIcon(":/icon/windows/icon_windows.ico")
+        self.all_fund_settled_cnt = 0
 
         self.timer = QTimer()  # 初始化定时器
         self.timer.timeout.connect(self.timer_refresh)
@@ -81,30 +83,31 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.trayIcon.show()
 
     def start_done(self):
-        self.firstStart = False
-        self.scheduler.add_job(self.scheduler_job, 'cron', hour='14', minute='50')
-        self.scheduler.start()
-        if FundConfig.AUTO_REFRESH_ENABLE:
-            print('启动定时任务')
-            self.timer.start(FundConfig.AUTO_REFRESH_TIMEOUT)
-            self.init_tray_icon()
-            # self.trayIcon.showMessage(FundConfig.APP_NAME, '系统加载完毕', self.icon)
-
-        try:
-            # 设置自选基金自动补全
-            completer = QCompleter(self.fundCrawler.get_all_fund())
-            # 设置匹配模式  有三种： Qt.MatchStartsWith 开头匹配（默认）  Qt.MatchContains 内容匹配  Qt.MatchEndsWith 结尾匹配
-            completer.setFilterMode(Qt.MatchContains)
-            # 设置补全模式  有三种： QCompleter.PopupCompletion（默认）  QCompleter.InlineCompletion
-            # QCompleter.UnfilteredPopupCompletion
-            completer.setCompletionMode(QCompleter.PopupCompletion)
-            # completer.activated.connect(lambda x: print(x.split('-')[0]))
-            self.optionalFundCodeTxt.setCompleter(completer)
-        except Exception as e:
-            print("设置自动补全失败：" + str(e))
+        if not self.is_start_done:
+            self.is_start_done = True
+            self.scheduler.add_job(self.scheduler_job, 'cron', hour='14', minute='50')
+            self.scheduler.start()
+            if FundConfig.AUTO_REFRESH_ENABLE:
+                print('启动定时任务')
+                self.timer.start(FundConfig.AUTO_REFRESH_TIMEOUT)
+                self.init_tray_icon()
+            try:
+                # 设置自选基金自动补全
+                completer = QCompleter(self.fundCrawler.get_all_fund())
+                # 设置匹配模式  有三种： Qt.MatchStartsWith 开头匹配（默认）  Qt.MatchContains 内容匹配  Qt.MatchEndsWith 结尾匹配
+                completer.setFilterMode(Qt.MatchContains)
+                # 设置补全模式  有三种： QCompleter.PopupCompletion（默认）  QCompleter.InlineCompletion
+                # QCompleter.UnfilteredPopupCompletion
+                completer.setCompletionMode(QCompleter.PopupCompletion)
+                self.optionalFundCodeTxt.setCompleter(completer)
+                FundUpdate(self).update(sys.argv)
+            except Exception as e:
+                print("设置自动补全失败：" + str(e))
+        else:
+            print("系统已经初始化完成")
 
     def scheduler_job(self):
-        self.trayIcon.showMessage(FundConfig.APP_NAME, '已结 14:50 了，快去加仓', self.icon)
+        self.trayIcon.showMessage(FundConfig.APP_NAME, '已结 14:50 了，快去加仓吧！', self.icon)
 
     def init_slot(self):
         self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))
@@ -116,23 +119,21 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.optionalTable.doubleClicked.connect(self.fund_double_clicked)
         # self.settingBtn.clicked.connect(self.setting_btn_clicked)
         self.dbSourceCob.currentIndexChanged.connect(self.db_source_changed)
-
         self.settingLabel.clicked.connect(self.setting_btn_clicked)
 
     def db_source_changed(self, index):
-        if self.firstStart: return
+        if not self.is_start_done: return
         FundConfig.DB_SWITCH = DBSource(index)
         self.fundConfigOrigin['source'] = index
         self.write_local_config()
         self.refresh_btn_clicked()
-        # self.refresh_btn_clicked(True)
 
     def timer_refresh(self):
         if not FundConfig.AUTO_REFRESH_ENABLE: return
         # 交易日15:30后自动关闭定时刷新
         nowTime = datetime.datetime.now()
         print(nowTime)
-        if is_workday(nowTime) and judge_time('9:20:00') and not judge_time('15:20:00'):
+        if is_workday(nowTime) and judge_time('09:20:00') and not judge_time('15:20:00'):
             print('timer_refresh')
             if self.tabWidget.currentIndex() == 0:
                 self.positionRefreshBtn.setText('自动刷新...')
@@ -140,8 +141,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             else:
                 self.optionalRefreshBtn.setText('自动刷新...')
                 self.refresh_btn_clicked(True)
-        print('timer_refresh passed')
-        # self.trayIcon.showMessage(FundConfig.APP_NAME, '定时刷新', self.icon)
+        else:
+            print('timer_refresh passed')
 
     def refresh_btn_clicked(self, isOptional: bool = False):
         print('refresh_btn_click')
@@ -456,6 +457,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         holdAmount = 0
         worthDate = ''
         expectWorthDate = ''
+        self.all_fund_settled_cnt = 0
         for index, item in enumerate(ret):
             print(index, item)
             fundCode = item['code']
@@ -554,12 +556,13 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
             checkTip = ''
             netWorthFloat = float(netWorth)
             # 当日净值已更新
-            if item['netWorthDate'] == item['expectWorthDate'][:10]:
+            if get_or_default(item['expectWorthDate']) != '0' and item['netWorthDate'] == item['expectWorthDate'][:10]:
                 lastDayTime = self.fundCrawler.get_last_work_day(item['netWorthDate'])
                 lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode, lastDayTime)['netWorth']
                 lastDayNetWorthFloat = float(lastDayNetWorth)
                 expectIncome = (netWorthFloat - lastDayNetWorthFloat) * fundHoldUnits
                 checkTip = '√'  # 已结算标记
+                self.all_fund_settled_cnt = self.all_fund_settled_cnt + 1
             else:
                 expectWorthFloat = float(item['expectWorth'])
                 expectIncome = (expectWorthFloat - netWorthFloat) * fundHoldUnits
@@ -577,7 +580,8 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.worthDateTxt.setText(worthDate[:16])
 
         # 计算今日收益
-        incomeTxt = '预估收益：{}'.format(round(todayExpectIncome, 2))
+        today_income_flag = '√' if self.all_fund_settled_cnt == len(ret) else ''
+        incomeTxt = '预估收益：{} {}'.format(today_income_flag, round(todayExpectIncome, 2))
         incomeTxtColor = get_color(todayExpectIncome, 'style')
         self.incomeTxt.setText(incomeTxt)
         self.incomeTxt.setStyleSheet("margin-right:5px;" + incomeTxtColor)
@@ -594,6 +598,7 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.holdAmount.setText(holdAmountTxt)
         # self.holdIncomeTxt.setStyleSheet(self.holdIncomeTxt.styleSheet() + totalIncomeTxtColor)
 
+        self.positionTable.horizontalHeader().update()
         self.positionTable.viewport().update()
 
     def refresh_optional_data(self, ret: list = None):

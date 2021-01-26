@@ -8,4 +8,7 @@
   <qresource prefix="/icon/macos">
     <file>icon_mac.icns</file>
   </qresource>
+  <qresource prefix="/icon/info">
+    <file>info.png</file>
+  </qresource>
 </RCC>

@@ -252,7 +252,7 @@ class FundCrawler:
                 'deviceid': str(uuid.uuid4()),
                 'Fcodes': ','.join(fundCodes)
             }
-            resp = requests.get(url, headers=headers, params=params)
+            resp = self.http_get(url, headers=headers, params=params)
             resp_json = resp.json()
             for item in resp_json['Datas']:
                 data.append({

@@ -1,4 +1,6 @@
 import datetime
+import time
+
 from chinese_calendar import get_workdays
 
 from typing import List
@@ -56,11 +58,11 @@ def get_last_trading_day(type: str):
 
 
 def judge_time(target_time: str):
-    nowTime = datetime.datetime.now()
-    hour = int(target_time.split(':')[0])
-    minute = int(target_time.split(':')[1])
-    seconds = int(target_time.split(':')[2])
-    return nowTime.hour >= hour and nowTime.minute >= minute and nowTime.second >= seconds
+    now_date = time.strftime('%Y-%m-%d')
+    now_time_stamp = time.time()
+    target_time = '{} {}'.format(now_date, target_time)
+    target_time_stamp = time.mktime(time.strptime(target_time, '%Y-%m-%d %H:%M:%S'))
+    return now_time_stamp >= target_time_stamp
 
 
 def get_or_default(string, default='0'):
@@ -74,3 +76,9 @@ def get_or_default(string, default='0'):
     except Exception as e:
         print('转换值异常' + str(e))
         return default
+
+
+def compare_version(current_version: str, latest_version: str):
+    cur_ver = current_version.strip().replace('.', '')
+    lat_ver = latest_version.strip().replace('.', '')
+    return int(cur_ver) < int(lat_ver)
