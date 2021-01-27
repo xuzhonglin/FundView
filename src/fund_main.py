@@ -6,31 +6,31 @@ import sys
 import uuid
 from datetime import datetime
 
-from PyQt5.QtCore import Qt, QModelIndex, QTimer
+from PyQt5.QtCore import Qt, QModelIndex, QTimer, QCoreApplication
 from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QPalette, QBrush, QColor, QIcon
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, \
-    QApplication, QMessageBox, QCompleter, QSystemTrayIcon
+    QApplication, QMessageBox, QCompleter, QSystemTrayIcon, QAction
 from chinese_calendar import is_workday
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from fund_update import FundUpdate
-from src.cloudSync import CloudSync
-from src.fundConfig import FundConfig, get_color
-from src.fundEnum import DBSource, ColorSwitch
+from src.fund_update import FundUpdate
+from src.fund_cloud_sync import CloudSync
+from src.fund_config import FundConfig, get_color
+from src.fund_enum import DBSource, ColorSwitch
 from ui.fundChartMain import FundChartMain
 from ui.fundSettingDialog import Ui_FundSettingDialog
-from src.myThread import MyThread
+from src.my_thread import MyThread
 from ui.addFundDialog import Ui_AddFundDialog
 from ui.fundViewForm import Ui_MainWindow
 from ui.fundImageDialog import Ui_FundImageDialog
 from ui.fundDealDialog import Ui_FundDealDialog
 from ui.fundTableMain import FundTableMain
-from src.fundCrawler import FundCrawler
-from src.fundUtils import *
+from src.fund_crawler import FundCrawler
+from src.fund_utils import *
 import traceback
 
 
-class FundViewMain(QMainWindow, Ui_MainWindow):
+class FundMain(QMainWindow, Ui_MainWindow):
     scheduler = BackgroundScheduler()
 
     def __init__(self, parent: QApplication):
@@ -78,9 +78,39 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
         self.thread.StartDone.connect(self.start_done)
 
     def init_tray_icon(self):
+
+        about_action = QAction("关于", self)
+        open_action = QAction("打开", self)
+        quit_action = QAction("退出", self)
+
+        tray_icon_menu = QMenu(self)
+        tray_icon_menu.addAction(about_action)
+        tray_icon_menu.addSeparator()
+        tray_icon_menu.addAction(open_action)
+        tray_icon_menu.addAction(quit_action)
+
+        quit_action.triggered.connect(QCoreApplication.quit)
+        open_action.triggered.connect(self.showNormal)
+        about_action.triggered.connect(self.show_about)
+
         self.trayIcon.setIcon(self.icon)
         self.trayIcon.setToolTip("韭菜盒子")
+        self.trayIcon.setContextMenu(tray_icon_menu)
+        self.trayIcon.activated.connect(lambda reason: self.tray_icon_activated(reason))
         self.trayIcon.show()
+
+    def show_about(self):
+        msg = QMessageBox(self)
+        msg.setWindowTitle("关于程序")
+        msg.setText("有了韭菜盒子从此不在做韭菜\t\n当前版本：{} \nCopyright © 2020-2021 colinxu".format(
+            FundConfig.VERSION))
+        msg.setIconPixmap(QPixmap(":/icon/windows/icon_windows.ico"))
+        msg.addButton("确定", QMessageBox.ActionRole)
+        msg.exec()
+
+    def tray_icon_activated(self, reason):
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.showNormal()
 
     def start_done(self):
         if not self.is_start_done:
@@ -100,14 +130,18 @@ class FundViewMain(QMainWindow, Ui_MainWindow):
                 # QCompleter.UnfilteredPopupCompletion
                 completer.setCompletionMode(QCompleter.PopupCompletion)
                 self.optionalFundCodeTxt.setCompleter(completer)
-                FundUpdate(self).update(sys.argv)
+                # 检查更新
+                if FundConfig.PLATFORM == 'win32':
+                    FundUpdate(self).update(sys.argv)
+                else:
+                    pass
             except Exception as e:
                 print("设置自动补全失败：" + str(e))
         else:
             print("系统已经初始化完成")
 
     def scheduler_job(self):
-        self.trayIcon.showMessage(FundConfig.APP_NAME, '已结 14:50 了，快去加仓吧！', self.icon)
+        self.trayIcon.showMessage(FundConfig.APP_NAME, '已经 14:50 了，快去加仓吧！', self.icon)
 
     def init_slot(self):
         self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))

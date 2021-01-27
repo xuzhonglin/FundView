@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import QMainWindow, QGraphicsProxyWidget, QVBoxLayout, QLab
     QGraphicsLineItem, QApplication, QDialog
 
 from ui.fundChartDialog import Ui_FundChartDialog
-from src.fundCrawler import FundCrawler
-from src.fundUtils import *
+from src.fund_crawler import FundCrawler
+from src.fund_utils import *
 # import jpype
 import traceback
 

@@ -10,9 +10,9 @@ import requests
 from bs4 import BeautifulSoup
 from chinese_calendar import is_workday
 
-from src.fundEnum import DBSource
-from src.fundConfig import FundConfig
-from src.fundCrawlerAnt import FundAnt
+from src.fund_enum import DBSource
+from src.fund_config import FundConfig
+from src.fund_crawler_ant import FundAnt
 
 
 class FundCrawler:

@@ -1,12 +1,15 @@
+import os
 import sys
 
-from src.fundEnum import DBSource, ColorSwitch, _FundColor
+from src.fund_enum import DBSource, ColorSwitch, _FundColor
 
 
 class FundConfig:
     APP_NAME = '韭菜盒子'
 
-    VERSION = '1.1.4'
+    VERSION = '1.1.5'
+
+    CUR_PID = os.getpid()
 
     UPDATE_URL = 'http://api.colinxu.cn/leekbox/update.json'
 

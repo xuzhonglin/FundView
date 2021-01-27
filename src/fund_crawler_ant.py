@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 import requests
-from src.fundConfig import FundConfig
+from src.fund_config import FundConfig
 
 
 class FundAnt:

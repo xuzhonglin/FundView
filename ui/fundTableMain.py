@@ -3,7 +3,7 @@ from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem
 
 from ui.fundTableDialog import Ui_FundTableDialog
-from src.fundCrawler import FundCrawler
+from src.fund_crawler import FundCrawler
 # import jpype
 import traceback
 
