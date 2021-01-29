@@ -70,6 +70,7 @@ class FundUpdate(QObject):
                 dialog.exec_()
             else:
                 print('暂无更新')
+                return 0
 
     def dl_update(self, dialog: Ui_FundUpdateDialog, update_info: dict):
         dialog.update_now_btn.setEnabled(False)

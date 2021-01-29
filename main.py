@@ -10,7 +10,8 @@
 import sys, os
 
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtNetwork import QLocalSocket, QLocalServer
+from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from src.fund_config import FundConfig
 from src.fund_main import FundMain
@@ -24,14 +25,37 @@ if __name__ == '__main__':
         pass
 
     app = QApplication(sys.argv)
-    w = FundMain(app)
 
-    # 设置全局字体
-    font = QFont(FundConfig.FONT_NAME, FundConfig.FONT_SIZE)
-    app.setFont(font)
+    serverName = 'LeekBox'
+    socket = QLocalSocket()
+    socket.connectToServer(serverName)
 
-    w.setWindowTitle(FundConfig.APP_NAME + ' ' + FundConfig.VERSION)
-    w.setWindowIcon(QIcon(':/icon/windows/icon_windows.ico'))
-    w.show()
+    # 如果连接成功，表明server已经存在，当前已有实例在运行
+    if socket.waitForConnected(500):
+        sys.exit(app.quit())
 
-    sys.exit(app.exec_())
+    # 没有实例运行，创建服务器
+    localServer = QLocalServer()
+    localServer.listen(serverName)
+
+    try:
+        w = FundMain(app)
+
+        # 设置全局字体
+        font = QFont(FundConfig.FONT_NAME, FundConfig.FONT_SIZE)
+        app.setFont(font)
+
+        w.setWindowTitle(FundConfig.APP_NAME + ' ' + FundConfig.VERSION)
+        w.setWindowIcon(QIcon(':/icon/windows/icon_windows.ico'))
+        w.show()
+
+        # 有新client连接，激活窗口
+        localServer.newConnection.connect(lambda: w.showNormal())
+
+        sys.exit(app.exec_())
+
+    except Exception as e:
+        print(e)
+        QMessageBox.critical(None, '提醒', '启动异常，{}\t\n'.format(e))
+    finally:
+        localServer.close()

@@ -6,24 +6,19 @@
             "fundUnits": 277.91
         },
         {
-            "fundCode": "007020",
-            "fundCost": 1.0502,
-            "fundUnits": 491.39
-        },
-        {
             "fundCode": "161725",
-            "fundCost": 1.2026,
-            "fundUnits": 1428.4
+            "fundCost": 1.2607,
+            "fundUnits": 900.0
         },
         {
             "fundCode": "009777",
-            "fundCost": 1.0,
-            "fundUnits": 290.68
+            "fundCost": 1.0658,
+            "fundUnits": 741.86
         },
         {
             "fundCode": "260108",
             "fundCost": 2.7208,
-            "fundUnits": 808.58
+            "fundUnits": 600.0
         },
         {
             "fundCode": "110011",
@@ -37,18 +32,28 @@
         },
         {
             "fundCode": "004854",
-            "fundCost": 1.311,
-            "fundUnits": 1601.8
+            "fundCost": 1.3101,
+            "fundUnits": 1908.24
         },
         {
             "fundCode": "540008",
-            "fundCost": 2.9331,
-            "fundUnits": 170.47
+            "fundCost": 2.9605,
+            "fundUnits": 337.78
         },
         {
             "fundCode": "470006",
-            "fundCost": 2.9705,
-            "fundUnits": 314.85
+            "fundCost": 2.9884,
+            "fundUnits": 466.89
+        },
+        {
+            "fundCode": "002190",
+            "fundCost": 2.7534,
+            "fundUnits": 363.19
+        },
+        {
+            "fundCode": "005693",
+            "fundCost": 1.2031,
+            "fundUnits": 581.82
         }
     ],
     "optional": [
@@ -75,7 +80,12 @@
         "001595",
         "005693",
         "470006",
-        "001606"
+        "001606",
+        "003494",
+        "002084",
+        "005827",
+        "001838",
+        "002079"
     ],
     "source": 1,
     "fontName": "微软雅黑",

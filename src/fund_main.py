@@ -2,7 +2,6 @@ import _thread
 import json
 import os, requests
 import sys
-import sys
 import uuid
 from datetime import datetime
 
@@ -87,12 +86,14 @@ class FundMain(QMainWindow, Ui_MainWindow):
         初始化系统状态栏
         :return:
         """
-        about_action = QAction("关于", self)
-        open_action = QAction("打开", self)
-        quit_action = QAction("退出", self)
+        about_action = QAction("关于程序", self)
+        update_action = QAction("检查更新", self)
+        open_action = QAction("显示窗口", self)
+        quit_action = QAction("退出程序", self)
 
         tray_icon_menu = QMenu(self)
         tray_icon_menu.addAction(about_action)
+        tray_icon_menu.addAction(update_action)
         tray_icon_menu.addSeparator()
         tray_icon_menu.addAction(open_action)
         tray_icon_menu.addAction(quit_action)
@@ -100,6 +101,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         quit_action.triggered.connect(QCoreApplication.quit)
         open_action.triggered.connect(self.showNormal)
         about_action.triggered.connect(self.show_about)
+        update_action.triggered.connect(self.check_update)
 
         self.trayIcon.setIcon(self.icon)
         self.trayIcon.setToolTip("韭菜盒子")
@@ -115,6 +117,12 @@ class FundMain(QMainWindow, Ui_MainWindow):
         msg.setIconPixmap(QPixmap(":/icon/windows/icon_windows.ico"))
         msg.addButton("确定", QMessageBox.ActionRole)
         msg.exec()
+
+    def check_update(self):
+        res = FundUpdate(self).update(sys.argv)
+        if res is not None:
+            self.showNormal()
+            QMessageBox.information(self, '提示', '暂无更新，已是最新版本！\t')
 
     def tray_icon_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
@@ -1107,6 +1115,16 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 pass
             elif curTabIndex == 1:
                 self.optional_add_fund_clicked()
+
+    def closeEvent(self, event):
+        """
+        重写closeEvent方法，实现dialog窗体关闭时执行一些代码
+        :param event: close()触发的事件
+        :return: None
+        """
+        print('窗口隐藏')
+        event.ignore()
+        self.hide()
 
     def except_hook(self, excType, excValue, traceBack):
         """
