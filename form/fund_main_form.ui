@@ -51,7 +51,7 @@
           </sizepolicy>
          </property>
          <attribute name="title">
-          <string>持仓</string>
+          <string>持仓基金</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout">
           <property name="leftMargin">
@@ -146,8 +146,11 @@
                 <height>0</height>
                </size>
               </property>
+              <property name="currentText">
+               <string>天天基金</string>
+              </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <item>
                <property name="text">
@@ -190,7 +193,7 @@ border-radius:5px;
                <string/>
               </property>
               <property name="pixmap">
-               <pixmap resource="fundViewResource.qrc">:/icon/setting/setting.png</pixmap>
+               <pixmap resource="fund_resource.qrc">:/icon/setting/setting.png</pixmap>
               </property>
               <property name="scaledContents">
                <bool>false</bool>
@@ -272,7 +275,7 @@ border-radius:5px;
            </spacer>
           </item>
           <item row="0" column="2">
-           <widget class="QLabel" name="worthDateTxt">
+           <widget class="QLabel" name="position_refresh_time_txt">
             <property name="text">
              <string>2020-11-30 12:20:20</string>
             </property>
@@ -305,7 +308,7 @@ border-radius:5px;
         </widget>
         <widget class="QWidget" name="tab_2">
          <attribute name="title">
-          <string>自选</string>
+          <string>自选基金</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout_3">
           <property name="leftMargin">
@@ -320,33 +323,7 @@ border-radius:5px;
           <property name="bottomMargin">
            <number>10</number>
           </property>
-          <item row="0" column="0">
-           <widget class="QPushButton" name="optionalRefreshBtn">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>刷新</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="1" column="0" colspan="4">
+          <item row="1" column="0" colspan="6">
            <widget class="QTableWidget" name="optionalTable">
             <property name="editTriggers">
              <set>QAbstractItemView::NoEditTriggers</set>
@@ -363,6 +340,19 @@ border-radius:5px;
            </widget>
           </item>
           <item row="0" column="3">
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="0" column="5">
            <widget class="QPushButton" name="addOptionalFundBtn">
             <property name="minimumSize">
              <size>
@@ -375,7 +365,30 @@ border-radius:5px;
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
+          <item row="0" column="0">
+           <widget class="QPushButton" name="optionalRefreshBtn">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>刷新</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="label_7">
+            <property name="styleSheet">
+             <string notr="true">margin-left:5px</string>
+            </property>
+            <property name="text">
+             <string>刷新时间：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
            <widget class="QLineEdit" name="optionalFundCodeTxt">
             <property name="minimumSize">
              <size>
@@ -393,10 +406,17 @@ border-radius:5px;
              <string notr="true">padding-left:3px;</string>
             </property>
             <property name="placeholderText">
-             <string>基金代码</string>
+             <string>基金代码或名称</string>
             </property>
             <property name="clearButtonEnabled">
              <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="optional_refresh_time_txt">
+            <property name="text">
+             <string>2020-11-30 12:20:20</string>
             </property>
            </widget>
           </item>
@@ -700,11 +720,11 @@ border-radius:5px;
   <customwidget>
    <class>ClickableLabel</class>
    <extends>QLabel</extends>
-   <header>ui.ClickableQLabel.h</header>
+   <header>form.clickable_label.h</header>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="fundViewResource.qrc"/>
+  <include location="fund_resource.qrc"/>
  </resources>
  <connections/>
 </ui>

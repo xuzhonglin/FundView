@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'fundImageDialog.ui'
+# Form implementation generated from reading form file 'fundImageDialog.form'
 #
 # Created by: PyQt5 UI code generator 5.15.2
 #

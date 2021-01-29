@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'addFundDialog.ui'
+# Form implementation generated from reading ui file 'fund_add_dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.2
 #
@@ -35,18 +35,21 @@ class Ui_AddFundDialog(object):
         self.Label.setObjectName("Label")
         self.gridLayout_2.addWidget(self.Label, 0, 0, 1, 1)
         self.fundCode = QtWidgets.QLineEdit(AddFundDialog)
+        self.fundCode.setClearButtonEnabled(True)
         self.fundCode.setObjectName("fundCode")
         self.gridLayout_2.addWidget(self.fundCode, 0, 1, 1, 1)
         self.Label_2 = QtWidgets.QLabel(AddFundDialog)
         self.Label_2.setObjectName("Label_2")
         self.gridLayout_2.addWidget(self.Label_2, 1, 0, 1, 1)
         self.fundCost = QtWidgets.QLineEdit(AddFundDialog)
+        self.fundCost.setClearButtonEnabled(True)
         self.fundCost.setObjectName("fundCost")
         self.gridLayout_2.addWidget(self.fundCost, 1, 1, 1, 1)
         self.Label_3 = QtWidgets.QLabel(AddFundDialog)
         self.Label_3.setObjectName("Label_3")
         self.gridLayout_2.addWidget(self.Label_3, 2, 0, 1, 1)
         self.fundUnits = QtWidgets.QLineEdit(AddFundDialog)
+        self.fundUnits.setClearButtonEnabled(True)
         self.fundUnits.setObjectName("fundUnits")
         self.gridLayout_2.addWidget(self.fundUnits, 2, 1, 1, 1)
         self.gridLayout.addLayout(self.gridLayout_2, 0, 0, 1, 3)
@@ -67,5 +70,8 @@ class Ui_AddFundDialog(object):
         self.saveBtn.setText(_translate("AddFundDialog", "保存"))
         self.saveBtn.setShortcut(_translate("AddFundDialog", "Return"))
         self.Label.setText(_translate("AddFundDialog", "基金代码"))
+        self.fundCode.setPlaceholderText(_translate("AddFundDialog", "基金代码或名称"))
         self.Label_2.setText(_translate("AddFundDialog", "持仓成本"))
+        self.fundCost.setPlaceholderText(_translate("AddFundDialog", "基金持仓成本价"))
         self.Label_3.setText(_translate("AddFundDialog", "持有份额"))
+        self.fundUnits.setPlaceholderText(_translate("AddFundDialog", "基金持有份额"))

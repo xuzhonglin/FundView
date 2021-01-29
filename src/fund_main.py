@@ -17,14 +17,14 @@ from src.fund_update import FundUpdate
 from src.fund_cloud_sync import CloudSync
 from src.fund_config import FundConfig, get_color
 from src.fund_enum import DBSource, ColorSwitch
-from ui.fundChartMain import FundChartMain
-from ui.fundSettingDialog import Ui_FundSettingDialog
+from form.fund_chart_main import FundChartMain
+from form.fund_setting_dialog import Ui_FundSettingDialog
 from src.my_thread import MyThread
-from ui.addFundDialog import Ui_AddFundDialog
-from ui.fundViewForm import Ui_MainWindow
-from ui.fundImageDialog import Ui_FundImageDialog
-from ui.fundDealDialog import Ui_FundDealDialog
-from ui.fundTableMain import FundTableMain
+from form.fund_add_dialog import Ui_AddFundDialog
+from form.fund_main_form import Ui_MainWindow
+from form.fund_image_dialog import Ui_FundImageDialog
+from form.fund_deal_dialog import Ui_FundDealDialog
+from form.fund_table_main import FundTableMain
 from src.fund_crawler import FundCrawler
 from src.fund_utils import *
 import traceback
@@ -35,7 +35,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
     def __init__(self, parent: QApplication):
         super().__init__()
-        sys.excepthook = self.exceptHook
+        sys.excepthook = self.except_hook
         self.setupUi(self)
         self.parentWindow = parent
         self.init_slot()
@@ -51,6 +51,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.trayIcon = QSystemTrayIcon(self)
         self.icon = QIcon(":/icon/windows/icon_windows.ico")
         self.all_fund_settled_cnt = 0
+        self.completer = QCompleter([])
 
         self.timer = QTimer()  # 初始化定时器
         self.timer.timeout.connect(self.timer_refresh)
@@ -63,6 +64,10 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.tabWidget.setCurrentIndex(0)
 
     def start_init(self):
+        """
+        初始化函数
+        :return:
+        """
         self.read_local_config()
         self.parse_fund_config()
         self.init_position_table()
@@ -78,7 +83,10 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.thread.StartDone.connect(self.start_done)
 
     def init_tray_icon(self):
-
+        """
+        初始化系统状态栏
+        :return:
+        """
         about_action = QAction("关于", self)
         open_action = QAction("打开", self)
         quit_action = QAction("退出", self)
@@ -123,13 +131,13 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 self.init_tray_icon()
             try:
                 # 设置自选基金自动补全
-                completer = QCompleter(self.fundCrawler.get_all_fund())
+                self.completer = QCompleter(self.fundCrawler.get_all_fund())
                 # 设置匹配模式  有三种： Qt.MatchStartsWith 开头匹配（默认）  Qt.MatchContains 内容匹配  Qt.MatchEndsWith 结尾匹配
-                completer.setFilterMode(Qt.MatchContains)
+                self.completer.setFilterMode(Qt.MatchContains)
                 # 设置补全模式  有三种： QCompleter.PopupCompletion（默认）  QCompleter.InlineCompletion
                 # QCompleter.UnfilteredPopupCompletion
-                completer.setCompletionMode(QCompleter.PopupCompletion)
-                self.optionalFundCodeTxt.setCompleter(completer)
+                self.completer.setCompletionMode(QCompleter.PopupCompletion)
+                self.optionalFundCodeTxt.setCompleter(self.completer)
                 # 检查更新
                 if FundConfig.PLATFORM == 'win32':
                     FundUpdate(self).update(sys.argv)
@@ -141,9 +149,17 @@ class FundMain(QMainWindow, Ui_MainWindow):
             print("系统已经初始化完成")
 
     def scheduler_job(self):
+        """
+        定时任务
+        :return:
+        """
         self.trayIcon.showMessage(FundConfig.APP_NAME, '已经 14:50 了，快去加仓吧！', self.icon)
 
     def init_slot(self):
+        """
+        舒适化槽函数
+        :return:
+        """
         self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))
         self.addFundBtn.clicked.connect(lambda: self.fund_add_edit_clicked(True))
         self.editFundBtn.clicked.connect(lambda: self.fund_add_edit_clicked(False))
@@ -340,32 +356,32 @@ class FundMain(QMainWindow, Ui_MainWindow):
         # elif action == menu6:
         #     title = '加仓：' + selectedItem[0].text()
         #     dialog = QDialog(self.centralwidget)
-        #     ui = Ui_FundDealDialog()
-        #     ui.setupUi(dialog)
+        #     form = Ui_FundDealDialog()
+        #     form.setupUi(dialog)
         #
-        #     ui.saleUnitsLabel.setParent(None)
-        #     ui.saleUnitsTxt.setParent(None)
-        #     ui.allUnitsLabel.setParent(None)
-        #     ui.allUnitsTxt.setParent(None)
-        #     ui.saleRateLayout.setParent(None)
+        #     form.saleUnitsLabel.setParent(None)
+        #     form.saleUnitsTxt.setParent(None)
+        #     form.allUnitsLabel.setParent(None)
+        #     form.allUnitsTxt.setParent(None)
+        #     form.saleRateLayout.setParent(None)
         #
-        #     for i in range(ui.saleRateLayout.count()):
-        #         ui.saleRateLayout.itemAt(i).widget().hide()
+        #     for i in range(form.saleRateLayout.count()):
+        #         form.saleRateLayout.itemAt(i).widget().hide()
         #
-        #     ui.fundCodeTxt.setText(fundCode)
-        #     ui.fundCodeTxt.setEnabled(False)
+        #     form.fundCodeTxt.setText(fundCode)
+        #     form.fundCodeTxt.setEnabled(False)
         #     netWorth = selectedItem[7].text().split('(')[0]
-        #     ui.netWorthTxt.setText(netWorth)
+        #     form.netWorthTxt.setText(netWorth)
         #
         #     fundInfo = self.fundCrawler.get_fund_info(fundCode)
-        #     ui.netWorthTxt.setText(fundInfo['DWJZ'])
-        #     ui.buyRateTxt.setText(fundInfo['RATE'])
+        #     form.netWorthTxt.setText(fundInfo['DWJZ'])
+        #     form.buyRateTxt.setText(fundInfo['RATE'])
         #
         #     dialog.accepted.connect(
         #         lambda: self.buy_sale_fund(fundCode, True,
-        #                                    netWorth=ui.netWorthTxt.text(),
-        #                                    buyAmount=ui.buyAmountTxt.text(),
-        #                                    buyRate=ui.buyRateTxt.text(),
+        #                                    netWorth=form.netWorthTxt.text(),
+        #                                    buyAmount=form.buyAmountTxt.text(),
+        #                                    buyRate=form.buyRateTxt.text(),
         #                                    selectedItem=selectedItem))
         #     dialog.setFixedHeight(dialog.height() - 30 * 3 + 10)
         #     dialog.setWindowTitle(title)
@@ -373,28 +389,28 @@ class FundMain(QMainWindow, Ui_MainWindow):
         # elif action == menu7:
         #     title = '减仓：' + selectedItem[0].text()
         #     dialog = QDialog(self.centralwidget)
-        #     ui = Ui_FundDealDialog()
-        #     ui.setupUi(dialog)
+        #     form = Ui_FundDealDialog()
+        #     form.setupUi(dialog)
         #
-        #     ui.netWorthLabel.setParent(None)
-        #     ui.netWorthTxt.setParent(None)
-        #     ui.buyRateLabel.setParent(None)
-        #     ui.buyRateTxt.setParent(None)
-        #     ui.buyAmountLabel.setParent(None)
-        #     ui.buyAmountTxt.setParent(None)
+        #     form.netWorthLabel.setParent(None)
+        #     form.netWorthTxt.setParent(None)
+        #     form.buyRateLabel.setParent(None)
+        #     form.buyRateTxt.setParent(None)
+        #     form.buyAmountLabel.setParent(None)
+        #     form.buyAmountTxt.setParent(None)
         #
         #     allUnits = selectedItem[3].text()
-        #     ui.fundCodeTxt.setText(fundCode)
-        #     ui.fundCodeTxt.setEnabled(False)
-        #     ui.allUnitsTxt.setText(allUnits)
-        #     ui.allUnitsTxt.setEnabled(False)
+        #     form.fundCodeTxt.setText(fundCode)
+        #     form.fundCodeTxt.setEnabled(False)
+        #     form.allUnitsTxt.setText(allUnits)
+        #     form.allUnitsTxt.setEnabled(False)
         #
         #     allUnitsFloat = float(allUnits)
         #
-        #     ui.rate20Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.2, '.2f')))
-        #     ui.rate30Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.3, '.2f')))
-        #     ui.rate50Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat * 0.5, '.2f')))
-        #     ui.rate100Btn.clicked.connect(lambda: ui.saleUnitsTxt.setText(format(allUnitsFloat, '.2f')))
+        #     form.rate20Btn.clicked.connect(lambda: form.saleUnitsTxt.setText(format(allUnitsFloat * 0.2, '.2f')))
+        #     form.rate30Btn.clicked.connect(lambda: form.saleUnitsTxt.setText(format(allUnitsFloat * 0.3, '.2f')))
+        #     form.rate50Btn.clicked.connect(lambda: form.saleUnitsTxt.setText(format(allUnitsFloat * 0.5, '.2f')))
+        #     form.rate100Btn.clicked.connect(lambda: form.saleUnitsTxt.setText(format(allUnitsFloat, '.2f')))
         #
         #     dialog.setFixedHeight(dialog.height() - 30 * 3 + 10)
         #     dialog.setWindowTitle(title)
@@ -611,7 +627,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
             totalIncome = totalIncome + (netWorthFloat - fundHold['fundCost']) * fundHold['fundUnits']
             holdAmount = holdAmount + fundHold['fundCost'] * fundHold['fundUnits']
 
-        self.worthDateTxt.setText(worthDate[:16])
+        # 刷新时间
+        refreshTime = time.strftime('%Y-%m-%d %H:%M:%S')
+        self.position_refresh_time_txt.setText(refreshTime)
 
         # 计算今日收益
         today_income_flag = '√' if self.all_fund_settled_cnt == len(ret) else ''
@@ -736,6 +754,10 @@ class FundMain(QMainWindow, Ui_MainWindow):
             else:
                 self.optionalTable.setItem(index, 9, QTableWidgetItem("-"))
 
+        # 刷新时间
+        refreshTime = time.strftime('%Y-%m-%d %H:%M:%S')
+        self.optional_refresh_time_txt.setText(refreshTime)
+
         self.optionalTable.viewport().update()
 
     def fund_add_edit_clicked(self, isAddFlag):
@@ -750,7 +772,11 @@ class FundMain(QMainWindow, Ui_MainWindow):
             ui.fundCost.setText(selectedItem[2].text())
             ui.fundUnits.setText(selectedItem[3].text())
             ui.fundCode.setEnabled(False)
+            ui.fundCode.setClearButtonEnabled(False)
             title = title + '：' + selectedItem[0].text()
+        else:
+            # 设置自动补全
+            ui.fundCode.setCompleter(self.completer)
 
         dialog.accepted.connect(
             lambda: self.edit_fund_data(ui.fundCode.text(), ui.fundCost.text(), ui.fundUnits.text()))
@@ -788,10 +814,18 @@ class FundMain(QMainWindow, Ui_MainWindow):
         print(fundCode, fundCost, fundUnits)
         print(fundCode, type(fundCost), type(fundUnits))
 
+        if fundCode == '' or fundCode is None:
+            QMessageBox.warning(self, '提示', '基金代码输入不正确！')
+            return
+
         if fundCost is None or fundCost == '':
             fundCost = 0
         if fundUnits is None or fundUnits == '':
             fundUnits = 0
+
+        # 对于自动补全带出的做处理
+        if '-' in fundCode:
+            fundCode = fundCode.split('-')[0]
 
         self.positionFund[fundCode] = {
             "fundCode": fundCode,
@@ -1074,7 +1108,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             elif curTabIndex == 1:
                 self.optional_add_fund_clicked()
 
-    def exceptHook(self, excType, excValue, traceBack):
+    def except_hook(self, excType, excValue, traceBack):
         """
         全局异常捕捉
         :param excType:
@@ -1085,23 +1119,3 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
         err_msg = ''.join(traceback.format_exception(excType, excValue, traceBack))
         QMessageBox.critical(self, '异常', err_msg)
-
-    def setTheme(self):
-        selectedColor = '#2b2b2b'
-        palette = QPalette()
-        # palette.setBrush(QPalette.Background, QBrush(QColor('#2b2b2b')))
-        palette.setBrush(QPalette.Foreground, QBrush(QColor('#2b2b2b')))
-        for widget in self.parentWindow.allWidgets():
-            # widget.setPalette(palette)
-            widget.setStyleSheet("background-color:#2b2b2b;color:#adafb1")
-
-        self.tabWidget.setStyleSheet("QTabBar::tab{background-color:#2b2b2b;color:#adafb1};")
-        # self.tab.setStyleSheet("background-color:#2b2b2b;color:#adafb1")
-        self.positionTable.setAlternatingRowColors(False)
-        self.optionalTable.setAlternatingRowColors(False)
-        self.positionTable.setStyleSheet("QTableWidget::item:selected { background-color: #214283 }")
-        self.positionTable.horizontalHeader().setStyleSheet(
-            "QHeaderView::section {background-color: #2b2b2b;color: #adafb1;}")
-        self.optionalTable.setStyleSheet("QTableWidget::item:selected { background-color: #214283 }")
-        self.optionalTable.horizontalHeader().setStyleSheet(
-            "QHeaderView::section {background-color: #2b2b2b;color: #adafb1;}")

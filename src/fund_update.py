@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 from src.fund_config import FundConfig
 from src.fund_utils import compare_version
-from ui.fund_update_dialog import Ui_FundUpdateDialog
+from form.fund_update_dialog import Ui_FundUpdateDialog
 
 
 class FundUpdate(QObject):

@@ -1,5 +1,3 @@
-import json
-import os, requests
 import sys
 from math import ceil, floor
 
@@ -7,20 +5,10 @@ from PyQt5.QtChart import QCategoryAxis, QChart, QLineSeries, QChartView, QLegen
 from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF, QMargins
 from PyQt5.QtGui import QBrush, QColor, QPen, QPainter
 from PyQt5.QtWidgets import QMainWindow, QGraphicsProxyWidget, QVBoxLayout, QLabel, QWidget, QHBoxLayout, \
-    QGraphicsLineItem, QApplication, QDialog
+    QGraphicsLineItem, QApplication, QDialog, QMessageBox
 
-from ui.fundChartDialog import Ui_FundChartDialog
+from form.fund_chart_dialog import Ui_FundChartDialog
 from src.fund_crawler import FundCrawler
-from src.fund_utils import *
-# import jpype
-import traceback
-
-RED_STR = '<span style=" color:#ff0000;">{}</span>'
-GREEN_STR = '<span style=" color:#00aa00;">{}</span>'
-RED = QBrush(QColor('#ff0000'))
-GREEN = QBrush(QColor('#00aa00'))
-STYLE_RED = 'color: rgb(255, 0, 0);'
-STYLE_GREEN = 'color: rgb(0, 170, 0);'
 
 
 class FundChartMain(QMainWindow, Ui_FundChartDialog):
@@ -134,35 +122,20 @@ class ChartView(QChartView):
         self.initChart()
 
     def initChart(self, type: str = 'THREE_MONTH'):
-        # if 'THREE_YEAR' not in self.cacheData:
-        #     dayDate, dayLength = get_last_trading_day('THREE_YEAR')
-        #     tempData = self.FundCrawler.get_fund_performance_ydi(self.fundCode, dayDate)
-        #     self.cacheData['THREE_YEAR'] = tempData['totalNetWorthData']
-        #     self.fundName = tempData['name']
-        #
-        # if type not in self.cacheData:
-        #     dayDate, dayLength = get_last_trading_day(type)
-        #     for index, day in enumerate(reversed(self.cacheData['THREE_YEAR'])):
-        #         if day[0] == dayDate:
-        #             self.cacheData[type] = self.cacheData['THREE_YEAR'][-index - 1:]
-        #             break
 
         if type not in self.cacheData:
             tempData = self.FundCrawler.get_fund_performance_ttt(self.fundCode, type)
             self.cacheData[type] = tempData
 
-        # if type not in self.cacheData:
-        #     dayDate, dayLength = get_last_trading_day(type)
-        #     for index, day in enumerate(reversed(self.cacheData['THREE_YEAR'])):
-        #         if day[0] == dayDate:
-        #             self.cacheData[type] = self.cacheData['THREE_YEAR'][-index - 1:]
-        #             break
-
         data = self.cacheData[type]
+
+        if len(data) == 0:
+            print('渲染异常')
+            QMessageBox.warning(self, '提示', '渲染失败，请稍后重试！')
+            return
 
         self.category = []
         for item in data:
-            # self.category.append(item[0][5:])
             self.category.append(item[0])
         self._chart = QChart(title="业绩走势：{} ({})".format(self.fundName, self.fundCode))
         self._chart.setAcceptHoverEvents(True)
@@ -170,11 +143,6 @@ class ChartView(QChartView):
         self._chart.setAnimationOptions(QChart.SeriesAnimations)
         # 设置图表margin
         self._chart.setMargins(QMargins(20, 20, 35, 20))
-
-        if len(data) == 0:
-            self.close()
-            raise Exception('渲染异常')
-            # self.exex
 
         if len(data[0]) == 4:
             dataList = [[], [], []]
@@ -204,7 +172,7 @@ class ChartView(QChartView):
                 series.append(j, v)
             series.setName(series_name)
             # series.setPointsVisible(True)  # 显示圆点
-            # series.setPointLabelsVisible(True)
+            # series.setPointLabelsVisible(True) #显示数值
             # series.hovered.connect(self.handleSeriesHoverd)  # 鼠标悬停
             self._chart.addSeries(series)
 
@@ -274,18 +242,6 @@ class ChartView(QChartView):
         self.min_y, self.max_y = axisY.min(), axisY.max()
 
     def get_pre_index(self, data):
-        # baseValue = float(data[0][1])
-        # maxValue = 0
-        # minValue = 0
-        # for item in data:
-        #     value = (float(item[1]) - baseValue) / baseValue * 100
-        #     maxValue = max(maxValue, value)
-        #     minValue = min(minValue, value)
-        # # TODO 包含0
-        # print(floor(minValue), ceil(maxValue))
-        # return self.get_seris_y(floor(minValue), ceil(maxValue))
-
-        # baseValue = float(data[0][1])
         maxValue = 0
         minValue = 0
 

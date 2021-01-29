@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'fund_update_dialog.ui'
+# Form implementation generated from reading form file 'fund_update_dialog.form'
 #
 # Created by: PyQt5 UI code generator 5.15.2
 #
@@ -63,4 +63,4 @@ class Ui_FundUpdateDialog(object):
         self.label_3.setText(_translate("FundUpdateDialog", "更新日志："))
         self.version_info_txt.setText(_translate("FundUpdateDialog", "当前版本：1.4.0，最新版本：1.5.0，发布日期：2021年1月26日 "))
         self.label.setText(_translate("FundUpdateDialog", "韭菜盒子有新版本了！是否立即更新？"))
-import ui.fundViewResource_rc
+import form.fund_resource_rc
