@@ -16,6 +16,8 @@ class FundConfig:
     # 平台 darwin/win32
     PLATFORM = sys.platform
 
+    RUN_DIR = os.path.expanduser('~') + '\\.LeekBox'
+
     YDI_URL = 'https://api.yiduu.com/v1'
 
     # https: // api.doctorxiong.club / v1

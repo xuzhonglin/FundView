@@ -21,9 +21,11 @@ class FundChartMain(QMainWindow, Ui_FundChartDialog):
         """
         super().__init__()
         self.setupUi(parent)
+        self.fund_code = fundCode
         self.chart = ChartView(self, fundCode=fundCode, fundName=fundName)
         self.chartLayout.addWidget(self.chart)
         self.init_slot()
+        self.init_period_increase()
 
     def init_slot(self):
         self.oneMonthRadio.toggled.connect(lambda a: self.radio_button_check(a, 'ONE_MONTH'))
@@ -35,6 +37,15 @@ class FundChartMain(QMainWindow, Ui_FundChartDialog):
     def radio_button_check(self, isChecked: bool, type: str):
         if not isChecked: return
         self.chart.initChart(type)
+
+    def init_period_increase(self):
+        fund_crawler = FundCrawler()
+        data = fund_crawler.get_fund_growth(self.fund_code)
+        self.one_month_txt.setText('{}%（{}）'.format(data['lastMonthGrowth'], data['lastMonthGrowthRank']))
+        self.three_month_txt.setText('{}%（{}）'.format(data['lastThreeMonthsGrowth'], data['lastThreeMonthsGrowthRank']))
+        self.six_month_txt.setText('{}%（{}）'.format(data['lastSixMonthsGrowth'], data['lastSixMonthsGrowthRank']))
+        self.one_year_txt.setText('{}%（{}）'.format(data['lastYearGrowth'], data['lastYearGrowthRank']))
+        print(data)
 
 
 class ToolTipItem(QWidget):
@@ -75,13 +86,13 @@ class ToolTipWidget(QWidget):
             if serie not in self.Cache:
                 item = ToolTipItem(
                     serie.color(),
-                    (serie.name() or "-") + ":" + fmt.format(point.y()), self)
+                    (serie.name().split('：')[0] or "-") + "：" + fmt.format(point.y()), self)
 
                 self.layout().addWidget(item)
                 self.Cache[serie] = item
             else:
                 self.Cache[serie].setText(
-                    (serie.name() or "-") + ":" + fmt.format(point.y()))
+                    (serie.name().split('：')[0] or "-") + "：" + fmt.format(point.y()))
             self.Cache[serie].setVisible(serie.isVisible())  # 隐藏那些不可用的项
         self.adjustSize()  # 调整大小
 
@@ -121,7 +132,7 @@ class ChartView(QChartView):
         self.fundName = fundName
         self.initChart()
 
-    def initChart(self, type: str = 'THREE_MONTH'):
+    def initChart_bak(self, type: str = 'THREE_MONTH'):
 
         if type not in self.cacheData:
             tempData = self.FundCrawler.get_fund_performance_ttt(self.fundCode, type)
@@ -131,18 +142,26 @@ class ChartView(QChartView):
 
         if len(data) == 0:
             print('渲染异常')
-            QMessageBox.warning(self, '提示', '渲染失败，请稍后重试！')
-            return
+            self.setDisabled(True)
+            QMessageBox.warning(self, '提示', '图形渲染失败，请稍后重试！\t')
+            data = [['', 1.0, 2.0, 3.0]]
+
+        if not self.isEnabled():
+            self.setEnabled(True)
 
         self.category = []
         for item in data:
             self.category.append(item[0])
-        self._chart = QChart(title="业绩走势：{} ({})".format(self.fundName, self.fundCode))
+        # self._chart = QChart(title="业绩走势：{} ({})".format(self.fundName, self.fundCode))
+        self._chart = QChart()
+
         self._chart.setAcceptHoverEvents(True)
         # Series动画
         self._chart.setAnimationOptions(QChart.SeriesAnimations)
         # 设置图表margin
-        self._chart.setMargins(QMargins(20, 20, 35, 20))
+        self._chart.setMargins(QMargins(20, 5, 35, 20))
+
+        self._chart.setContentsMargins(0, 0, 0, 0)
 
         if len(data[0]) == 4:
             dataList = [[], [], []]
@@ -156,14 +175,14 @@ class ChartView(QChartView):
 
         if len(dataList) == 3:
             dataTable = [
-                ['本基金 ', dataList[0]],
-                ['沪深300', dataList[1]],
-                ['上证指数', dataList[2]],
+                ['本基金：{}%'.format(dataList[0][-1]), dataList[0]],
+                ['沪深300：{}%'.format(dataList[1][-1]), dataList[1]],
+                ['上证指数：{}%'.format(dataList[2][-1]), dataList[2]],
             ]
         else:
             dataTable = [
-                ['本基金 ', dataList[0]],
-                ['同类均值', dataList[1]],
+                ['本基金：{}%'.format(dataList[0][-1]), dataList[0]],
+                ['同类均值：{}%'.format(dataList[1][-1]), dataList[1]],
             ]
 
         for series_name, data_list in dataTable:
@@ -224,7 +243,125 @@ class ChartView(QChartView):
             marker.hovered.connect(self.handleMarkerHovered)
 
         self.setChart(self._chart)
+        # 提示widget
+        self.toolTipWidget = GraphicsProxyWidget(self._chart)
+        # line
+        self.lineItem = QGraphicsLineItem(self._chart)
+        pen = QPen(Qt.gray)
+        pen.setWidth(1)
+        self.lineItem.setPen(pen)
+        self.lineItem.setZValue(998)
+        self.lineItem.hide()
 
+        # 一些固定计算，减少mouseMoveEvent中的计算量
+        # 获取x和y轴的最小最大值
+        axisX, axisY = self._chart.axisX(), self._chart.axisY()
+        self.min_x, self.max_x = axisX.min(), axisX.max()
+        self.min_y, self.max_y = axisY.min(), axisY.max()
+
+    def initChart(self, type: str = 'THREE_MONTH'):
+
+        if type not in self.cacheData:
+            tempData = self.FundCrawler.get_fund_performance_ttt_new(self.fundCode, type)
+            self.cacheData[type] = tempData
+
+        data = self.cacheData[type]['data']
+        expansion = self.cacheData[type]['expansion']
+
+        if len(data) == 0:
+            print('渲染异常')
+            self.setDisabled(True)
+            QMessageBox.warning(self, '提示', '图形渲染失败，请稍后重试！\t')
+            data = [['', 1.0, 2.0, 3.0]]
+
+        if not self.isEnabled():
+            self.setEnabled(True)
+
+        self.category = []
+        for item in data:
+            self.category.append(item[0])
+        # self._chart = QChart(title="业绩走势：{} ({})".format(self.fundName, self.fundCode))
+        self._chart = QChart()
+
+        self._chart.setAcceptHoverEvents(True)
+        # Series动画
+        self._chart.setAnimationOptions(QChart.SeriesAnimations)
+        # 设置图表margin
+        self._chart.setMargins(QMargins(20, 5, 35, 20))
+
+        self._chart.setContentsMargins(0, 0, 0, 0)
+
+        dataList = [[], [], []]
+
+        # 插入数据
+        for item in data:
+            for i in range(len(item) - 1):
+                dataList[i].append(item[i + 1])
+
+        dataTable = [
+            ['本基金：{}%'.format(dataList[0][-1]), dataList[0]],
+            ['同类均值：{}%'.format(dataList[1][-1]), dataList[1]],
+            ['{}：{}%'.format(expansion, dataList[2][-1]), dataList[2]],
+        ]
+
+        for series_name, data_list in dataTable:
+            series = QLineSeries(self._chart)
+            for j, v in enumerate(data_list):
+                series.append(j, v)
+            series.setName(series_name)
+            # series.setPointsVisible(True)  # 显示圆点
+            # series.setPointLabelsVisible(True) #显示数值
+            # series.hovered.connect(self.handleSeriesHoverd)  # 鼠标悬停
+            self._chart.addSeries(series)
+
+        # self._chart.setStyle()
+
+        self._chart.createDefaultAxes()  # 创建默认的轴
+        axisX = self._chart.axisX()  # x轴
+        axisX.setTickCount(6)  # x轴设置7个刻度
+        axisX.setGridLineVisible(False)  # 隐藏从x轴往上的线条
+
+        axisY = self._chart.axisY()
+        axisY.setTickCount(6)  # y轴设置7个刻度
+
+        down, up = self.get_pre_index(data)
+        # down, up = -20, 50
+        axisY.setRange(down, up)  # 设置y轴范围
+        # 设置坐标格式
+        axisY.setLabelFormat("%0.1f%")
+        # 自定义x轴
+        axis_x = QCategoryAxis(self._chart, labelsPosition=QCategoryAxis.AxisLabelsPositionOnValue)
+        axis_x.setTickCount(len(self.category))
+        # axis_x.setGridLineVisible(False)
+        min_x = axisX.min()
+        max_x = axisX.max()
+        # step = (max_x - min_x) / (6 - 1)  # 7个tick
+
+        axis_x.append(self.category[0], min_x)
+        axis_x.append(self.category[int(len(self.category) * 0.25)], (max_x - min_x) * 0.25)
+        axis_x.append(self.category[int(len(self.category) * 0.5)], (max_x - min_x) * 0.5)
+        axis_x.append(self.category[int(len(self.category) * 0.75)], (max_x - min_x) * 0.75)
+        axis_x.append(self.category[-1], max_x)
+
+        self._chart.setAxisX(axis_x, self._chart.series()[-1])
+
+        # self._chart.legend(
+        # chart的图例
+        legend = self._chart.legend()
+        # legend.setVisible(False)
+        # legend.
+        # 设置图例由Series来决定样式
+        legend.setMarkerShape(QLegend.MarkerShapeFromSeries)
+        # 遍历图例上的标记并绑定信号
+        for marker in legend.markers():
+            # 隐藏图例
+            # marker.setVisible(False)
+            # 点击事件
+            marker.clicked.connect(self.handleMarkerClicked)
+            # 鼠标悬停事件
+            marker.hovered.connect(self.handleMarkerHovered)
+
+        self.setChart(self._chart)
         # 提示widget
         self.toolTipWidget = GraphicsProxyWidget(self._chart)
         # line

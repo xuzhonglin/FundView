@@ -18,6 +18,9 @@ from src.fund_main import FundMain
 
 if __name__ == '__main__':
 
+    usr_home = os.path.expanduser('~')
+    print(usr_home)
+
     try:
         if os.path.isfile("upgrade.bat"):
             os.remove("upgrade.bat")
@@ -32,6 +35,7 @@ if __name__ == '__main__':
 
     # 如果连接成功，表明server已经存在，当前已有实例在运行
     if socket.waitForConnected(500):
+        print('程序已经存在运行实例')
         sys.exit(app.quit())
 
     # 没有实例运行，创建服务器

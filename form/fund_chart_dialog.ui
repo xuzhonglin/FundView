@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>609</width>
-    <height>344</height>
+    <width>653</width>
+    <height>378</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,45 +15,141 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
-    <number>0</number>
+    <number>10</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>15</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>10</number>
    </property>
    <property name="bottomMargin">
     <number>15</number>
    </property>
-   <item row="1" column="1">
-    <widget class="QRadioButton" name="oneMonthRadio">
+   <item row="0" column="0" colspan="7">
+    <widget class="QWidget" name="widget_2" native="true">
+     <layout class="QGridLayout" name="gridLayout_3">
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QWidget" name="widget_3" native="true">
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border-radius:5px;</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>近1月（排名）</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>近3月（排名）</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>近6月（排名）</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>近1年（排名）</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="one_month_txt">
+           <property name="text">
+            <string>+1.2%（1）</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="three_month_txt">
+           <property name="text">
+            <string>+7.6%（2）</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLabel" name="six_month_txt">
+           <property name="text">
+            <string>+13.7%（3）</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QLabel" name="one_year_txt">
+           <property name="text">
+            <string>+30.1%（4）</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="4">
+    <widget class="QRadioButton" name="oneYearRadio">
      <property name="text">
-      <string>近1月</string>
+      <string>近1年</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="6">
-    <spacer name="horizontalSpacer_2">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="2" column="3">
+    <widget class="QRadioButton" name="sixMonthRadio">
+     <property name="text">
+      <string>近6月</string>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
+    </widget>
    </item>
-   <item row="0" column="0" colspan="7">
+   <item row="1" column="0" colspan="7">
     <layout class="QGridLayout" name="chartLayout">
      <property name="bottomMargin">
       <number>0</number>
      </property>
     </layout>
    </item>
-   <item row="1" column="0">
+   <item row="2" column="0">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -66,14 +162,7 @@
      </property>
     </spacer>
    </item>
-   <item row="1" column="5">
-    <widget class="QRadioButton" name="threeYearRadio">
-     <property name="text">
-      <string>近3年</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="2">
+   <item row="2" column="2">
     <widget class="QRadioButton" name="threeMonthRadio">
      <property name="text">
       <string>近3月</string>
@@ -83,17 +172,30 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="3">
-    <widget class="QRadioButton" name="sixMonthRadio">
+   <item row="2" column="1">
+    <widget class="QRadioButton" name="oneMonthRadio">
      <property name="text">
-      <string>近6月</string>
+      <string>近1月</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="4">
-    <widget class="QRadioButton" name="oneYearRadio">
+   <item row="2" column="6">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="5">
+    <widget class="QRadioButton" name="threeYearRadio">
      <property name="text">
-      <string>近1年</string>
+      <string>近3年</string>
      </property>
     </widget>
    </item>

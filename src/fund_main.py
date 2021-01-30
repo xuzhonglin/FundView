@@ -51,6 +51,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.icon = QIcon(":/icon/windows/icon_windows.ico")
         self.all_fund_settled_cnt = 0
         self.completer = QCompleter([])
+        self.tip_cnt = 0
 
         self.timer = QTimer()  # 初始化定时器
         self.timer.timeout.connect(self.timer_refresh)
@@ -853,7 +854,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             else:
                 fundCode = self.optionalTable.item(rowIndex, 1).text()
                 fundName = self.optionalTable.item(rowIndex, 0).text()
-            title = "业绩走势：{}".format(fundName)
+            title = "业绩走势：{}-{}".format(fundName, fundCode)
             dialog = QDialog(self.centralwidget)
             windowsFlags = dialog.windowFlags()
             windowsFlags |= Qt.WindowMaximizeButtonHint
@@ -1125,6 +1126,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
         print('窗口隐藏')
         event.ignore()
         self.hide()
+        if self.tip_cnt == 0:
+            self.tip_cnt += 1
+            self.trayIcon.showMessage('提醒', '程序已隐藏到任务栏，双击图标可恢复！')
 
     def except_hook(self, excType, excValue, traceBack):
         """

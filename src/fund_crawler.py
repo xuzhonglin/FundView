@@ -367,27 +367,38 @@ class FundCrawler:
                 'plat': 'Iphone',
                 'FCODE': fundCode,
             }
-            resp = requests.get(url, headers=headers, params=params)
+            resp = self.http_get(url, headers=headers, params=params)
             resp_json = resp.json()
             for item in resp_json['Datas']:
                 key_name = item['title']
                 if key_name == 'Z':
                     growth['lastWeekGrowth'] = item['syl'] if item['syl'] != '' else '--'
+                    growth['lastWeekGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
                 elif key_name == 'Y':
                     growth['lastMonthGrowth'] = item['syl'] if item['syl'] != '' else '--'
+                    growth['lastMonthGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
                 elif key_name == '3Y':
                     growth['lastThreeMonthsGrowth'] = item['syl'] if item['syl'] != '' else '--'
+                    growth['lastThreeMonthsGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
                 elif key_name == '6Y':
                     growth['lastSixMonthsGrowth'] = item['syl'] if item['syl'] != '' else '--'
+                    growth['lastSixMonthsGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
                 elif key_name == '1N':
                     growth['lastYearGrowth'] = item['syl'] if item['syl'] != '' else '--'
-        except:
+                    growth['lastYearGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
+        except Exception as e:
+            print(e)
             growth = {
                 "lastWeekGrowth": "--",
                 "lastMonthGrowth": "--",
                 "lastThreeMonthsGrowth": "--",
                 "lastSixMonthsGrowth": "--",
-                "lastYearGrowth": "--"
+                "lastYearGrowth": "--",
+                "lastWeekGrowthRank": "-/-",
+                "lastMonthGrowthRank": "-/-",
+                "lastThreeMonthsGrowthRank": "-/-",
+                "lastSixMonthsGrowthRank": "-/-",
+                "lastYearGrowthRank": "-/-"
             }
         return growth
 
@@ -474,6 +485,52 @@ class FundCrawler:
         except Exception as e:
             print(e)
         return []
+
+    def get_fund_performance_ttt_new(self, fundCode: str, type: str = 'THREE_MONTH'):
+        if type == 'ONE_MONTH':
+            type = 'y'
+        elif type == 'THREE_MONTH':
+            type = '3y'
+        elif type == 'SIX_MONTH':
+            type = '6y'
+        elif type == 'ONE_YEAR':
+            type = 'n'
+        elif type == 'THREE_YEAR':
+            type = '3n'
+
+        try:
+            url = 'https://dataapi.1234567.com.cn/dataapi/fund/FundVPageAcc'
+            headers = {
+                'Host': 'dataapi.1234567.com.cn',
+                'User-Agent': self.get_fake_ua()
+            }
+            params = {
+                'deviceid': 'Wap',
+                'product': 'EFund',
+                'FCODE': fundCode,
+                'CODE': fundCode,
+                'INDEXCODE': '000300',
+                'RANGE': type
+            }
+            resp = self.http_get(url, headers=headers, params=params)
+            result = []
+            if resp.status_code == 200:
+                print(resp.json())
+                data = resp.json()
+                for item in data['data']:
+                    temp = [item['pdate'], float(item['yield']), float(item['fundTypeYield']),
+                            float(item['indexYield'])]
+                    result.append(temp)
+                return {
+                    'data': result,
+                    'expansion': data['expansion']['aboutAcc'][2]['name']
+                }
+        except Exception as e:
+            print(e)
+        return {
+            'data': [],
+            'expansion': ''
+        }
 
     def get_day_worth(self, fundCode: str, worthDate: str = ''):
         """
@@ -891,5 +948,6 @@ if __name__ == '__main__':
     # ret = fund.get_funds_data_ttt(['110011'])
     # ret = fund.get_all_fund()
     # ret = fund.get_fund_positions('110011')
-    ret = fund.get_last_work_day('2020-12-20')
+    # ret = fund.get_last_work_day('2020-12-20')
+    ret = fund.get_fund_performance_ttt_new('110011')
     print(ret)
