@@ -1128,7 +1128,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.hide()
         if self.tip_cnt == 0:
             self.tip_cnt += 1
-            self.trayIcon.showMessage('提醒', '程序已隐藏到任务栏，双击图标可恢复！')
+            self.trayIcon.showMessage(FundConfig.APP_NAME, '程序已隐藏到任务栏，双击图标可恢复！', self.icon)
 
     def except_hook(self, excType, excValue, traceBack):
         """

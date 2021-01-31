@@ -273,6 +273,7 @@ class ChartView(QChartView):
             self.setDisabled(True)
             QMessageBox.warning(self, '提示', '图形渲染失败，请稍后重试！\t')
             data = [['', 1.0, 2.0, 3.0]]
+            expansion = '暂无'
 
         if not self.isEnabled():
             self.setEnabled(True)

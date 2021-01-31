@@ -509,7 +509,7 @@ class FundCrawler:
                 'product': 'EFund',
                 'FCODE': fundCode,
                 'CODE': fundCode,
-                'INDEXCODE': '000300',
+                'INDEXCODE': '',
                 'RANGE': type
             }
             resp = self.http_get(url, headers=headers, params=params)
@@ -517,9 +517,13 @@ class FundCrawler:
             if resp.status_code == 200:
                 print(resp.json())
                 data = resp.json()
-                for item in data['data']:
-                    temp = [item['pdate'], float(item['yield']), float(item['fundTypeYield']),
-                            float(item['indexYield'])]
+                for index, item in enumerate(data['data']):
+                    yield_value = float(item['yield']) if item['yield'] is not None else 0
+                    fund_type_yield = float(item['fundTypeYield']) if item['fundTypeYield'] is not None else 0
+                    index_yield = float(item['indexYield']) if item['indexYield'] is not None else 0
+                    if index > 0 and (fund_type_yield == 0 and index_yield == 0):
+                        continue
+                    temp = [item['pdate'], yield_value, fund_type_yield, index_yield]
                     result.append(temp)
                 return {
                     'data': result,
