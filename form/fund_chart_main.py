@@ -3,11 +3,12 @@ from math import ceil, floor
 
 from PyQt5.QtChart import QCategoryAxis, QChart, QLineSeries, QChartView, QLegend
 from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF, QMargins
-from PyQt5.QtGui import QBrush, QColor, QPen, QPainter
+from PyQt5.QtGui import QPen, QPainter
 from PyQt5.QtWidgets import QMainWindow, QGraphicsProxyWidget, QVBoxLayout, QLabel, QWidget, QHBoxLayout, \
     QGraphicsLineItem, QApplication, QDialog, QMessageBox
 
 from form.fund_chart_dialog import Ui_FundChartDialog
+from src.fund_utils import get_color
 from src.fund_crawler import FundCrawler
 
 
@@ -41,10 +42,16 @@ class FundChartMain(QMainWindow, Ui_FundChartDialog):
     def init_period_increase(self):
         fund_crawler = FundCrawler()
         data = fund_crawler.get_fund_growth(self.fund_code)
-        self.one_month_txt.setText('{}%（{}）'.format(data['lastMonthGrowth'], data['lastMonthGrowthRank']))
-        self.three_month_txt.setText('{}%（{}）'.format(data['lastThreeMonthsGrowth'], data['lastThreeMonthsGrowthRank']))
-        self.six_month_txt.setText('{}%（{}）'.format(data['lastSixMonthsGrowth'], data['lastSixMonthsGrowthRank']))
-        self.one_year_txt.setText('{}%（{}）'.format(data['lastYearGrowth'], data['lastYearGrowthRank']))
+        color_txt = get_color(data['lastMonthGrowth'], 'str').format(data['lastMonthGrowth'] + '%')
+        self.one_month_txt.setText('{}（{}）'.format(color_txt, data['lastMonthGrowthRank']))
+        color_txt = get_color(data['lastThreeMonthsGrowth'], 'str').format(data['lastThreeMonthsGrowth'] + '%')
+        self.three_month_txt.setText('{}（{}）'.format(color_txt, data['lastThreeMonthsGrowthRank']))
+        color_txt = get_color(data['lastSixMonthsGrowth'], 'str').format(data['lastSixMonthsGrowth'] + '%')
+        self.six_month_txt.setText('{}（{}）'.format(color_txt, data['lastSixMonthsGrowthRank']))
+        color_txt = get_color(data['lastYearGrowth'], 'str').format(data['lastYearGrowth'] + '%')
+        self.one_year_txt.setText('{}（{}）'.format(color_txt, data['lastYearGrowthRank']))
+        color_txt = get_color(data['lastThreeYearGrowth'], 'str').format(data['lastThreeYearGrowth'] + '%')
+        self.three_year_txt.setText('{}（{}）'.format(color_txt, data['lastThreeYearGrowthRank']))
         print(data)
 
 
@@ -159,7 +166,7 @@ class ChartView(QChartView):
         # Series动画
         self._chart.setAnimationOptions(QChart.SeriesAnimations)
         # 设置图表margin
-        self._chart.setMargins(QMargins(20, 5, 35, 20))
+        self._chart.setMargins(QMargins(15, 5, 30, 15))
 
         self._chart.setContentsMargins(0, 0, 0, 0)
 
@@ -288,7 +295,7 @@ class ChartView(QChartView):
         # Series动画
         self._chart.setAnimationOptions(QChart.SeriesAnimations)
         # 设置图表margin
-        self._chart.setMargins(QMargins(20, 5, 35, 20))
+        self._chart.setMargins(QMargins(15, 5, 35, 15))
 
         self._chart.setContentsMargins(0, 0, 0, 0)
 

@@ -4,9 +4,10 @@ import os, requests
 import sys
 import uuid
 from datetime import datetime
+import time
 
 from PyQt5.QtCore import Qt, QModelIndex, QTimer, QCoreApplication
-from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QPalette, QBrush, QColor, QIcon
+from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QIcon
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, \
     QApplication, QMessageBox, QCompleter, QSystemTrayIcon, QAction
 from chinese_calendar import is_workday
@@ -14,7 +15,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from src.fund_update import FundUpdate
 from src.fund_cloud_sync import CloudSync
-from src.fund_config import FundConfig, get_color
+from src.fund_config import FundConfig
 from src.fund_enum import DBSource, ColorSwitch
 from form.fund_chart_main import FundChartMain
 from form.fund_setting_dialog import Ui_FundSettingDialog
@@ -25,7 +26,7 @@ from form.fund_image_dialog import Ui_FundImageDialog
 from form.fund_deal_dialog import Ui_FundDealDialog
 from form.fund_table_main import FundTableMain
 from src.fund_crawler import FundCrawler
-from src.fund_utils import *
+from src.fund_utils import get_or_default, get_color, judge_time
 import traceback
 
 
@@ -111,6 +112,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.trayIcon.show()
 
     def show_about(self):
+        self.showNormal()
         msg = QMessageBox(self)
         msg.setWindowTitle("关于程序")
         msg.setText("有了韭菜盒子从此不在做韭菜\t\n当前版本：{} \nCopyright © 2020-2021 colinxu".format(
@@ -120,9 +122,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
         msg.exec()
 
     def check_update(self):
+        self.showNormal()
         res = FundUpdate(self).update(sys.argv)
         if res is not None:
-            self.showNormal()
             QMessageBox.information(self, '提示', '暂无更新，已是最新版本！\t')
 
     def tray_icon_activated(self, reason):
@@ -190,7 +192,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
     def timer_refresh(self):
         if not FundConfig.AUTO_REFRESH_ENABLE: return
         # 交易日15:30后自动关闭定时刷新
-        nowTime = datetime.datetime.now()
+        nowTime = datetime.now()
         print(nowTime)
         if is_workday(nowTime) and judge_time('09:20:00') and not judge_time('15:20:00'):
             print('timer_refresh')
@@ -608,7 +610,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
             self.positionTable.item(index, 9).setForeground(expectGrowthColor)
 
             # 预估时间
-            expectWorthItem = QTableWidgetItem(item['expectWorthDate'][5:16])
+            expectWorthDate = item['expectWorthDate'][5:16] if '--' not in item['expectWorthDate'] else '--'
+            expectWorthItem = QTableWidgetItem(expectWorthDate)
             self.positionTable.setItem(index, 10, expectWorthItem)
 
             # 11.预估收益
@@ -623,7 +626,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 checkTip = '√'  # 已结算标记
                 self.all_fund_settled_cnt = self.all_fund_settled_cnt + 1
             else:
-                expectWorthFloat = float(item['expectWorth'])
+                expectWorthFloat = float(item['expectWorth']) if '--' not in item['expectWorth'] else 0
                 expectIncome = (expectWorthFloat - netWorthFloat) * fundHoldUnits
 
             todayExpectIncome = todayExpectIncome + expectIncome
@@ -795,22 +798,39 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
     def optional_add_fund_clicked(self):
         fundCode = self.optionalFundCodeTxt.text()
+
         if '-' in fundCode:
             fundCode = fundCode.split('-')[0]
-        if fundCode == '' or len(fundCode) != 6 or fundCode is None: return
-        self.optionalFundCodeTxt.setText("")
 
+        if fundCode == '' or len(fundCode) != 6 or fundCode is None:
+            QMessageBox.warning(self, '提示', '请检查输入的基金代码是否正确！')
+            self.optionalFundCodeTxt.setText("")
+            return
+
+        # 设置选中色
         if fundCode in self.optionalFund:
-            index = self.optionalFund.index(fundCode)
-            # self.optionalTable.row(index).
-            # self.optionalTable.scrollTo()
-            # self.optionalTable.findItems(fundCode)
+            find_items = self.optionalTable.findItems(fundCode, Qt.MatchContains)
+            for item in find_items:
+                self.optionalTable.scrollToItem(item)
+                self.optionalTable.setStyleSheet(
+                    "selection-background-color:rgb(51,153,255);selection-color:rgb(255,255,255)")
+                index = self.optionalTable.indexFromItem(item)
+                self.optionalTable.selectRow(index.row())
+            return
+
+        # 新增时校验基金代码
+        ret = self.fundCrawler.get_fund_info(fundCode)
+        if ret is None or ret['FTYPE'] == '货币型':
+            QMessageBox.warning(self, '提醒', '请检查基金代码！货币型基金，海外基金暂不支持！\n')
             return
 
         self.optionalFund.append(fundCode)
         self.write_local_config(fundCode, isOptional=True)
         self.refresh_optional_data()
         self.optionalTable.scrollToBottom()
+        self.optionalTable.setStyleSheet(
+            "selection-background-color:rgb(51,153,255);selection-color:rgb(255,255,255)")
+        self.optionalTable.selectRow(len(self.optionalFund) - 1)
 
     def edit_fund_data(self, fundCode, fundCost, fundUnits):
         """
@@ -821,11 +841,17 @@ class FundMain(QMainWindow, Ui_MainWindow):
         :return:
         """
         print(fundCode, fundCost, fundUnits)
-        print(fundCode, type(fundCost), type(fundUnits))
 
         if fundCode == '' or fundCode is None:
             QMessageBox.warning(self, '提示', '基金代码输入不正确！')
             return
+
+        # 新增时校验基金代码
+        if fundCode not in self.positionFund.keys():
+            ret = self.fundCrawler.get_fund_info(fundCode)
+            if ret is None or ret['FTYPE'] == '货币型':
+                QMessageBox.warning(self, '提醒', '请检查基金代码！货币型基金，海外基金暂不支持！\n')
+                return
 
         if fundCost is None or fundCost == '':
             fundCost = 0
@@ -854,7 +880,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             else:
                 fundCode = self.optionalTable.item(rowIndex, 1).text()
                 fundName = self.optionalTable.item(rowIndex, 0).text()
-            title = "业绩走势：{}-{}".format(fundName, fundCode)
+            title = "业绩走势：{}-{}".format(fundCode, fundName)
             dialog = QDialog(self.centralwidget)
             windowsFlags = dialog.windowFlags()
             windowsFlags |= Qt.WindowMaximizeButtonHint

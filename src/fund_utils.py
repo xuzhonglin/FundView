@@ -5,6 +5,9 @@ from chinese_calendar import get_workdays
 
 from typing import List
 
+from src.fund_config import FundConfig
+from src.fund_enum import _FundColor, ColorSwitch
+
 
 def _correct_trading_day(trading_day: List[datetime.date], last_work_day: datetime.date):
     trading_day_date = trading_day[0]
@@ -82,3 +85,41 @@ def compare_version(current_version: str, latest_version: str):
     cur_ver = current_version.strip().replace('.', '')
     lat_ver = latest_version.strip().replace('.', '')
     return int(cur_ver) < int(lat_ver)
+
+
+def get_color(value, colorType):
+    if type(value) == str:
+        value = value.replace('%', '')
+        if value is None or '--' in value:
+            value = 0
+        value = float(value)
+
+    is_black = FundConfig.FUND_COLOR != ColorSwitch.BLACK_ONLY
+    is_green_red = FundConfig.FUND_COLOR == ColorSwitch.GREEN_RED
+
+    if value >= 0 and colorType == 'str':
+        if is_green_red:
+            return _FundColor.GREEN_STR
+        return _FundColor.RED_STR if is_black else _FundColor.BLACK_STR
+    elif colorType == 'str':
+        if is_green_red:
+            return _FundColor.RED_STR
+        return _FundColor.GREEN_STR if is_black else _FundColor.BLACK_STR
+
+    if value >= 0 and colorType == 'brush':
+        if is_green_red:
+            return _FundColor.GREEN_BRUSH
+        return _FundColor.RED_BRUSH if is_black else _FundColor.BLACK_BRUSH
+    elif colorType == 'brush':
+        if is_green_red:
+            return _FundColor.RED_BRUSH
+        return _FundColor.GREEN_BRUSH if is_black else _FundColor.BLACK_BRUSH
+
+    if value >= 0 and colorType == 'style':
+        if is_green_red:
+            return _FundColor.STYLE_GREEN
+        return _FundColor.STYLE_RED if is_black else _FundColor.STYLE_BLACK
+    elif colorType == 'style':
+        if is_green_red:
+            return _FundColor.STYLE_RED
+        return _FundColor.STYLE_GREEN if is_black else _FundColor.STYLE_BLACK

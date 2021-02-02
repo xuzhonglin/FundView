@@ -12,11 +12,10 @@ import os
 import subprocess
 
 BUILD_PACKNAME = '韭菜盒子'
-BUILD_VERSION = '1.2.3'
+BUILD_VERSION = '1.2.4'
 
 
 def build_win32():
-    source_script = ''
     with open('venv/Scripts/activate.bat', 'r') as f:
         source_script = f.read()
     bat_content = '@echo off\n'

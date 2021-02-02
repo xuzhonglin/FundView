@@ -371,21 +371,27 @@ class FundCrawler:
             resp_json = resp.json()
             for item in resp_json['Datas']:
                 key_name = item['title']
+                rank = item['rank'] if item['rank'] != '' else '-'
+                sc = item['sc'] if item['sc'] != '' else '-'
+                syl = item['syl'] if item['syl'] != '' else '--'
                 if key_name == 'Z':
-                    growth['lastWeekGrowth'] = item['syl'] if item['syl'] != '' else '--'
-                    growth['lastWeekGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
+                    growth['lastWeekGrowth'] = syl
+                    growth['lastWeekGrowthRank'] = '{}/{}'.format(rank, sc)
                 elif key_name == 'Y':
-                    growth['lastMonthGrowth'] = item['syl'] if item['syl'] != '' else '--'
-                    growth['lastMonthGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
+                    growth['lastMonthGrowth'] = syl
+                    growth['lastMonthGrowthRank'] = '{}/{}'.format(rank, sc)
                 elif key_name == '3Y':
-                    growth['lastThreeMonthsGrowth'] = item['syl'] if item['syl'] != '' else '--'
-                    growth['lastThreeMonthsGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
+                    growth['lastThreeMonthsGrowth'] = syl
+                    growth['lastThreeMonthsGrowthRank'] = '{}/{}'.format(rank, sc)
                 elif key_name == '6Y':
-                    growth['lastSixMonthsGrowth'] = item['syl'] if item['syl'] != '' else '--'
-                    growth['lastSixMonthsGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
+                    growth['lastSixMonthsGrowth'] = syl
+                    growth['lastSixMonthsGrowthRank'] = '{}/{}'.format(rank, sc)
                 elif key_name == '1N':
-                    growth['lastYearGrowth'] = item['syl'] if item['syl'] != '' else '--'
-                    growth['lastYearGrowthRank'] = '{}/{}'.format(item['rank'], item['sc'])
+                    growth['lastYearGrowth'] = syl
+                    growth['lastYearGrowthRank'] = '{}/{}'.format(rank, sc)
+                elif key_name == '3N':
+                    growth['lastThreeYearGrowth'] = syl
+                    growth['lastThreeYearGrowthRank'] = '{}/{}'.format(rank, sc)
         except Exception as e:
             print(e)
             growth = {
@@ -394,11 +400,13 @@ class FundCrawler:
                 "lastThreeMonthsGrowth": "--",
                 "lastSixMonthsGrowth": "--",
                 "lastYearGrowth": "--",
+                "lastThreeYearGrowth": "--",
                 "lastWeekGrowthRank": "-/-",
                 "lastMonthGrowthRank": "-/-",
                 "lastThreeMonthsGrowthRank": "-/-",
                 "lastSixMonthsGrowthRank": "-/-",
-                "lastYearGrowthRank": "-/-"
+                "lastYearGrowthRank": "-/-",
+                "lastThreeYearGrowthRank": "-/-"
             }
         return growth
 
@@ -518,6 +526,11 @@ class FundCrawler:
                 print(resp.json())
                 data = resp.json()
                 for index, item in enumerate(data['data']):
+
+                    if 'yield' not in item.keys() or 'fundTypeYield' not in item.keys() or 'indexYield' not in item.keys():
+                        print('缺少某个字段，跳过')
+                        continue
+
                     yield_value = float(item['yield']) if item['yield'] is not None else 0
                     fund_type_yield = float(item['fundTypeYield']) if item['fundTypeYield'] is not None else 0
                     index_yield = float(item['indexYield']) if item['indexYield'] is not None else 0
@@ -953,5 +966,5 @@ if __name__ == '__main__':
     # ret = fund.get_all_fund()
     # ret = fund.get_fund_positions('110011')
     # ret = fund.get_last_work_day('2020-12-20')
-    ret = fund.get_fund_performance_ttt_new('110011')
+    ret = fund.get_fund_info('002788')
     print(ret)
