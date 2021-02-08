@@ -105,7 +105,10 @@ class FundMain(QMainWindow, Ui_MainWindow):
         about_action.triggered.connect(self.show_about)
         update_action.triggered.connect(self.check_update)
 
+        if FundConfig.PLATFORM == 'darwin':
+            self.icon = QIcon(QPixmap(":/icon/white-icon/leekbox-white.png").scaled(16, 16))
         self.trayIcon.setIcon(self.icon)
+
         self.trayIcon.setToolTip("韭菜盒子")
         self.trayIcon.setContextMenu(tray_icon_menu)
         self.trayIcon.activated.connect(lambda reason: self.tray_icon_activated(reason))
@@ -619,7 +622,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             netWorthFloat = float(netWorth)
             # 当日净值已更新
             if get_or_default(item['expectWorthDate']) != '0' and item['netWorthDate'] == item['expectWorthDate'][:10]:
-                lastDayTime = self.fundCrawler.get_last_work_day(item['netWorthDate'])
+                lastDayTime = self.fundCrawler.get_last_trade_day(item['netWorthDate'])
                 lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode, lastDayTime)['netWorth']
                 lastDayNetWorthFloat = float(lastDayNetWorth)
                 expectIncome = (netWorthFloat - lastDayNetWorthFloat) * fundHoldUnits
@@ -807,13 +810,17 @@ class FundMain(QMainWindow, Ui_MainWindow):
             self.optionalFundCodeTxt.setText("")
             return
 
+        if FundConfig.PLATFORM == 'darwin':
+            selection_style = 'selection-background-color:rgb(0,99,225);selection-color:rgb(255,255,255)'
+        else:
+            selection_style = 'selection-background-color:rgb(51,153,255);selection-color:rgb(255,255,255)'
+
         # 设置选中色
         if fundCode in self.optionalFund:
             find_items = self.optionalTable.findItems(fundCode, Qt.MatchContains)
             for item in find_items:
                 self.optionalTable.scrollToItem(item)
-                self.optionalTable.setStyleSheet(
-                    "selection-background-color:rgb(51,153,255);selection-color:rgb(255,255,255)")
+                self.optionalTable.setStyleSheet(selection_style)
                 index = self.optionalTable.indexFromItem(item)
                 self.optionalTable.selectRow(index.row())
             return
@@ -828,8 +835,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.write_local_config(fundCode, isOptional=True)
         self.refresh_optional_data()
         self.optionalTable.scrollToBottom()
-        self.optionalTable.setStyleSheet(
-            "selection-background-color:rgb(51,153,255);selection-color:rgb(255,255,255)")
+        self.optionalTable.setStyleSheet(selection_style)
         self.optionalTable.selectRow(len(self.optionalFund) - 1)
 
     def edit_fund_data(self, fundCode, fundCost, fundUnits):

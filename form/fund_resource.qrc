@@ -8,6 +8,9 @@
   <qresource prefix="/icon/macos">
     <file>icon_mac.icns</file>
   </qresource>
+  <qresource prefix="/icon/white-icon">
+    <file>leekbox-white.png</file>
+  </qresource>
   <qresource prefix="/icon/info">
     <file>info.png</file>
   </qresource>

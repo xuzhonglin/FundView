@@ -943,13 +943,16 @@ class FundCrawler:
         nowTime = datetime.now()
         return is_workday(nowTime) and nowTime.hour >= 19 and nowTime.minute >= 0
 
-    def get_last_work_day(self, curDate: str):
+    def get_last_trade_day(self, curDate: str):
         curDatetime = datetime.strptime(curDate, '%Y-%m-%d')
         i = -1
         yesterday = curDatetime + timedelta(days=i)  # 昨天日期
-        while not is_workday(yesterday):
+        week_num = yesterday.weekday()
+        # 是工作日并且不是周末
+        while not (is_workday(yesterday) and week_num < 5):
             i = i - 1
             yesterday = curDatetime + timedelta(days=i)  # 昨天日期
+            week_num = yesterday.weekday()
         return yesterday.strftime('%Y-%m-%d')
 
 
