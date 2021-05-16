@@ -49,7 +49,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.spaceKeyTimes = 0
         self.is_start_done = False
         self.trayIcon = QSystemTrayIcon(self)
-        self.icon = QIcon(":/icon/windows/icon_windows.ico")
+        self.icon = QIcon(":/icon/new/windows/leekbox-icon-256.ico")
         self.all_fund_settled_cnt = 0
         self.completer = QCompleter([])
         self.tip_cnt = 0
@@ -120,7 +120,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         msg.setWindowTitle("关于程序")
         msg.setText("有了韭菜盒子从此不在做韭菜\t\n当前版本：{} \nCopyright © 2020-2021 colinxu".format(
             FundConfig.VERSION))
-        msg.setIconPixmap(QPixmap(":/icon/windows/icon_windows.ico"))
+        msg.setIconPixmap(QPixmap(":/icon/new/windows/leekbox-icon-256.ico"))
         msg.addButton("确定", QMessageBox.ActionRole)
         msg.exec()
 
@@ -529,7 +529,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
             fundHold = self.positionFund[fundCode]
             # 1.基金名称
-            fundName = get_or_default(item['name'], '暂无')
+            fundName = get_or_default(item['name'], '未获取到名称')
             # if len(fundName) > 10:
             #     fundName = fundName[:10] + '...'
             fundNameItem = QTableWidgetItem(fundName)
@@ -629,8 +629,11 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 checkTip = '√'  # 已结算标记
                 self.all_fund_settled_cnt = self.all_fund_settled_cnt + 1
             else:
-                expectWorthFloat = float(item['expectWorth']) if '--' not in item['expectWorth'] else 0
+                expectWorthFloat = float(get_or_default(item['expectWorth']))
                 expectIncome = (expectWorthFloat - netWorthFloat) * fundHoldUnits
+
+            if '--' in item['expectWorthDate']:
+                expectIncome = 0
 
             todayExpectIncome = todayExpectIncome + expectIncome
             prefix = '+' if expectIncome > 0 else ''
@@ -851,6 +854,10 @@ class FundMain(QMainWindow, Ui_MainWindow):
         if fundCode == '' or fundCode is None:
             QMessageBox.warning(self, '提示', '基金代码输入不正确！')
             return
+
+        # 对于自动补全带出的做处理
+        if '-' in fundCode:
+            fundCode = fundCode.split('-')[0]
 
         # 新增时校验基金代码
         if fundCode not in self.positionFund.keys():
@@ -1110,7 +1117,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
             self.fundConfigOrigin['fontName'] = ''
             self.fundConfigOrigin['fontSize'] = ''
 
-        FundConfig.DB_SWITCH = DBSource(int(self.getOrDefault('source', 0)))
+        db_source = min(int(self.getOrDefault('source', 0)), 1)
+
+        FundConfig.DB_SWITCH = DBSource(db_source)
         FundConfig.FONT_NAME = self.getOrDefault('fontName', FundConfig.FONT_NAME)
         FundConfig.FONT_SIZE = self.getOrDefault('fontSize', FundConfig.FONT_SIZE)
         FundConfig.AUTO_REFRESH_ENABLE = self.getOrDefault('enableAutoRefresh', False)

@@ -77,7 +77,6 @@ class Ui_MainWindow(object):
         self.dbSourceCob.setObjectName("dbSourceCob")
         self.dbSourceCob.addItem("")
         self.dbSourceCob.addItem("")
-        self.dbSourceCob.addItem("")
         self.horizontalLayout_6.addWidget(self.dbSourceCob)
         self.settingLabel = ClickableLabel(self.tab)
         self.settingLabel.setMinimumSize(QtCore.QSize(20, 20))
@@ -307,7 +306,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
-        self.dbSourceCob.setCurrentIndex(1)
+        self.dbSourceCob.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -320,9 +319,8 @@ class Ui_MainWindow(object):
         self.label_6.setText(_translate("MainWindow", "数据仅供参考"))
         self.label_4.setText(_translate("MainWindow", "数据源："))
         self.dbSourceCob.setCurrentText(_translate("MainWindow", "天天基金"))
-        self.dbSourceCob.setItemText(0, _translate("MainWindow", "易读优"))
-        self.dbSourceCob.setItemText(1, _translate("MainWindow", "天天基金"))
-        self.dbSourceCob.setItemText(2, _translate("MainWindow", "蚂蚁财富"))
+        self.dbSourceCob.setItemText(0, _translate("MainWindow", "天天基金"))
+        self.dbSourceCob.setItemText(1, _translate("MainWindow", "蚂蚁财富"))
         self.editFundBtn.setText(_translate("MainWindow", "编辑"))
         self.positionTable.setSortingEnabled(True)
         self.position_refresh_time_txt.setText(_translate("MainWindow", "2020-11-30 12:20:20"))

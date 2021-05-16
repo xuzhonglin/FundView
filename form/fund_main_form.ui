@@ -150,13 +150,8 @@
                <string>天天基金</string>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
-              <item>
-               <property name="text">
-                <string>易读优</string>
-               </property>
-              </item>
               <item>
                <property name="text">
                 <string>天天基金</string>

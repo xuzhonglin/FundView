@@ -32,6 +32,7 @@ class FundUpdate(QObject):
         self.args = []
         self.update_filename = ''
         self.dialog = None
+        self.file_md5 = ''
 
     def update(self, args):
         self.args = args
@@ -42,6 +43,7 @@ class FundUpdate(QObject):
             force_update = resp_json['forceUpdate']
             chang_log = resp_json['changeLog']
             publish_time = resp_json['publishTime']
+            self.file_md5 = resp_json['fileMd5']
             update_info = '当前版本：{}，最新版本：{}，发布日期：{}'.format(FundConfig.VERSION, latest_version, publish_time)
             # 有新版本
             if compare_version(FundConfig.VERSION, latest_version):
@@ -114,12 +116,9 @@ class FundUpdate(QObject):
         @param: dst place to put the file
         """
         file_size = int(requests.get(url, stream=True).headers['Content-Length'])
-        # if os.path.exists(dst):
-        #     first_byte = os.path.getsize(dst)
-        # else:
-        #     first_byte = 0
-        # if first_byte >= file_size:
-        #     return file_size
+        # 存在相同文件，则删除
+        if os.path.exists(dst):
+            os.remove(dst)
         first_byte = 0
 
         header = {"Range": "bytes=%s-%s" % (first_byte, file_size)}

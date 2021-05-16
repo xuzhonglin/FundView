@@ -4,10 +4,8 @@ from PyQt5.QtGui import QBrush, QColor
 
 
 class DBSource(Enum):
-    YDI = 0
-    TTT = 1
-    OTH = 3
-    ANT = 2
+    TTT = 0
+    ANT = 1
 
 
 class ColorSwitch(Enum):

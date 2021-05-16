@@ -50,7 +50,7 @@ if __name__ == '__main__':
         app.setFont(font)
 
         w.setWindowTitle(FundConfig.APP_NAME + ' ' + FundConfig.VERSION)
-        w.setWindowIcon(QIcon(':/icon/windows/icon_windows.ico'))
+        w.setWindowIcon(QIcon(':/icon/new/windows/leekbox-icon-256.ico'))
         w.show()
 
         # 有新client连接，激活窗口

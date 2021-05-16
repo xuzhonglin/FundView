@@ -7,7 +7,7 @@ from src.fund_enum import DBSource, ColorSwitch
 class FundConfig:
     APP_NAME = '韭菜盒子'
 
-    VERSION = '1.2.4'
+    VERSION = '1.2.6'
 
     CUR_PID = os.getpid()
 
@@ -34,8 +34,7 @@ class FundConfig:
     # 数据源
     # tt 天天基金
     # ant 蚂蚁财富
-    # ydi 易读优
-    DB_SWITCH = DBSource.YDI
+    DB_SWITCH = DBSource.TTT
 
     # 字体
     FONT_NAME = '.AppleSystemUIFont' if PLATFORM == 'darwin' else '微软雅黑'

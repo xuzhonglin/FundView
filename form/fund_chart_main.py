@@ -459,8 +459,16 @@ class ChartView(QChartView):
         # 把鼠标位置所在点转换为对应的xy值
         x = self._chart.mapToValue(pos).x()
         y = self._chart.mapToValue(pos).y()
-        index = round((x - self.min_x) / self.step_x)
-        indexY = round((y - self.min_y) / self.step_y)
+
+        if self.step_x == 0:
+            index = 0
+        else:
+            index = round((x - self.min_x) / self.step_x)
+
+        if self.step_y == 0:
+            indexY = 0
+        else:
+            indexY = round((y - self.min_y) / self.step_y)
 
         # 得到在坐标系中的所有正常显示的series的类型和点
         points = [(serie, serie.at(index))

@@ -11,8 +11,8 @@ import sys
 import os
 import subprocess
 
-BUILD_PACKNAME = '韭菜盒子'
-BUILD_VERSION = '1.2.4'
+BUILD_PACKNAME = 'LeekBox'
+BUILD_VERSION = '1.2.6'
 
 
 def build_win32():
@@ -24,7 +24,7 @@ def build_win32():
     bat_content += 'cd ' + os.getcwd() + '\n'
     bat_content += 'chcp 65001 \n'
     bat_content += '@echo on\n'
-    bat_content += 'pyinstaller -F -w --icon="form\\icon_windows.ico" -n {}-{} main.py\n'.format(BUILD_PACKNAME,
+    bat_content += 'pyinstaller -F -w --icon="form\\leekbox-icon-256.ico" -n {}-{} main.py\n'.format(BUILD_PACKNAME,
                                                                                                  BUILD_VERSION)
     bat_content += 'del {}-{}.spec\n'.format(BUILD_PACKNAME, BUILD_VERSION)
     with open('build.bat', 'w', encoding=sys.getdefaultencoding()) as f:

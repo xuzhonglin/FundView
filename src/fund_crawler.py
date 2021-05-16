@@ -20,59 +20,6 @@ class FundCrawler:
     def __init__(self):
         pass
 
-    def get_board_info_ydi(self):
-        """
-        获取大盘信息
-        :return:
-        """
-        try:
-            url = FundConfig.YDI_URL + '/stock/board'
-            resp = self.http_get(url)
-            if resp.status_code == 200:
-                resp_json = resp.json()
-                temp = []
-                for item in resp_json['data']:
-                    print(item)
-                    temp.append({
-                        "priceChange": item['f4'],
-                        "date": '',
-                        "code": item['f12'],
-                        "type": "ZS",
-                        "volume": '',
-                        "high": '',
-                        "low": '',
-                        "price": item['f2'],
-                        "name": item['f14'],
-                        "changePercent": item['f3'],
-                        "close": '',
-                        "turnover": '',
-                        "open": ''
-                    })
-                return temp
-        except Exception as e:
-            print(e)
-        return []
-
-    def get_board_info_oth(self):
-        """
-        获取大盘信息
-        :return:
-        """
-        try:
-            url = FundConfig.OTHER_URL + '/stock?code=sh000001,sz399001,sz399006,sh000300,sh000016'
-            resp = self.http_get(url)
-            if resp.status_code == 200:
-                resp_json = resp.json()
-                temp = []
-                for item in resp_json['data']:
-                    print(item)
-                    item['code'] = item['code'][2:]
-                    temp.append(item)
-                return temp
-        except Exception as e:
-            print(e)
-        return []
-
     def get_board_info_ttt(self):
         try:
             url = 'http://push2.eastmoney.com/api/qt/clist/get'
@@ -125,65 +72,7 @@ class FundCrawler:
         :param endDate:
         :return:
         """
-        if FundConfig.DB_SWITCH == DBSource.YDI:
-            return self.get_board_info_ydi()
-        elif FundConfig.DB_SWITCH == DBSource.OTH:
-            return self.get_board_info_oth()
-        else:
-            return self.get_board_info_ttt()
-
-    def get_funds_data_ydi(self, fundCode: [], isOptional: bool = False):
-        """
-        获取持仓基金信息
-        :param isOptional: 是否自选
-        :param fundCode: 基金代码列表
-        :return:
-        """
-        try:
-            fundCodeArray = self.split_array(fundCode, 20)
-            ret = []
-            for subArray in fundCodeArray:
-                fundCodes = ','.join(subArray)
-                url = FundConfig.YDI_URL + '/fund?code=' + fundCodes
-                resp = self.http_get(url)
-                if resp.status_code == 200:
-                    resp_json = resp.json()
-                    data = resp_json['data']
-                    for item in data:
-                        item.update(self.query_update_worth(item))
-                        # 是自选基金 这查询近期涨幅
-                        if isOptional:
-                            item.update(self.get_fund_growth(item['code']))
-                    ret.extend(data)
-            return ret
-        except Exception as e:
-            print(e)
-        return []
-
-    def get_funds_data_oth(self, fundCode: []):
-        """
-        获取持仓基金信息
-        :param fundCode: 基金代码列表
-        :return:
-        """
-        try:
-            fundCodeArray = self.split_array(fundCode, 20)
-            ret = []
-            for subArray in fundCodeArray:
-                fundCodes = ','.join(subArray)
-                url = FundConfig.OTHER_URL + '/fund?code=' + fundCodes
-                resp = self.http_get(url)
-                if resp.status_code == 200:
-                    resp_json = resp.json()
-                    data = resp_json['data']
-                    for item in data:
-                        # 查询是否需要更新净值
-                        item.update(self.query_update_worth(item))
-                    ret.extend(data)
-            return ret
-        except Exception as e:
-            print(e)
-        return []
+        return self.get_board_info_ttt()
 
     # def get_funds_data_ttt(self, fundCodes: [], isOptional: bool = False):
     #     data = []
@@ -275,60 +164,6 @@ class FundCrawler:
             print(ex)
             pass
         return data
-
-    def _get_fund_data_ttt_bak(self, fundCode: str, isOptional: bool = False):
-        """
-        废弃-获取基金的基础信息[天天基金]
-        :param fundCodes: 基金编码
-        :param isOptional: 是否自选
-        :return: []
-        """
-        fundData = {}
-        try:
-            url = 'http://fund.eastmoney.com/{}.html'.format(fundCode)
-            headers = {
-                'User-Agent': self.get_fake_ua(),
-                'Host': 'fund.eastmoney.com',
-                'Referer': url
-            }
-            html = self.http_get(url, headers=headers)
-            html = html.content.decode('utf-8')
-            soup = BeautifulSoup(html, "lxml")
-
-            # 获取净值
-            netWorthHtml = soup.select('div.dataOfFund > dl.dataItem02 > dd.dataNums > span')
-            fundData['netWorth'] = netWorthHtml[0].get_text()
-            fundData['dayGrowth'] = netWorthHtml[1].get_text().replace('%', '')
-            netWorthDate = soup.select('div.dataOfFund > dl.dataItem02 > dt > p')[0].text[-11:-1]
-            fundData['netWorthDate'] = netWorthDate
-
-            buyRate = soup.select('span.nowPrice')[0].text
-            fundData['buyRate'] = buyRate.replace('%', '')
-
-            # 持仓股票
-            # expectWorthHtml = soup.select('#position_shares > div.poptableWrap > table')
-            # for i in expectWorthHtml[0].findAll('tr')[1:]:
-            #     temp = i.findAll('td')
-            #     a = temp[0].find('a').get_text()
-            #     b = temp[1].get_text().replace('%', '')
-            #     c = temp[2].find('span').get_text().replace('%', '')
-            #     print(a, b, c)
-
-            if isOptional:
-                # 阶段涨幅
-                growthHtml = soup.select('#increaseAmount_stage > table  ')
-                growth = growthHtml[0].findAll('tr')[1:2][0].select('.Rdata')
-                a = {
-                    "lastWeekGrowth": growth[0].text.replace('%', ''),
-                    "lastMonthGrowth": growth[1].text.replace('%', ''),
-                    "lastThreeMonthsGrowth": growth[2].text.replace('%', ''),
-                    "lastSixMonthsGrowth": growth[3].text.replace('%', ''),
-                    "lastYearGrowth": growth[5].text.replace('%', '')
-                }
-                fundData.update(a)
-        except Exception as e:
-            print(e)
-        return fundData
 
     def get_funds_growth(self, fundCodes: list):
         """
@@ -438,26 +273,10 @@ class FundCrawler:
         :return:
         """
         print('当前数据源：[{}]'.format(FundConfig.DB_SWITCH))
-        if FundConfig.DB_SWITCH == DBSource.YDI:
-            return self.get_funds_data_ydi(fundCodes, isOptional)
-        elif FundConfig.DB_SWITCH == DBSource.OTH:
-            return self.get_funds_data_oth(fundCodes)
-        elif FundConfig.DB_SWITCH == DBSource.ANT:
+        if FundConfig.DB_SWITCH == DBSource.ANT:
             return self.get_funds_data_ant(fundCodes, isOptional)
         else:
             return self.get_funds_data_ttt(fundCodes, isOptional)
-
-    def get_fund_performance_ydi(self, fundCode: str, startDate: str = ''):
-        try:
-            url = FundConfig.OTHER_URL + '/fund/detail?code={}&startDate={}'.format(fundCode, startDate)
-            resp = self.http_get(url)
-            if resp.status_code == 200:
-                resp_json = resp.json()
-                data = resp_json['data']
-                return data
-        except Exception as e:
-            print(e)
-        return {}
 
     def get_fund_performance_ttt(self, fundCode: str, type: str = 'threemonth'):
         if type == 'ONE_MONTH':
@@ -563,7 +382,7 @@ class FundCrawler:
             for item in ret:
                 if item['netWorthDate'] == worthDate:
                     return item
-        return None
+        return 0
 
     def get_history_worth(self, fundCode: str, startDate: str = '', endDate: str = '', pageSize: int = 10,
                           pageNum: int = 1):
@@ -960,7 +779,7 @@ if __name__ == '__main__':
     # pass
     fund = FundCrawler()
     # ret = fund.get_day_worth('009777', '2020-12-23')
-    # ret = fund.get_funds_data(['110011'])
+    ret = fund.get_funds_data(['110011'])
     # ret = fund.get_board_data_bak()
     # ret = fund.get_fund_performance_ydi('110011')
     # ret = fund.get_history_worth('110011', '2020-09-04', '2020-12-04', 93, 1)
@@ -969,5 +788,5 @@ if __name__ == '__main__':
     # ret = fund.get_all_fund()
     # ret = fund.get_fund_positions('110011')
     # ret = fund.get_last_work_day('2020-12-20')
-    ret = fund.get_fund_info('002788')
+    # ret = fund.get_fund_info('002788')
     print(ret)
