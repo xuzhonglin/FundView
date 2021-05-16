@@ -171,7 +171,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
     def init_slot(self):
         """
-        舒适化槽函数
+        初始化槽函数
         :return:
         """
         self.positionRefreshBtn.clicked.connect(lambda: self.refresh_btn_clicked(False))
@@ -184,6 +184,21 @@ class FundMain(QMainWindow, Ui_MainWindow):
         # self.settingBtn.clicked.connect(self.setting_btn_clicked)
         self.dbSourceCob.currentIndexChanged.connect(self.db_source_changed)
         self.settingLabel.clicked.connect(self.setting_btn_clicked)
+        self.tabWidget.currentChanged.connect(self.tab_widget_changed)
+
+    def tab_widget_changed(self, index):
+        if index == 2:
+            self.headLabelOne.setText('BTC / USDT')
+            self.headLabelTwo.setText('ETH / USDT')
+            self.headLabelThree.setText('ADA / USDT')
+            self.headLabelFour.setText('XRP / USDT')
+            self.headLabelFive.setText('DOT / USDT')
+        else:
+            self.headLabelOne.setText('上证指数（ 000001 ）')
+            self.headLabelTwo.setText('深证成指（ 399001 ）')
+            self.headLabelThree.setText('创业板指（ 399006 ）')
+            self.headLabelFour.setText('沪深300（ 000300 ）')
+            self.headLabelFive.setText('上证50（ 000016 ）')
 
     def db_source_changed(self, index):
         if not self.is_start_done: return

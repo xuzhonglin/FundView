@@ -41,7 +41,7 @@
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="tab">
          <property name="sizePolicy">
@@ -417,6 +417,64 @@ border-radius:5px;
           </item>
          </layout>
         </widget>
+        <widget class="QWidget" name="tab_3">
+         <attribute name="title">
+          <string>虚拟货币</string>
+         </attribute>
+         <layout class="QGridLayout" name="gridLayout_4">
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <property name="bottomMargin">
+           <number>10</number>
+          </property>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="coinPairText">
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">padding-left:3px;</string>
+            </property>
+            <property name="placeholderText">
+             <string>搜索交易对 BTC/USDT</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QPushButton" name="addCoinPairBtn">
+            <property name="text">
+             <string>添加</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <spacer name="horizontalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="1" column="0" colspan="3">
+           <widget class="QTableWidget" name="coinMarketTable"/>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </item>
      </layout>
@@ -441,7 +499,7 @@ border-radius:5px;
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="headLabelOne">
           <property name="text">
            <string>上证指数（000001）</string>
           </property>
@@ -496,7 +554,7 @@ border-radius:5px;
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
-         <widget class="QLabel" name="label_3">
+         <widget class="QLabel" name="headLabelTwo">
           <property name="text">
            <string>深证成指（399001 ）</string>
           </property>
@@ -551,7 +609,7 @@ border-radius:5px;
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QLabel" name="label_10">
+         <widget class="QLabel" name="headLabelThree">
           <property name="text">
            <string>创业板指 （399006 ）</string>
           </property>
@@ -606,7 +664,7 @@ border-radius:5px;
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
-         <widget class="QLabel" name="label_11">
+         <widget class="QLabel" name="headLabelFour">
           <property name="text">
            <string>沪深300 （000300 ）</string>
           </property>
@@ -661,7 +719,7 @@ border-radius:5px;
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="QLabel" name="label_5">
+         <widget class="QLabel" name="headLabelFive">
           <property name="text">
            <string>上证50（ 000016 ）</string>
           </property>

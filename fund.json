@@ -3,12 +3,7 @@
         {
             "fundCode": "001510",
             "fundCost": 3.5983,
-            "fundUnits": 277.91
-        },
-        {
-            "fundCode": "161725",
-            "fundCost": 1.2607,
-            "fundUnits": 900.0
+            "fundUnits": 200.0
         },
         {
             "fundCode": "009777",
@@ -18,7 +13,7 @@
         {
             "fundCode": "260108",
             "fundCost": 2.7208,
-            "fundUnits": 480.0
+            "fundUnits": 300.0
         },
         {
             "fundCode": "110011",
@@ -28,7 +23,7 @@
         {
             "fundCode": "001595",
             "fundCost": 1.2825,
-            "fundUnits": 1169.55
+            "fundUnits": 800.0
         },
         {
             "fundCode": "470006",
@@ -47,8 +42,8 @@
         },
         {
             "fundCode": "163406",
-            "fundCost": 2.2435,
-            "fundUnits": 445.73
+            "fundCost": 2.2149,
+            "fundUnits": 586.94
         },
         {
             "fundCode": "005827",
@@ -86,11 +81,13 @@
         "005827",
         "001838",
         "002079",
-        "110011"
+        "110011",
+        "420102",
+        "502023"
     ],
     "source": 0,
-    "fontName": "微软雅黑",
-    "fontSize": 9,
+    "fontName": ".AppleSystemUIFont",
+    "fontSize": 13,
     "enableAutoRefresh": true,
     "autoRefreshTimeout": 60000,
     "colorScheme": 0,
