@@ -7,7 +7,7 @@ from src.fund_enum import DBSource, ColorSwitch
 class FundConfig:
     APP_NAME = '韭菜盒子'
 
-    VERSION = '1.2.6'
+    VERSION = '1.3.0'
 
     CUR_PID = os.getpid()
 

@@ -27,7 +27,10 @@ from form.fund_deal_dialog import Ui_FundDealDialog
 from form.fund_table_main import FundTableMain
 from src.fund_crawler import FundCrawler
 from src.fund_utils import get_or_default, get_color, judge_time
+# from okex.websocket_example import *
 import traceback
+import asyncio
+
 
 
 class FundMain(QMainWindow, Ui_MainWindow):
@@ -73,6 +76,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.parse_fund_config()
         self.init_position_table()
         self.init_optional_table()
+        self.init_coin_table()
 
         print("界面初始化完成")
         self.thread = MyThread(self.positionFund, self.optionalFund)
@@ -161,6 +165,14 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 print("设置自动补全失败：" + str(e))
         else:
             print("系统已经初始化完成")
+
+    def start_websocket(self):
+        pass
+        # url = 'wss://real.coinall.ltd:8443/ws/v3'
+        # channels = ["spot/ticker:BTC-USDT", "spot/ticker:ETH-USDT", "spot/ticker:DOGE-USDT"]
+        # loop = asyncio.get_event_loop()
+        # # 公共数据 不需要登录（行情，K线，交易数据，资金费率，限价范围，深度数据，标记价格等频道）
+        # loop.run_until_complete(subscribe_without_login(url, channels))
 
     def scheduler_job(self):
         """
@@ -320,6 +332,37 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.optionalTable.setContextMenuPolicy(Qt.CustomContextMenu)
         # 将信号请求连接到槽（单击鼠标右键，就调用方法）
         self.optionalTable.customContextMenuRequested.connect(self.fund_table_menu)
+
+    def init_coin_table(self):
+        self.coinMarketTable.clearContents()
+        # 设置一共10列
+        self.coinMarketTable.setColumnCount(7)
+        #  设置水平方向两个头标签文本内容
+        self.coinMarketTable.setHorizontalHeaderLabels(
+            ['名称', '最新价', '今日涨幅', '24H最低', '24H最高', '24H成交量', '24H成交额'])
+        # 水平方向标签拓展剩下的窗口部分，填满表格
+        # self.tableView.horizontalHeader().setStretchLastSection(True)
+        # 水平方向，表格大小拓展到适当的尺寸
+        self.coinMarketTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.coinMarketTable.horizontalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        # 设置整行选中
+        self.coinMarketTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.coinMarketTable.verticalHeader().hide()
+
+        # 设置行高
+        self.coinMarketTable.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+
+        # 调整第 1-3列的宽度 为适应内容
+        # self.coinMarketTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        # self.coinMarketTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        # self.coinMarketTable.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        # self.coinMarketTable.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
+        # self.positionTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+
+        # 允许弹出菜单
+        # self.coinMarketTable.setContextMenuPolicy(Qt.CustomContextMenu)
+        # 将信号请求连接到槽（单击鼠标右键，就调用方法）
+        # self.coinMarketTable.customContextMenuRequested.connect(self.fund_table_menu)
 
     def fund_table_menu(self, pos):
         curTabIndex = self.tabWidget.currentIndex()
