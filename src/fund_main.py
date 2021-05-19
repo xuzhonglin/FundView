@@ -27,10 +27,9 @@ from form.fund_deal_dialog import Ui_FundDealDialog
 from form.fund_table_main import FundTableMain
 from src.fund_crawler import FundCrawler
 from src.fund_utils import get_or_default, get_color, judge_time
-# from okex.websocket_example import *
+from okex.websocket_example import *
 import traceback
 import asyncio
-
 
 
 class FundMain(QMainWindow, Ui_MainWindow):
@@ -163,16 +162,19 @@ class FundMain(QMainWindow, Ui_MainWindow):
                     pass
             except Exception as e:
                 print("设置自动补全失败：" + str(e))
+            _thread.start_new_thread(self.start_websocket, ())
+            # self.start_websocket()
         else:
             print("系统已经初始化完成")
 
     def start_websocket(self):
-        pass
-        # url = 'wss://real.coinall.ltd:8443/ws/v3'
-        # channels = ["spot/ticker:BTC-USDT", "spot/ticker:ETH-USDT", "spot/ticker:DOGE-USDT"]
-        # loop = asyncio.get_event_loop()
-        # # 公共数据 不需要登录（行情，K线，交易数据，资金费率，限价范围，深度数据，标记价格等频道）
-        # loop.run_until_complete(subscribe_without_login(url, channels))
+        # pass
+        url = 'wss://real.coinall.ltd:8443/ws/v3'
+        channels = ["spot/ticker:BTC-USDT", "spot/ticker:ETH-USDT", "spot/ticker:ADA-USDT",
+                    "spot/ticker:XRP-USDT", "spot/ticker:DOT-USDT"]
+        loop = asyncio.new_event_loop()
+        # 公共数据 不需要登录（行情，K线，交易数据，资金费率，限价范围，深度数据，标记价格等频道）
+        loop.run_until_complete(self.subscribe_without_login(url, channels))
 
     def scheduler_job(self):
         """
@@ -205,12 +207,32 @@ class FundMain(QMainWindow, Ui_MainWindow):
             self.headLabelThree.setText('ADA / USDT')
             self.headLabelFour.setText('XRP / USDT')
             self.headLabelFive.setText('DOT / USDT')
+            self.SHZ_Price.setText('-')
+            self.SHZ_PriceChange.setText('-')
+            self.SHZ_ChangePercent.setText('-')
+            # 深证成指
+            self.SZZ_Price.setText('-')
+            self.SZZ_PriceChange.setText('-')
+            self.SZZ_ChangePercent.setText('-')
+            # 创业板指
+            self.CY_Price.setText('-')
+            self.CY_PriceChange.setText('-')
+            self.CY_ChangePercent.setText('-')
+            # 沪深300
+            self.HS_Price.setText('-')
+            self.HS_PriceChange.setText('-')
+            self.HS_ChangePercent.setText('-')
+            # 上证50
+            self.SZ_Price.setText('-')
+            self.SZ_PriceChange.setText('-')
+            self.SZ_ChangePercent.setText('-')
         else:
             self.headLabelOne.setText('上证指数（ 000001 ）')
             self.headLabelTwo.setText('深证成指（ 399001 ）')
             self.headLabelThree.setText('创业板指（ 399006 ）')
             self.headLabelFour.setText('沪深300（ 000300 ）')
             self.headLabelFive.setText('上证50（ 000016 ）')
+            self.refresh_board_data()
 
     def db_source_changed(self, index):
         if not self.is_start_done: return
@@ -1240,3 +1262,210 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
         err_msg = ''.join(traceback.format_exception(excType, excValue, traceBack))
         QMessageBox.critical(self, '异常', err_msg)
+
+    # subscribe channels un_need login
+    async def subscribe_without_login(self, url, channels):
+        l = []
+        while True:
+            try:
+                async with websockets.connect(url) as ws:
+                    sub_param = {"op": "subscribe", "args": channels}
+                    sub_str = json.dumps(sub_param)
+                    await ws.send(sub_str)
+
+                    while True:
+                        try:
+                            res_b = await asyncio.wait_for(ws.recv(), timeout=25)
+                        except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed) as e:
+                            try:
+                                await ws.send('ping')
+                                res_b = await ws.recv()
+                                timestamp = get_timestamp()
+                                res = inflate(res_b).decode('utf-8')
+                                print(timestamp + res)
+                                continue
+                            except Exception as e:
+                                timestamp = get_timestamp()
+                                print(timestamp + "正在重连……")
+                                print(e)
+                                break
+
+                        timestamp = get_timestamp()
+                        res = inflate(res_b).decode('utf-8')
+                        # print(timestamp + res)
+
+                        res = eval(res)
+                        if 'event' in res:
+                            continue
+                        for i in res:
+                            if 'spot/ticker' in res[i]:
+                                self.refresh_coin_board(res)
+                            if 'depth' in res[i] and 'depth5' not in res[i]:
+                                # 订阅频道是深度频道
+                                if res['action'] == 'partial':
+                                    for m in l:
+                                        if res['data'][0]['instrument_id'] == m['instrument_id']:
+                                            l.remove(m)
+                                    # 获取首次全量深度数据
+                                    bids_p, asks_p, instrument_id = partial(res, timestamp)
+                                    d = {}
+                                    d['instrument_id'] = instrument_id
+                                    d['bids_p'] = bids_p
+                                    d['asks_p'] = asks_p
+                                    l.append(d)
+
+                                    # 校验checksum
+                                    checksum = res['data'][0]['checksum']
+                                    # print(timestamp + '推送数据的checksum为：' + str(checksum))
+                                    check_num = check(bids_p, asks_p)
+                                    # print(timestamp + '校验后的checksum为：' + str(check_num))
+                                    if check_num == checksum:
+                                        print("校验结果为：True")
+                                    else:
+                                        print("校验结果为：False，正在重新订阅……")
+
+                                        # 取消订阅
+                                        await self.unsubscribe_without_login(url, channels, timestamp)
+                                        # 发送订阅
+                                        async with websockets.connect(url) as ws:
+                                            sub_param = {"op": "subscribe", "args": channels}
+                                            sub_str = json.dumps(sub_param)
+                                            await ws.send(sub_str)
+                                            timestamp = get_timestamp()
+                                            print(timestamp + f"send: {sub_str}")
+
+                                elif res['action'] == 'update':
+                                    for j in l:
+                                        if res['data'][0]['instrument_id'] == j['instrument_id']:
+                                            # 获取全量数据
+                                            bids_p = j['bids_p']
+                                            asks_p = j['asks_p']
+                                            # 获取合并后数据
+                                            bids_p = update_bids(res, bids_p, timestamp)
+                                            asks_p = update_asks(res, asks_p, timestamp)
+
+                                            # 校验checksum
+                                            checksum = res['data'][0]['checksum']
+                                            # print(timestamp + '推送数据的checksum为：' + str(checksum))
+                                            check_num = check(bids_p, asks_p)
+                                            # print(timestamp + '校验后的checksum为：' + str(check_num))
+                                            if check_num == checksum:
+                                                print("校验结果为：True")
+                                            else:
+                                                print("校验结果为：False，正在重新订阅……")
+
+                                                # 取消订阅
+                                                await self.unsubscribe_without_login(url, channels, timestamp)
+                                                # 发送订阅
+                                                async with websockets.connect(url) as ws:
+                                                    sub_param = {"op": "subscribe", "args": channels}
+                                                    sub_str = json.dumps(sub_param)
+                                                    await ws.send(sub_str)
+                                                    timestamp = get_timestamp()
+                                                    print(timestamp + f"send: {sub_str}")
+            except Exception as e:
+                timestamp = get_timestamp()
+                print(timestamp + "连接断开，正在重连……")
+                print(e)
+                continue
+
+    # subscribe channels need login
+    async def subscribe(self, url, api_key, passphrase, secret_key, channels):
+        while True:
+            try:
+                async with websockets.connect(url) as ws:
+                    # login
+                    timestamp = str(server_timestamp())
+                    login_str = login_params(timestamp, api_key, passphrase, secret_key)
+                    await ws.send(login_str)
+                    # time = get_timestamp()
+                    # print(time + f"send: {login_str}")
+                    res_b = await ws.recv()
+                    res = inflate(res_b).decode('utf-8')
+                    time = get_timestamp()
+                    print(time + res)
+
+                    # subscribe
+                    sub_param = {"op": "subscribe", "args": channels}
+                    sub_str = json.dumps(sub_param)
+                    await ws.send(sub_str)
+                    time = get_timestamp()
+                    print(time + f"send: {sub_str}")
+
+                    while True:
+                        try:
+                            res_b = await asyncio.wait_for(ws.recv(), timeout=25)
+                        except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed) as e:
+                            try:
+                                await ws.send('ping')
+                                res_b = await ws.recv()
+                                time = get_timestamp()
+                                res = inflate(res_b).decode('utf-8')
+                                print(time + res)
+                                continue
+                            except Exception as e:
+                                time = get_timestamp()
+                                print(time + "正在重连……")
+                                print(e)
+                                break
+
+                        time = get_timestamp()
+                        res = inflate(res_b).decode('utf-8')
+                        print(time + res)
+
+            except Exception as e:
+                time = get_timestamp()
+                print(time + "连接断开，正在重连……")
+                print(e)
+                continue
+
+    # unsubscribe channels
+    async def unsubscribe(self, url, api_key, passphrase, secret_key, channels):
+        async with websockets.connect(url) as ws:
+            # login
+            timestamp = str(server_timestamp())
+            login_str = login_params(str(timestamp), api_key, passphrase, secret_key)
+            await ws.send(login_str)
+            # time = get_timestamp()
+            # print(time + f"send: {login_str}")
+
+            res_1 = await ws.recv()
+            res = inflate(res_1).decode('utf-8')
+            time = get_timestamp()
+            print(time + res)
+
+            # unsubscribe
+            sub_param = {"op": "unsubscribe", "args": channels}
+            sub_str = json.dumps(sub_param)
+            await ws.send(sub_str)
+            time = get_timestamp()
+            print(time + f"send: {sub_str}")
+
+            res_1 = await ws.recv()
+            res = inflate(res_1).decode('utf-8')
+            time = get_timestamp()
+            print(time + res)
+
+    # unsubscribe channels
+    async def unsubscribe_without_login(self, url, channels, timestamp):
+        async with websockets.connect(url) as ws:
+            # unsubscribe
+            sub_param = {"op": "unsubscribe", "args": channels}
+            sub_str = json.dumps(sub_param)
+            await ws.send(sub_str)
+            print(timestamp + f"send: {sub_str}")
+
+            res_1 = await ws.recv()
+            res = inflate(res_1).decode('utf-8')
+            print(timestamp + f"recv: {res}")
+
+    def refresh_coin_board(self, data: dict):
+        print('helle', data)
+        list = data['data']
+        for item in list:
+            coin_type = item['instrument_id']
+            if 'BTC' in coin_type:
+                self.SHZ_Price.setText(item['last'])
+                self.SHZ_PriceChange.setText(str(float(item['open_utc8']) - float(item['last'])))
+                self.SHZ_ChangePercent.setText(
+                    str((float(item['last']) - float(item['open_utc8'])) / float(item['last'])))
