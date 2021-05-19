@@ -1460,12 +1460,49 @@ class FundMain(QMainWindow, Ui_MainWindow):
             print(timestamp + f"recv: {res}")
 
     def refresh_coin_board(self, data: dict):
-        print('helle', data)
+        # print('helle', data)
         list = data['data']
+        if self.tabWidget.currentIndex() != 2:
+            return
         for item in list:
             coin_type = item['instrument_id']
             if 'BTC' in coin_type:
-                self.SHZ_Price.setText(item['last'])
-                self.SHZ_PriceChange.setText(str(float(item['open_utc8']) - float(item['last'])))
-                self.SHZ_ChangePercent.setText(
-                    str((float(item['last']) - float(item['open_utc8'])) / float(item['last'])))
+                last_price = float(item['last'])
+                open_price = float(item['open_utc8'])
+                price_diff = last_price - open_price
+                colorString = get_color(price_diff, 'str')
+                # last_price = colorString.format(last_price)
+                changePercent = '{}%'.format(format(price_diff / open_price * 100, '.2f'))
+                # priceChange = colorString.format(priceChange)
+                changePercent = colorString.format(changePercent)
+                self.SHZ_Price.setText(str(last_price))
+                # self.SHZ_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
+                # self.SHZ_ChangePercent.setText(changePercent)
+            if 'ETH' in coin_type:
+                last_price = float(item['last'])
+                open_price = float(item['open_utc8'])
+                price_diff = last_price - open_price
+                self.SZZ_Price.setText('{}'.format(last_price))
+                # self.SZZ_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
+                self.SZZ_ChangePercent.setText('{}%'.format(format(price_diff / open_price * 100, '.2f')))
+            if 'ADA' in coin_type:
+                last_price = float(item['last'])
+                open_price = float(item['open_utc8'])
+                price_diff = last_price - open_price
+                self.CY_Price.setText('{}'.format(last_price))
+                # self.CY_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
+                self.CY_ChangePercent.setText('{}%'.format(format(price_diff / open_price * 100, '.2f')))
+            if 'XRP' in coin_type:
+                last_price = float(item['last'])
+                open_price = float(item['open_utc8'])
+                price_diff = last_price - open_price
+                self.HS_Price.setText('{}'.format(last_price))
+                # self.HS_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
+                self.HS_ChangePercent.setText('{}%'.format(format(price_diff / open_price * 100, '.2f')))
+            if 'DOT' in coin_type:
+                last_price = float(item['last'])
+                open_price = float(item['open_utc8'])
+                price_diff = last_price - open_price
+                self.SZ_Price.setText('{}'.format(last_price))
+                # self.SZ_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
+                self.SZ_ChangePercent.setText('{}%'.format(format(price_diff / open_price * 100, '.2f')))
