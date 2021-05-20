@@ -1,5 +1,5 @@
 
-API_URL = 'https://www.okex.com'
+API_URL = 'https://www.ouyi.cc'
 
 CONTENT_TYPE = 'Content-Type'
 OK_ACCESS_KEY = 'OK-ACCESS-KEY'

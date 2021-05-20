@@ -384,7 +384,7 @@ secret_key = ""
 passphrase = ""
 
 url = 'wss://real.coinall.ltd:8443/ws/v3'
-# url = 'wss://real.okex.com:8443/ws/v3?brokerId=9999'
+# url = 'wss://real.okex_v3.com:8443/ws/v3?brokerId=9999'
 
 # 现货
 # 用户币币账户频道
@@ -396,7 +396,7 @@ url = 'wss://real.coinall.ltd:8443/ws/v3'
 # 用户交易频道
 # channels = ["spot/order:BTC-USDT"]
 # 公共-Ticker频道
-channels = ["spot/ticker:BTC-USDT", "spot/ticker:DOGE-USDT"]
+# channels = ["spot/ticker:BTC-USDT", "spot/ticker:DOGE-USDT"]
 # 公共-K线频道
 # channels = ["spot/candle60s:BTC-USDT"]
 # 公共-交易频道
@@ -493,6 +493,8 @@ channels = ["spot/ticker:BTC-USDT", "spot/ticker:DOGE-USDT"]
 # ws公共指数频道
 # 指数行情
 # channels = ["index/ticker:BTC-USD"]
+channels = ["index/ticker:BTC-USDT", "index/ticker:ETH-USDT", "index/ticker:ADA-USDT",
+                    "index/ticker:XRP-USDT", "index/ticker:DOT-USDT"]
 # 指数K线
 # channels = ["index/candle60s:BTC-USD"]
 

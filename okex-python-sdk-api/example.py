@@ -1,12 +1,12 @@
-import okex.account_api as account
-import okex.futures_api as future
-import okex.lever_api as lever
-import okex.spot_api as spot
-import okex.swap_api as swap
-import okex.index_api as index
-import okex.option_api as option
-import okex.system_api as system
-import okex.information_api as information
+import okex_v3.account_api as account
+import okex_v3.futures_api as future
+import okex_v3.lever_api as lever
+import okex_v3.spot_api as spot
+import okex_v3.swap_api as swap
+import okex_v3.index_api as index
+import okex_v3.option_api as option
+import okex_v3.system_api as system
+import okex_v3.information_api as information
 import json
 import datetime
 
@@ -19,9 +19,9 @@ time = get_timestamp()
 
 if __name__ == '__main__':
 
-    api_key = ""
-    secret_key = ""
-    passphrase = ""
+    api_key = "bfd9d993-af30-45c7-a9c1-ba03254b4da2"
+    secret_key = "F1A2B433774BC7AC512A2F20331836AF"
+    passphrase = "Z47f68JnReR9heb"
 
     # param use_server_time's value is False if is True will use server timestamp
     # param test's value is False if is True will use simulative trading
@@ -30,7 +30,9 @@ if __name__ == '__main__':
 # 资金账户API
     accountAPI = account.AccountAPI(api_key, secret_key, passphrase, False)
     # 资金账户信息
-    # result = accountAPI.get_wallet()
+    result = accountAPI.get_wallet()
+
+    print(result)
     # 单一币种账户信息
     # result = accountAPI.get_currency('')
     # 资金划转
@@ -114,7 +116,7 @@ if __name__ == '__main__':
 
 # level api test
 # 币币杠杆API
-    levelAPI = lever.LeverAPI(api_key, secret_key, passphrase, False)
+#     levelAPI = lever.LeverAPI(api_key, secret_key, passphrase, False)
     # 币币杠杆账户信息
     # result = levelAPI.get_account_info()
     # 单一币对账户信息
@@ -164,7 +166,7 @@ if __name__ == '__main__':
 
 # future api test
 # 交割合约API
-    futureAPI = future.FutureAPI(api_key, secret_key, passphrase, False)
+#     futureAPI = future.FutureAPI(api_key, secret_key, passphrase, False)
     # 所有合约持仓信息
     # result = futureAPI.get_position()
     # 单个合约持仓信息
@@ -259,7 +261,7 @@ if __name__ == '__main__':
 
 # swap api test
 # 永续合约API
-    swapAPI = swap.SwapAPI(api_key, secret_key, passphrase, False)
+#     swapAPI = swap.SwapAPI(api_key, secret_key, passphrase, False)
     # 所有合约持仓信息
     # result = swapAPI.get_position()
     # 单个合约持仓信息
@@ -345,7 +347,7 @@ if __name__ == '__main__':
 
 # option api test
 # 期权合约API
-    optionAPI = option.OptionAPI(api_key, secret_key, passphrase, False)
+#     optionAPI = option.OptionAPI(api_key, secret_key, passphrase, False)
     # 单个标的指数持仓信息
     # result = optionAPI.get_specific_position(underlying='', instrument_id='')
     # 单个标的物账户信息
@@ -399,7 +401,7 @@ if __name__ == '__main__':
 
 # information api test
 # 合约交易数据API
-    informationAPI = information.InformationAPI(api_key, secret_key, passphrase, False)
+#     informationAPI = information.InformationAPI(api_key, secret_key, passphrase, False)
     # 公共-多空持仓人数比
     # result = informationAPI.get_long_short_ratio(currency='', start='', end='', granularity='')
     # 公共-持仓总量及交易量
@@ -415,11 +417,11 @@ if __name__ == '__main__':
 # 指数API
     indexAPI = index.IndexAPI(api_key, secret_key, passphrase, False)
     # 公共-获取指数成分
-    # result = indexAPI.get_index_constituents('')
+    result = indexAPI.get_index_constituents('')
 
 # system api test
 # 获取系统升级状态
-    system = system.SystemAPI(api_key, secret_key, passphrase, False)
+#     system = system.SystemAPI(api_key, secret_key, passphrase, False)
     # 公共-获取系统升级状态
     # result = system.get_system_status('')
 

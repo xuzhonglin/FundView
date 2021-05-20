@@ -12,7 +12,7 @@ import os
 import subprocess
 
 BUILD_PACKNAME = 'LeekBox'
-BUILD_VERSION = '1.2.6'
+BUILD_VERSION = '1.3.0'
 
 
 def build_win32():

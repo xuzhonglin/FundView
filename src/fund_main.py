@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 import time
 
-from PyQt5.QtCore import Qt, QModelIndex, QTimer, QCoreApplication
+from PyQt5.QtCore import Qt, QModelIndex, QTimer, QCoreApplication, pyqtSignal
 from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QIcon
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, \
     QApplication, QMessageBox, QCompleter, QSystemTrayIcon, QAction
@@ -27,13 +27,15 @@ from form.fund_deal_dialog import Ui_FundDealDialog
 from form.fund_table_main import FundTableMain
 from src.fund_crawler import FundCrawler
 from src.fund_utils import get_or_default, get_color, judge_time
-from okex.websocket_example import *
+from okex_v3.websocket_example import *
 import traceback
 import asyncio
 
 
 class FundMain(QMainWindow, Ui_MainWindow):
     scheduler = BackgroundScheduler()
+    BoardChange = pyqtSignal(int, list)
+    TableChange = pyqtSignal(list)
 
     def __init__(self, parent: QApplication):
         super().__init__()
@@ -55,6 +57,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.all_fund_settled_cnt = 0
         self.completer = QCompleter([])
         self.tip_cnt = 0
+        self.op_coin = []
 
         self.timer = QTimer()  # 初始化定时器
         self.timer.timeout.connect(self.timer_refresh)
@@ -170,8 +173,13 @@ class FundMain(QMainWindow, Ui_MainWindow):
     def start_websocket(self):
         # pass
         url = 'wss://real.coinall.ltd:8443/ws/v3'
-        channels = ["spot/ticker:BTC-USDT", "spot/ticker:ETH-USDT", "spot/ticker:ADA-USDT",
-                    "spot/ticker:XRP-USDT", "spot/ticker:DOT-USDT"]
+        channels = ["index/ticker:BTC-USDT", "index/ticker:ETH-USDT", "index/ticker:ADA-USDT",
+                    "index/ticker:XRP-USDT", "index/ticker:DOT-USDT"]
+        self.op_coin = ["spot/ticker:BTC-USDT", "spot/ticker:ETH-USDT", "spot/ticker:DOGE-USDT",
+                        "spot/ticker:XRP-USDT", "spot/ticker:EOS-USDT", "spot/ticker:OKB-USDT",
+                        "spot/ticker:ETC-USDT", "spot/ticker:XCH-USDT", "spot/ticker:SHIB-USDT",
+                        "spot/ticker:OKT-USDT", "spot/ticker:CSPR-USDT", "spot/ticker:LAT-USDT"]
+        channels.extend(self.op_coin)
         loop = asyncio.new_event_loop()
         # 公共数据 不需要登录（行情，K线，交易数据，资金费率，限价范围，深度数据，标记价格等频道）
         loop.run_until_complete(self.subscribe_without_login(url, channels))
@@ -199,6 +207,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.dbSourceCob.currentIndexChanged.connect(self.db_source_changed)
         self.settingLabel.clicked.connect(self.setting_btn_clicked)
         self.tabWidget.currentChanged.connect(self.tab_widget_changed)
+        self.BoardChange.connect(self.change_board_text)
+        self.TableChange.connect(self.change_table_coneten)
 
     def tab_widget_changed(self, index):
         if index == 2:
@@ -251,7 +261,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             if self.tabWidget.currentIndex() == 0:
                 self.positionRefreshBtn.setText('自动刷新...')
                 self.refresh_btn_clicked()
-            else:
+            elif self.tabWidget.currentIndex() == 1:
                 self.optionalRefreshBtn.setText('自动刷新...')
                 self.refresh_btn_clicked(True)
         else:
@@ -373,6 +383,10 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
         # 设置行高
         self.coinMarketTable.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+
+        # 设置颜色相间
+        self.coinMarketTable.setAlternatingRowColors(True)
+        self.coinMarketTable.horizontalHeader().setHighlightSections(False)
 
         # 调整第 1-3列的宽度 为适应内容
         # self.coinMarketTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
@@ -538,7 +552,6 @@ class FundMain(QMainWindow, Ui_MainWindow):
         dialog.exec_()
 
     def refresh_board_data(self, ret: list = None):
-        print(ret)
         if ret is None:
             ret = self.fundCrawler.get_board_info()
         for board_item in ret:
@@ -1298,9 +1311,11 @@ class FundMain(QMainWindow, Ui_MainWindow):
                         if 'event' in res:
                             continue
                         for i in res:
-                            if 'spot/ticker' in res[i]:
+                            if 'index/ticker' in res[i]:
                                 self.refresh_coin_board(res)
-                            if 'depth' in res[i] and 'depth5' not in res[i]:
+                            elif 'spot/ticker' in res[i]:
+                                self.refresh_coin_table(res)
+                            elif 'depth' in res[i] and 'depth5' not in res[i]:
                                 # 订阅频道是深度频道
                                 if res['action'] == 'partial':
                                     for m in l:
@@ -1460,49 +1475,112 @@ class FundMain(QMainWindow, Ui_MainWindow):
             print(timestamp + f"recv: {res}")
 
     def refresh_coin_board(self, data: dict):
-        # print('helle', data)
         list = data['data']
         if self.tabWidget.currentIndex() != 2:
             return
         for item in list:
             coin_type = item['instrument_id']
+            last_price = float(item['last'])
+            open_price = float(item['open_utc8'])
+            price_diff = last_price - open_price
+            colorString = get_color(price_diff, 'str')
+            changePercent = '{}%'.format(format(price_diff / open_price * 100, '.2f'))
+            # priceChange = colorString.format(priceChange)
+            changePercent = colorString.format(changePercent)
             if 'BTC' in coin_type:
-                last_price = float(item['last'])
-                open_price = float(item['open_utc8'])
-                price_diff = last_price - open_price
-                colorString = get_color(price_diff, 'str')
-                # last_price = colorString.format(last_price)
-                changePercent = '{}%'.format(format(price_diff / open_price * 100, '.2f'))
-                # priceChange = colorString.format(priceChange)
-                changePercent = colorString.format(changePercent)
-                self.SHZ_Price.setText(str(last_price))
-                # self.SHZ_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
-                # self.SHZ_ChangePercent.setText(changePercent)
-            if 'ETH' in coin_type:
-                last_price = float(item['last'])
-                open_price = float(item['open_utc8'])
-                price_diff = last_price - open_price
-                self.SZZ_Price.setText('{}'.format(last_price))
-                # self.SZZ_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
-                self.SZZ_ChangePercent.setText('{}%'.format(format(price_diff / open_price * 100, '.2f')))
-            if 'ADA' in coin_type:
-                last_price = float(item['last'])
-                open_price = float(item['open_utc8'])
-                price_diff = last_price - open_price
-                self.CY_Price.setText('{}'.format(last_price))
-                # self.CY_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
-                self.CY_ChangePercent.setText('{}%'.format(format(price_diff / open_price * 100, '.2f')))
-            if 'XRP' in coin_type:
-                last_price = float(item['last'])
-                open_price = float(item['open_utc8'])
-                price_diff = last_price - open_price
-                self.HS_Price.setText('{}'.format(last_price))
-                # self.HS_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
-                self.HS_ChangePercent.setText('{}%'.format(format(price_diff / open_price * 100, '.2f')))
-            if 'DOT' in coin_type:
-                last_price = float(item['last'])
-                open_price = float(item['open_utc8'])
-                price_diff = last_price - open_price
-                self.SZ_Price.setText('{}'.format(last_price))
-                # self.SZ_PriceChange.setText('{}'.format(format(price_diff, '.1f')))
-                self.SZ_ChangePercent.setText('{}%'.format(format(price_diff / open_price * 100, '.2f')))
+                last_price_str = colorString.format(format(last_price, '.1f'))
+                self.BoardChange.emit(1, [last_price_str, '', changePercent])
+            elif 'ETH' in coin_type:
+                last_price_str = colorString.format(format(last_price, '.2f'))
+                self.BoardChange.emit(2, [last_price_str, '', changePercent])
+            elif 'ADA' in coin_type:
+                last_price_str = colorString.format(format(last_price, '.4f'))
+                self.BoardChange.emit(3, [last_price_str, '', changePercent])
+            elif 'XRP' in coin_type:
+                last_price_str = colorString.format(format(last_price, '.4f'))
+                self.BoardChange.emit(4, [last_price_str, '', changePercent])
+            elif 'DOT' in coin_type:
+                last_price_str = colorString.format(format(last_price, '.3f'))
+                self.BoardChange.emit(5, [last_price_str, '', changePercent])
+
+    def refresh_coin_table(self, data: dict):
+        list = data['data']
+        # print(list)
+        if self.tabWidget.currentIndex() != 2:
+            return
+        self.TableChange.emit(list)
+
+    def change_table_coneten(self, list: dict):
+        self.coinMarketTable.setRowCount(len(self.op_coin))
+        for item in list:
+            coin_type = item['instrument_id']
+            row_index = self.op_coin.index("spot/ticker:" + coin_type)
+            coin_price = float(item['last'])
+            coin_open = float(item['open_utc8'])
+            change_percent = (coin_price - coin_open) / coin_open * 100
+
+            # 货币名称
+            coin_name_item = QTableWidgetItem(coin_type.replace('-', '/'))
+            self.coinMarketTable.setItem(row_index, 0, coin_name_item)
+
+            # 最新价
+            coin_price_str = '₮ {}'.format(coin_price)
+            coin_price_item = QTableWidgetItem(coin_price_str)
+            self.coinMarketTable.setItem(row_index, 1, coin_price_item)
+
+            # 今日涨跌
+            change_percent_item = QTableWidgetItem('{}%'.format(format(change_percent, '.2f')))
+            self.coinMarketTable.setItem(row_index, 2, change_percent_item)
+
+            # 24h最低
+            low_24h = '₮ {}'.format(item['low_24h'])
+            low_24h_item = QTableWidgetItem(low_24h)
+            self.coinMarketTable.setItem(row_index, 3, low_24h_item)
+
+            # 24h最高
+            high_24h = '₮ {}'.format(item['high_24h'])
+            high_24h_item = QTableWidgetItem(high_24h)
+            self.coinMarketTable.setItem(row_index, 4, high_24h_item)
+
+            # 24h成交量
+            base_volume_24h = float(item['base_volume_24h'])
+            base_volume_24h_str = ''
+            if base_volume_24h > 100000000:
+                base_volume_24h_str = '{} 亿'.format(format(base_volume_24h / 100000000, '.2f'))
+            elif base_volume_24h > 10000:
+                base_volume_24h_str = '{} 万'.format(format(base_volume_24h / 10000, '.2f'))
+            base_volume_24h_item = QTableWidgetItem(base_volume_24h_str)
+            self.coinMarketTable.setItem(row_index, 5, base_volume_24h_item)
+
+            # 24h成交金额
+            base_amount_24h = base_volume_24h * coin_price
+            base_amount_24h_str = ''
+            if base_amount_24h > 100000000:
+                base_amount_24h_str = '₮ {} 亿'.format(format(base_amount_24h / 100000000, '.2f'))
+            elif base_amount_24h > 10000:
+                base_amount_24h_str = '₮ {} 万'.format(format(base_amount_24h / 10000, '.2f'))
+            base_amount_24h_item = QTableWidgetItem(base_amount_24h_str)
+            self.coinMarketTable.setItem(row_index, 6, base_amount_24h_item)
+        self.coinMarketTable.viewport().update()
+
+    def change_board_text(self, position: int, text: list):
+        if position == 1:
+            self.SHZ_Price.setText(text[0])
+            self.SHZ_PriceChange.setText(text[1])
+            self.SHZ_ChangePercent.setText(text[2])
+        if position == 2:
+            self.SZZ_Price.setText(text[0])
+            self.SZZ_PriceChange.setText(text[1])
+            self.SZZ_ChangePercent.setText(text[2])
+        if position == 3:
+            self.CY_Price.setText(text[0])
+            self.CY_PriceChange.setText(text[1])
+            self.CY_ChangePercent.setText(text[2])
+        if position == 4:
+            self.HS_Price.setText(text[0])
+            self.HS_PriceChange.setText(text[1])
+            self.HS_ChangePercent.setText(text[2])
+        if position == 5:
+            self.SZ_Price.setText(text[0])
+            self.SZ_PriceChange.setText(text[1])
+            self.SZ_ChangePercent.setText(text[2])

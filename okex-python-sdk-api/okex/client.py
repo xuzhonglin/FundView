@@ -45,11 +45,11 @@ class Client(object):
         # send request
         response = None
         if method == c.GET:
-            response = requests.get(url, headers=header)
+            response = requests.get(url, headers=header, verify=False)
         elif method == c.POST:
-            response = requests.post(url, data=body, headers=header)
+            response = requests.post(url, data=body, headers=header, verify=False)
         elif method == c.DELETE:
-            response = requests.delete(url, headers=header)
+            response = requests.delete(url, headers=header, verify=False)
 
         # exception handle
         if not str(response.status_code).startswith('2'):
