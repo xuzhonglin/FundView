@@ -27,7 +27,8 @@ from form.fund_deal_dialog import Ui_FundDealDialog
 from form.fund_table_main import FundTableMain
 from src.fund_crawler import FundCrawler
 from src.fund_utils import get_or_default, get_color, judge_time
-from okex_v3.websocket_example import *
+from okex.okex_websocket import *
+import okex.Account_api as Account
 import traceback
 import asyncio
 
@@ -36,6 +37,15 @@ class FundMain(QMainWindow, Ui_MainWindow):
     scheduler = BackgroundScheduler()
     BoardChange = pyqtSignal(int, list)
     TableChange = pyqtSignal(list)
+    api_key = "42adc4f1-3a4c-4cb4-b4b5-156051a77cab"
+    secret_key = "69866D7C605424264AEC79428ED73D22"
+    passphrase = "NBhgfIy324op9cvL"
+    # flag是实盘与模拟盘的切换参数 flag is the key parameter which can help you to change between demo and real trading.
+    # flag = '1'  # 模拟盘 demo trading
+    flag = '0'  # 实盘 real trading
+
+    # account api
+    accountAPI = Account.AccountAPI(api_key, secret_key, passphrase, False, flag)
 
     def __init__(self, parent: QApplication):
         super().__init__()
@@ -209,6 +219,13 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.tabWidget.currentChanged.connect(self.tab_widget_changed)
         self.BoardChange.connect(self.change_board_text)
         self.TableChange.connect(self.change_table_coneten)
+        self.total_assets_txt.clicked.connect(self.balance_click)
+
+    def balance_click(self):
+        res = self.accountAPI.get_account()
+        balance = float(res['data'][0]['totalEq'])
+        balance_str = '{} USD'.format(format(balance, '.2f'))
+        self.total_assets_txt.setText(balance_str)
 
     def tab_widget_changed(self, index):
         if index == 2:
@@ -236,6 +253,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
             self.SZ_Price.setText('-')
             self.SZ_PriceChange.setText('-')
             self.SZ_ChangePercent.setText('-')
+
+            self.balance_click()
+
         else:
             self.headLabelOne.setText('上证指数（ 000001 ）')
             self.headLabelTwo.setText('深证成指（ 399001 ）')
@@ -1518,6 +1538,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             coin_price = float(item['last'])
             coin_open = float(item['open_utc8'])
             change_percent = (coin_price - coin_open) / coin_open * 100
+            change_color = get_color(change_percent, 'brush')
 
             # 货币名称
             coin_name_item = QTableWidgetItem(coin_type.replace('-', '/'))
@@ -1531,6 +1552,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             # 今日涨跌
             change_percent_item = QTableWidgetItem('{}%'.format(format(change_percent, '.2f')))
             self.coinMarketTable.setItem(row_index, 2, change_percent_item)
+            self.coinMarketTable.item(row_index, 2).setForeground(change_color)
 
             # 24h最低
             low_24h = '₮ {}'.format(item['low_24h'])
