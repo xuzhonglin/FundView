@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>460</width>
-    <height>399</height>
+    <width>440</width>
+    <height>392</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
     <number>12</number>
    </property>
    <property name="topMargin">
-    <number>12</number>
+    <number>15</number>
    </property>
    <property name="rightMargin">
     <number>12</number>
@@ -32,16 +32,6 @@
    <property name="bottomMargin">
     <number>15</number>
    </property>
-   <item row="2" column="3">
-    <widget class="QPushButton" name="pushButton">
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
-     </property>
-     <property name="text">
-      <string>取消</string>
-     </property>
-    </widget>
-   </item>
    <item row="2" column="0">
     <spacer name="horizontalSpacer">
      <property name="orientation">
@@ -72,8 +62,11 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="4">
+   <item row="0" column="0" colspan="5">
     <widget class="QTabWidget" name="tabWidget">
+     <property name="styleSheet">
+      <string notr="true">ß</string>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
@@ -477,6 +470,16 @@
        <string>虚拟货币</string>
       </attribute>
      </widget>
+    </widget>
+   </item>
+   <item row="2" column="3">
+    <widget class="QPushButton" name="pushButton">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="text">
+      <string>取消</string>
+     </property>
     </widget>
    </item>
   </layout>

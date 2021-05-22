@@ -1115,7 +1115,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         读取本地配置文件
         :return: void
         """
-        home_dir = os.environ['HOME']
+        home_dir = os.path.expanduser("~")
         if FundConfig.PLATFORM == 'win32':
             config_dir = home_dir + '/AppData/Roaming/LeekBox'
         else:

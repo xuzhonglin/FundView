@@ -14,16 +14,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_FundSettingDialog(object):
     def setupUi(self, FundSettingDialog):
         FundSettingDialog.setObjectName("FundSettingDialog")
-        FundSettingDialog.resize(460, 399)
+        FundSettingDialog.resize(440, 392)
         FundSettingDialog.setAutoFillBackground(False)
         FundSettingDialog.setStyleSheet("")
         self.gridLayout = QtWidgets.QGridLayout(FundSettingDialog)
-        self.gridLayout.setContentsMargins(12, 12, 12, 15)
+        self.gridLayout.setContentsMargins(12, 15, 12, 15)
         self.gridLayout.setObjectName("gridLayout")
-        self.pushButton = QtWidgets.QPushButton(FundSettingDialog)
-        self.pushButton.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.pushButton.setObjectName("pushButton")
-        self.gridLayout.addWidget(self.pushButton, 2, 3, 1, 1)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem, 2, 0, 1, 1)
         self.saveBtn = QtWidgets.QPushButton(FundSettingDialog)
@@ -34,6 +30,7 @@ class Ui_FundSettingDialog(object):
         self.isRecoveryTxt.setObjectName("isRecoveryTxt")
         self.gridLayout.addWidget(self.isRecoveryTxt, 2, 1, 1, 1)
         self.tabWidget = QtWidgets.QTabWidget(FundSettingDialog)
+        self.tabWidget.setStyleSheet("ß")
         self.tabWidget.setObjectName("tabWidget")
         self.tab = QtWidgets.QWidget()
         self.tab.setObjectName("tab")
@@ -168,7 +165,11 @@ class Ui_FundSettingDialog(object):
         self.tab_2 = QtWidgets.QWidget()
         self.tab_2.setObjectName("tab_2")
         self.tabWidget.addTab(self.tab_2, "")
-        self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 4)
+        self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 5)
+        self.pushButton = QtWidgets.QPushButton(FundSettingDialog)
+        self.pushButton.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.pushButton.setObjectName("pushButton")
+        self.gridLayout.addWidget(self.pushButton, 2, 3, 1, 1)
 
         self.retranslateUi(FundSettingDialog)
         self.tabWidget.setCurrentIndex(0)
@@ -184,7 +185,6 @@ class Ui_FundSettingDialog(object):
     def retranslateUi(self, FundSettingDialog):
         _translate = QtCore.QCoreApplication.translate
         FundSettingDialog.setWindowTitle(_translate("FundSettingDialog", "Dialog"))
-        self.pushButton.setText(_translate("FundSettingDialog", "取消"))
         self.saveBtn.setText(_translate("FundSettingDialog", "保存"))
         self.isRecoveryTxt.setText(_translate("FundSettingDialog", "0"))
         self.groupBox.setTitle(_translate("FundSettingDialog", "外观设置"))
@@ -219,3 +219,4 @@ class Ui_FundSettingDialog(object):
         self.label_4.setText(_translate("FundSettingDialog", "同步："))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("FundSettingDialog", "通用设置"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("FundSettingDialog", "虚拟货币"))
+        self.pushButton.setText(_translate("FundSettingDialog", "取消"))
