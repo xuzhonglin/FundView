@@ -1147,6 +1147,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
             # 删除旧的配置文件
             if os.path.exists(config_old):
                 os.remove(config_old)
+                self.write_local_config()
+
         except:
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 config = {
