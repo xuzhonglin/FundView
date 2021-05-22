@@ -68,6 +68,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.completer = QCompleter([])
         self.tip_cnt = 0
         self.op_coin = []
+        self.config_path = ''
 
         self.timer = QTimer()  # 初始化定时器
         self.timer.timeout.connect(self.timer_refresh)
@@ -75,7 +76,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.dbSourceCob.setFont(QFont(FundConfig.FONT_NAME, FundConfig.FONT_SIZE - 1))
 
         self.start_init()
-        self.sync = CloudSync(self.runDir + '/fund.json', FundConfig.FUND_MID)
+        self.sync = CloudSync(self.config_path, FundConfig.FUND_MID)
 
         self.tabWidget.setCurrentIndex(0)
 
@@ -1114,8 +1115,21 @@ class FundMain(QMainWindow, Ui_MainWindow):
         读取本地配置文件
         :return: void
         """
+        home_dir = os.environ['HOME']
+        if FundConfig.PLATFORM == 'win32':
+            config_dir = home_dir + '/AppData/Roaming/LeekBox'
+        else:
+            config_dir = home_dir + '/Library/Application Support/LeekBox'
+        is_dir_exists = os.path.exists(config_dir)
+        if not is_dir_exists:
+            os.makedirs(config_dir)
+        self.config_path = config_dir + "/fund.json"
         try:
-            with open('fund.json', 'r', encoding='utf-8') as f:
+            config_old = 'fund.json'
+            config = config_dir + '/fund.json'
+            if os.path.exists(config_old):
+                config = config_old
+            with open(config, 'r', encoding='utf-8') as f:
                 self.fundConfigOrigin = json.load(f)
                 # 检查key值
                 for key in FundConfig.CONFIG_KEYS:
@@ -1127,8 +1141,14 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
                 if type(self.fundConfigOrigin['optional']) != list:
                     self.fundConfigOrigin['optional'] = []
+
+                if type(self.fundConfigOrigin['crypto-coin']) != list:
+                    self.fundConfigOrigin['crypto-coin'] = []
+            # 删除旧的配置文件
+            if os.path.exists(config_old):
+                os.remove(config_old)
         except:
-            with open('fund.json', 'w', encoding='utf-8') as f:
+            with open(self.config_path, 'w', encoding='utf-8') as f:
                 config = {
                     'positions': [
                         {
@@ -1139,7 +1159,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
                     ],
                     'optional': ['260108'],
                     'source': 0,
-                    'fontName': '微软雅黑',
+                    'fontName': FundConfig.FONT_NAME,
                     'fontSize': 9,
                     'enableAutoRefresh': False,
                     'autoRefreshTimeout': 60000,
@@ -1147,7 +1167,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
                     'enableProxy': False,
                     'proxyAddress': '',
                     'mid': str(uuid.uuid4()),
-                    'enableSync': False
+                    'enableSync': False,
+                    'crypto-coin': ["BTC-USDT", "ETH-USDT", "DOGE-USDT"],
+                    'crypto-api': ""
                 }
                 self.fundConfigOrigin = config
                 json.dump(config, f, indent=4, ensure_ascii=False)
@@ -1166,7 +1188,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         try:
             # 单纯保存配置
             if fundCode is None or fundCode == '':
-                with open('fund.json', 'w', encoding='utf-8') as f:
+                with open(self.config_path, 'w', encoding='utf-8') as f:
                     json.dump(self.fundConfigOrigin, f, indent=4, ensure_ascii=False)
                     return
                     # 删除持仓
@@ -1202,7 +1224,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
                     self.fundConfigOrigin['optional'].append(fundCode)
                 else:
                     pass
-            with open('fund.json', 'w', encoding='utf-8') as f:
+            with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(self.fundConfigOrigin, f, indent=4, ensure_ascii=False)
         except Exception as e:
             print(e)
@@ -1541,7 +1563,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             change_color = get_color(change_percent, 'brush')
 
             # 货币名称
-            coin_name_item = QTableWidgetItem(coin_type.replace('-', '/'))
+            coin_name_item = QTableWidgetItem(coin_type)
             self.coinMarketTable.setItem(row_index, 0, coin_name_item)
 
             # 最新价

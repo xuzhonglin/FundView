@@ -334,7 +334,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
         self.dbSourceCob.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -362,7 +362,7 @@ class Ui_MainWindow(object):
         self.optionalFundCodeTxt.setPlaceholderText(_translate("MainWindow", "基金代码或名称"))
         self.optional_refresh_time_txt.setText(_translate("MainWindow", "2020-11-30 12:20:20"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "自选基金"))
-        self.coinPairText.setPlaceholderText(_translate("MainWindow", "搜索交易对 BTC/USDT"))
+        self.coinPairText.setPlaceholderText(_translate("MainWindow", "搜索交易对 BTC-USDT"))
         self.addCoinPairBtn.setText(_translate("MainWindow", "添加"))
         self.total_assets_txt.setText(_translate("MainWindow", "----"))
         self.label.setText(_translate("MainWindow", "总资产估值："))

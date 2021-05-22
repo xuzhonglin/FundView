@@ -58,5 +58,4 @@ class FundConfig:
     SWAP_FLAG = False
 
     CONFIG_KEYS = ["positions", "optional", "source", "fontName", "fontSize", "enableAutoRefresh", "autoRefreshTimeout",
-                   "colorScheme", "enableProxy", "proxyAddress", "mid", "enableSync"]
-
+                   "colorScheme", "enableProxy", "proxyAddress", "mid", "enableSync", "crypto-coin", "crypto-api"]

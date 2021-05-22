@@ -41,7 +41,7 @@
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>2</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab">
          <property name="sizePolicy">
@@ -446,7 +446,7 @@ border-radius:5px;
              <string notr="true">padding-left:3px;</string>
             </property>
             <property name="placeholderText">
-             <string>搜索交易对 BTC/USDT</string>
+             <string>搜索交易对 BTC-USDT</string>
             </property>
            </widget>
           </item>
