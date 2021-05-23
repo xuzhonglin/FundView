@@ -7,7 +7,9 @@
 @File     : main.py
 @Desc     : 主函数
 """
+import io
 import sys, os
+import traceback
 
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtNetwork import QLocalSocket, QLocalServer
@@ -18,6 +20,7 @@ from src.fund_main import FundMain
 
 if __name__ == '__main__':
 
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')  # 改变标准输出的默认编码
     usr_home = os.path.expanduser('~')
     print(usr_home)
 
@@ -60,6 +63,8 @@ if __name__ == '__main__':
 
     except Exception as e:
         print(e)
-        QMessageBox.critical(None, '提醒', '启动异常，{}\t\n'.format(e))
+        print('traceback.format_exc():\n%s' % traceback.format_exc())  # 字符串
+        QMessageBox.critical(None, '提醒', '启动异常，{}\t\n'.format(traceback.format_exc()))
+
     finally:
         localServer.close()

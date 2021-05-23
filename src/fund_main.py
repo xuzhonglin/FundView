@@ -6,8 +6,10 @@ import uuid
 from datetime import datetime
 import time
 
-from PyQt5.QtCore import Qt, QModelIndex, QTimer, QCoreApplication, pyqtSignal
+from PyQt5.QtCore import Qt, QModelIndex, QTimer, QCoreApplication, pyqtSignal, QUrl
 from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QIcon
+from PyQt5.QtNetwork import QNetworkCookie
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, \
     QApplication, QMessageBox, QCompleter, QSystemTrayIcon, QAction
 from chinese_calendar import is_workday
@@ -24,11 +26,13 @@ from form.fund_add_dialog import Ui_AddFundDialog
 from form.fund_main_form import Ui_MainWindow
 from form.fund_image_dialog import Ui_FundImageDialog
 from form.fund_deal_dialog import Ui_FundDealDialog
+from form.fund_browser_dialog import Ui_FundBrowser
 from form.fund_table_main import FundTableMain
 from src.fund_crawler import FundCrawler
 from src.fund_utils import get_or_default, get_color, judge_time
 from okex.okex_websocket import *
 import okex.Account_api as Account
+import okex.common_api as Common
 import traceback
 import asyncio
 
@@ -46,6 +50,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
     # account api
     accountAPI = Account.AccountAPI(api_key, secret_key, passphrase, False, flag)
+    commonAPI = Common.CommonApi(api_key, secret_key, passphrase, False, flag)
 
     def __init__(self, parent: QApplication):
         super().__init__()
@@ -169,11 +174,25 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 # QCompleter.UnfilteredPopupCompletion
                 self.completer.setCompletionMode(QCompleter.PopupCompletion)
                 self.optionalFundCodeTxt.setCompleter(self.completer)
+
+                all_coin = self.commonAPI.get_all_coin()
+                completer_list = []
+                for coin_pair in all_coin['data']['list']:
+                    completer_list.append('{}-USDT {}'.format(coin_pair['project'], coin_pair['fullName']))
+
+                # 设置币对自动完成
+                self.coin_pair_completer = QCompleter(completer_list)
+                self.coin_pair_completer.setFilterMode(Qt.MatchContains)
+                self.coin_pair_completer.setCompletionMode(QCompleter.PopupCompletion)
+                self.coin_pair_completer.setCaseSensitivity(Qt.CaseInsensitive)
+                self.coinPairText.setCompleter(self.coin_pair_completer)
+
                 # 检查更新
                 if FundConfig.PLATFORM == 'win32':
                     FundUpdate(self).update(sys.argv)
                 else:
                     pass
+
             except Exception as e:
                 print("设置自动补全失败：" + str(e))
             _thread.start_new_thread(self.start_websocket, ())
@@ -221,6 +240,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.BoardChange.connect(self.change_board_text)
         self.TableChange.connect(self.change_table_coneten)
         self.total_assets_txt.clicked.connect(self.balance_click)
+        self.coinMarketTable.doubleClicked.connect(self.coin_double_clicked)
+
 
     def balance_click(self):
         res = self.accountAPI.get_account()
@@ -1630,3 +1651,33 @@ class FundMain(QMainWindow, Ui_MainWindow):
             self.SZ_Price.setText(text[0])
             self.SZ_PriceChange.setText(text[1])
             self.SZ_ChangePercent.setText(text[2])
+
+    def coin_double_clicked(self, index: QModelIndex):
+        try:
+            rowIndex = index.row()
+            coin_pair = self.coinMarketTable.item(rowIndex, 0).text()
+            print(coin_pair)
+            coin_pair = coin_pair.lower()
+            url = 'https://www.ouyi.cc/markets/spot-info/' + coin_pair
+            browser = QWebEngineView()
+            # 加载外部的web界面
+            browser.setContextMenuPolicy(Qt.NoContextMenu)
+            # browser.page().
+            browser.page().profile().cookieStore().setCookie(
+                QNetworkCookie(bytes('locale', encoding='utf-8'), bytes('zh_CN', encoding='utf-8')))
+            browser.load(QUrl(url))
+            browser.show()
+            # title = "行情"
+            # dialog = QDialog(self.centralwidget)
+            # windowsFlags = dialog.windowFlags()
+            # windowsFlags |= Qt.WindowMaximizeButtonHint
+            # dialog.setWindowFlags(windowsFlags)
+            # dialog.setWindowTitle(title)
+            # dialog.exec_()
+            # ui = Ui_FundBrowser()
+            # ui.setupUi(dialog)
+            # dialog.setWindowTitle(title)
+            # dialog.exec_()
+        except Exception as e:
+            print(e)
+            QMessageBox.warning(self.parent(), '提示', '出现异常请重试!{}\t\t\n'.format(e))

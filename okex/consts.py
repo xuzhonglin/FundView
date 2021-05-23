@@ -106,3 +106,6 @@ CONTROL_TRANSFER = '/api/v5/asset/subaccount/transfer'
 
 # status
 STATUS = '/api/v5/system/status'
+
+# common
+ALL_COIN = '/v2/support/info/announce/listProject'
