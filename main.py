@@ -20,9 +20,8 @@ from src.fund_main import FundMain
 
 if __name__ == '__main__':
 
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')  # 改变标准输出的默认编码
-    usr_home = os.path.expanduser('~')
-    print(usr_home)
+    if FundConfig.PLATFORM == 'darwin':
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')  # 改变标准输出的默认编码
 
     try:
         if os.path.isfile("upgrade.bat"):
