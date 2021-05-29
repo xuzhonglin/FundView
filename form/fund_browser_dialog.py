@@ -17,9 +17,9 @@ class Ui_FundBrowser(object):
         FundBrowser.resize(885, 520)
         self.gridLayout = QtWidgets.QGridLayout(FundBrowser)
         self.gridLayout.setObjectName("gridLayout")
-        self.widget = QtWidgets.QWidget(FundBrowser)
-        self.widget.setObjectName("widget")
-        self.gridLayout.addWidget(self.widget, 0, 0, 1, 1)
+        self.grid_layout = QtWidgets.QGridLayout()
+        self.grid_layout.setObjectName("grid_layout")
+        self.gridLayout.addLayout(self.grid_layout, 0, 0, 1, 1)
 
         self.retranslateUi(FundBrowser)
         QtCore.QMetaObject.connectSlotsByName(FundBrowser)

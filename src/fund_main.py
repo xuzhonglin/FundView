@@ -6,10 +6,8 @@ import uuid
 from datetime import datetime
 import time
 
-from PyQt5.QtCore import Qt, QModelIndex, QTimer, QCoreApplication, pyqtSignal, QUrl
+from PyQt5.QtCore import Qt, QModelIndex, QTimer, QCoreApplication, pyqtSignal
 from PyQt5.QtGui import QStandardItemModel, QImage, QPixmap, QFont, QIcon
-from PyQt5.QtNetwork import QNetworkCookie
-from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QHeaderView, QAbstractItemView, QTableWidgetItem, QDialog, QMenu, \
     QApplication, QMessageBox, QCompleter, QSystemTrayIcon, QAction
 from chinese_calendar import is_workday
@@ -47,6 +45,10 @@ class FundMain(QMainWindow, Ui_MainWindow):
     # flag是实盘与模拟盘的切换参数 flag is the key parameter which can help you to change between demo and real trading.
     # flag = '1'  # 模拟盘 demo trading
     flag = '0'  # 实盘 real trading
+    url = 'wss://real.coinall.ltd:8443/ws/v3'
+    channels = ["index/ticker:BTC-USDT", "index/ticker:ETH-USDT", "index/ticker:ADA-USDT",
+                "index/ticker:XRP-USDT", "index/ticker:DOT-USDT"]
+    loop = asyncio.new_event_loop()
 
     # account api
     accountAPI = Account.AccountAPI(api_key, secret_key, passphrase, False, flag)
@@ -74,6 +76,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.tip_cnt = 0
         self.op_coin = []
         self.config_path = ''
+        self.socket_running = True
 
         self.timer = QTimer()  # 初始化定时器
         self.timer.timeout.connect(self.timer_refresh)
@@ -200,19 +203,23 @@ class FundMain(QMainWindow, Ui_MainWindow):
         else:
             print("系统已经初始化完成")
 
-    def start_websocket(self):
-        # pass
-        url = 'wss://real.coinall.ltd:8443/ws/v3'
-        channels = ["index/ticker:BTC-USDT", "index/ticker:ETH-USDT", "index/ticker:ADA-USDT",
-                    "index/ticker:XRP-USDT", "index/ticker:DOT-USDT"]
-        self.op_coin = ["spot/ticker:BTC-USDT", "spot/ticker:ETH-USDT", "spot/ticker:DOGE-USDT",
-                        "spot/ticker:XRP-USDT", "spot/ticker:EOS-USDT", "spot/ticker:OKB-USDT",
-                        "spot/ticker:ETC-USDT", "spot/ticker:XCH-USDT", "spot/ticker:SHIB-USDT",
-                        "spot/ticker:OKT-USDT", "spot/ticker:CSPR-USDT", "spot/ticker:LAT-USDT"]
-        channels.extend(self.op_coin)
-        loop = asyncio.new_event_loop()
+    def start_websocket(self, restart: bool = False):
+        if restart:
+            self.socket_running = False
+            while self.loop.is_running():
+                print('等待结束')
+            print('loop 已结束')
+            self.loop.close()
+            self.loop = asyncio.new_event_loop()
+            self.socket_running = True
+            self.channels = []
+        self.op_coin = []
+        for item in self.fundConfigOrigin['crypto-coin']:
+            self.op_coin.append("spot/ticker:" + item)
+        self.channels.extend(self.op_coin)
+        # loop = asyncio.new_event_loop()
         # 公共数据 不需要登录（行情，K线，交易数据，资金费率，限价范围，深度数据，标记价格等频道）
-        loop.run_until_complete(self.subscribe_without_login(url, channels))
+        self.loop.run_until_complete(self.subscribe_without_login(self.url, self.channels))
 
     def scheduler_job(self):
         """
@@ -241,7 +248,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.TableChange.connect(self.change_table_coneten)
         self.total_assets_txt.clicked.connect(self.balance_click)
         self.coinMarketTable.doubleClicked.connect(self.coin_double_clicked)
-
+        self.addCoinPairBtn.clicked.connect(self.add_coin_btn_clicked)
 
     def balance_click(self):
         res = self.accountAPI.get_account()
@@ -664,7 +671,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
             fundHold = self.positionFund[fundCode]
             # 1.基金名称
-            fundName = get_or_default(item['name'], '未获取到名称')
+            fundName = get_or_default(item['name'], '[未获取到名称]')
             # if len(fundName) > 10:
             #     fundName = fundName[:10] + '...'
             fundNameItem = QTableWidgetItem(fundName)
@@ -685,7 +692,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             fundHoldUnitsItem = QTableWidgetItem("{}".format(round(fundHoldUnits, 2)))
             self.positionTable.setItem(index, 3, fundHoldUnitsItem)
 
-            netWorthValue = float(get_or_default(item['netWorth']))
+            netWorthValue = float(get_or_default(item['netWorth'], 1))
             # 5.持有金额
             fundHoldAmount = netWorthValue * fundHold['fundUnits']
             fundHoldAmountItem = QTableWidgetItem("{}".format(format(fundHoldAmount, '.2f')))
@@ -758,7 +765,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
             # 当日净值已更新
             if get_or_default(item['expectWorthDate']) != '0' and item['netWorthDate'] == item['expectWorthDate'][:10]:
                 lastDayTime = self.fundCrawler.get_last_trade_day(item['netWorthDate'])
-                lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode, lastDayTime)['netWorth']
+                lastDayNetWorth = self.fundCrawler.get_day_worth(fundCode, lastDayTime)
+                lastDayNetWorth = lastDayNetWorth['netWorth'] if lastDayNetWorth != 0 else 1
                 lastDayNetWorthFloat = float(lastDayNetWorth)
                 expectIncome = (netWorthFloat - lastDayNetWorthFloat) * fundHoldUnits
                 checkTip = '√'  # 已结算标记
@@ -770,6 +778,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
             if '--' in item['expectWorthDate']:
                 expectIncome = 0
 
+            if len(expectWorthDate) <= 0:
+                expectIncome = 0
+
             todayExpectIncome = todayExpectIncome + expectIncome
             prefix = '+' if expectIncome > 0 else ''
             expectIncomeItem = QTableWidgetItem('{} {}{}'.format(checkTip, prefix, round(expectIncome, 2)))
@@ -777,8 +788,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
             expectIncomeColor = get_color(expectIncome, 'brush')
             self.positionTable.item(index, 11).setForeground(expectIncomeColor)
 
-            totalIncome = totalIncome + (netWorthFloat - fundHold['fundCost']) * fundHold['fundUnits']
-            holdAmount = holdAmount + fundHold['fundCost'] * fundHold['fundUnits']
+            if '[' not in fundName:
+                totalIncome = totalIncome + (netWorthFloat - fundHold['fundCost']) * fundHold['fundUnits']
+                holdAmount = holdAmount + fundHold['fundCost'] * fundHold['fundUnits']
 
         # 刷新时间
         refreshTime = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -1372,6 +1384,11 @@ class FundMain(QMainWindow, Ui_MainWindow):
                         res = inflate(res_b).decode('utf-8')
                         # print(timestamp + res)
 
+                        # 停止运行
+                        if not self.socket_running:
+                            await self.unsubscribe_without_login(url, channels, timestamp)
+                            break
+
                         res = eval(res)
                         if 'event' in res:
                             continue
@@ -1443,6 +1460,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
                                                     await ws.send(sub_str)
                                                     timestamp = get_timestamp()
                                                     print(timestamp + f"send: {sub_str}")
+                    if not self.socket_running:
+                        print(timestamp + "手动结束……")
+                        break
             except Exception as e:
                 timestamp = get_timestamp()
                 print(timestamp + "连接断开，正在重连……")
@@ -1656,28 +1676,29 @@ class FundMain(QMainWindow, Ui_MainWindow):
         try:
             rowIndex = index.row()
             coin_pair = self.coinMarketTable.item(rowIndex, 0).text()
-            print(coin_pair)
             coin_pair = coin_pair.lower()
             url = 'https://www.ouyi.cc/markets/spot-info/' + coin_pair
-            browser = QWebEngineView()
-            # 加载外部的web界面
-            browser.setContextMenuPolicy(Qt.NoContextMenu)
-            # browser.page().
-            browser.page().profile().cookieStore().setCookie(
-                QNetworkCookie(bytes('locale', encoding='utf-8'), bytes('zh_CN', encoding='utf-8')))
-            browser.load(QUrl(url))
-            browser.show()
             # title = "行情"
             # dialog = QDialog(self.centralwidget)
             # windowsFlags = dialog.windowFlags()
             # windowsFlags |= Qt.WindowMaximizeButtonHint
             # dialog.setWindowFlags(windowsFlags)
             # dialog.setWindowTitle(title)
-            # dialog.exec_()
             # ui = Ui_FundBrowser()
             # ui.setupUi(dialog)
-            # dialog.setWindowTitle(title)
+            # ui.grid_layout.addWidget(browser)
             # dialog.exec_()
         except Exception as e:
             print(e)
             QMessageBox.warning(self.parent(), '提示', '出现异常请重试!{}\t\t\n'.format(e))
+
+    def add_coin_btn_clicked(self):
+        print('add_coin_btn_clicked')
+        coin_pair = self.coinPairText.text()
+        if not coin_pair or len(coin_pair) < 5:
+            return
+        coin_pair = coin_pair.split(' ')[0]
+        coin_pair = coin_pair.upper()
+        self.fundConfigOrigin['crypto-coin'].append(coin_pair)
+        self.write_local_config()
+        self.start_websocket(True)

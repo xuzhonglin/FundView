@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>440</width>
-    <height>392</height>
+    <height>324</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -133,7 +133,7 @@
               </property>
               <property name="currentFont">
                <font>
-                <family>Lucida Grande</family>
+                <family>宋体</family>
                </font>
               </property>
              </widget>
@@ -408,6 +408,9 @@
               <property name="text">
                <string>自动刷新</string>
               </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
              </widget>
             </item>
             <item row="2" column="2">
@@ -469,6 +472,146 @@
       <attribute name="title">
        <string>虚拟货币</string>
       </attribute>
+      <layout class="QGridLayout" name="gridLayout_7">
+       <item row="0" column="0">
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="title">
+          <string>交易所</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_9">
+          <item row="0" column="0">
+           <layout class="QGridLayout" name="gridLayout_8">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>ApiKey：</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QLineEdit" name="api_address_text"/>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>交易所：</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="pass_phrase_label">
+              <property name="text">
+               <string>Passphrase：</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QComboBox" name="exchange_opt">
+              <item>
+               <property name="text">
+                <string>OKEx 欧易</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>SecretKey：</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QLabel" name="label_15">
+              <property name="text">
+               <string>API地址：</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1" colspan="3">
+             <widget class="QLineEdit" name="api_key_text"/>
+            </item>
+            <item row="2" column="1" colspan="3">
+             <widget class="QLineEdit" name="secret_key_text"/>
+            </item>
+            <item row="3" column="1" colspan="3">
+             <widget class="QLineEdit" name="pass_phrase_text"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="title">
+          <string>偏好设置</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_10">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>涨幅周期：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="local_currency_opt">
+            <item>
+             <property name="text">
+              <string>人民币 CNY</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>美元   USD</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>本地货币：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="raise_cycle_opt">
+            <item>
+             <property name="text">
+              <string>香港时间 0点 UTC+8</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>国际时间 0点 UTC+0</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>24H 制</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

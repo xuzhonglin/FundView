@@ -9,9 +9,9 @@ import json
 
 
 if __name__ == '__main__':
-    api_key = "bfd9d993-af30-45c7-a9c1-ba03254b4da2"
-    secret_key = "F1A2B433774BC7AC512A2F20331836AF"
-    passphrase = "Z47f68JnReR9heb"
+    api_key = "42adc4f1-3a4c-4cb4-b4b5-156051a77cab"
+    secret_key = "69866D7C605424264AEC79428ED73D22"
+    passphrase = "NBhgfIy324op9cvL"
     # flag是实盘与模拟盘的切换参数 flag is the key parameter which can help you to change between demo and real trading.
     # flag = '1'  # 模拟盘 demo trading
     flag = '0'  # 实盘 real trading
@@ -21,9 +21,9 @@ if __name__ == '__main__':
     # 查看账户持仓风险 GET Position_risk
     # result = accountAPI.get_position_risk('SWAP')
     # 查看账户余额  Get Balance
-    result = accountAPI.get_account()
+    # result = accountAPI.get_account()
     # 查看持仓信息  Get Positions
-    # result = accountAPI.get_positions('FUTURES', 'BTC-USD-210402')
+    result = accountAPI.get_positions()
     # 账单流水查询（近七天） Get Bills Details (recent 7 days)
     # result = accountAPI.get_bills_detail('FUTURES', 'BTC','cross')
     # 账单流水查询（近三个月） Get Bills Details (recent 3 months)
