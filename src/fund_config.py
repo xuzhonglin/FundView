@@ -58,4 +58,17 @@ class FundConfig:
     SWAP_FLAG = False
 
     CONFIG_KEYS = ["positions", "optional", "source", "fontName", "fontSize", "enableAutoRefresh", "autoRefreshTimeout",
-                   "colorScheme", "enableProxy", "proxyAddress", "mid", "enableSync", "crypto-coin", "crypto-api"]
+                   "colorScheme", "enableProxy", "proxyAddress", "mid", "enableSync", "optionalCoins", "exchangeApi",
+                   'timeZone', 'localCurrency']
+
+    EXCHANGE_API = {'okex': {
+        'apiAddress': 'https://www.ouyi.cc',
+        'apiKey': '',
+        'apiSecret': '',
+        'passPhrase': ''
+    }}
+
+    EXCHANGE_SETTING = {
+        'timeZone': 0,
+        'localCurrency': 0
+    }

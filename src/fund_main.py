@@ -214,7 +214,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
             self.socket_running = True
             self.channels = []
         self.op_coin = []
-        for item in self.fundConfigOrigin['crypto-coin']:
+        for item in self.fundConfigOrigin['optionalCoins']:
             self.op_coin.append("spot/ticker:" + item)
         self.channels.extend(self.op_coin)
         # loop = asyncio.new_event_loop()
@@ -1068,6 +1068,15 @@ class FundMain(QMainWindow, Ui_MainWindow):
         ui.midTxt.setCursorPosition(0)
         ui.cloudSyncChb.setChecked(FundConfig.ENABLE_SYNC)
 
+        #虚拟货币
+        ui.api_address_text.setText(FundConfig.EXCHANGE_API['okex']['apiAddress'])
+        ui.api_key_text.setText(FundConfig.EXCHANGE_API['okex']['apiKey'])
+        ui.secret_key_text.setText(FundConfig.EXCHANGE_API['okex']['apiSecret'])
+        ui.pass_phrase_text.setText(FundConfig.EXCHANGE_API['okex']['passPhrase'])
+
+        ui.raise_cycle_opt.setCurrentIndex(FundConfig.EXCHANGE_SETTING['timeZone'])
+        ui.local_currency_opt.setCurrentIndex(FundConfig.EXCHANGE_SETTING['localCurrency'])
+
         ui.recoveryBtn.clearFocus()
         ui.saveBtn.setFocus()
         ui.saveBtn.clicked.connect(lambda: self.save_program_setting(ui))
@@ -1101,6 +1110,21 @@ class FundMain(QMainWindow, Ui_MainWindow):
             FundConfig.PROXY_POOL = dialog.proxyUrlTxt.text()
             FundConfig.ENABLE_SYNC = dialog.cloudSyncChb.isChecked()
 
+            # 虚拟货币
+            FundConfig.EXCHANGE_API = {
+                'okex': {
+                    'apiAddress': 'https://www.ouyi.cc',
+                    'apiKey': dialog.api_key_text.text(),
+                    'apiSecret': dialog.secret_key_text.text(),
+                    'passPhrase': dialog.pass_phrase_text.text()
+                }
+            }
+
+            FundConfig.EXCHANGE_SETTING = {
+                'timeZone': dialog.raise_cycle_opt.currentIndex(),
+                'localCurrency': dialog.local_currency_opt.currentIndex()
+            }
+
             oldFundMid = FundConfig.FUND_MID
             newFundMid = dialog.midTxt.text()
             FundConfig.FUND_MID = newFundMid
@@ -1131,6 +1155,17 @@ class FundMain(QMainWindow, Ui_MainWindow):
             self.fundConfigOrigin['proxyAddress'] = FundConfig.PROXY_POOL
             self.fundConfigOrigin['mid'] = FundConfig.FUND_MID
             self.fundConfigOrigin['enableSync'] = FundConfig.ENABLE_SYNC
+
+            # 虚拟货币
+            exchangeApiArray = ['okex',
+                                FundConfig.EXCHANGE_API['okex']['apiKey'],
+                                FundConfig.EXCHANGE_API['okex']['apiSecret'],
+                                FundConfig.EXCHANGE_API['okex']['passPhrase']]
+            exchangeApi = ','.join(exchangeApiArray)
+            self.fundConfigOrigin['exchangeApi'] = base64.encodebytes(exchangeApi.encode('utf-8')) \
+                .decode('utf-8').replace('\n', '')
+            self.fundConfigOrigin['timeZone'] = FundConfig.EXCHANGE_SETTING['timeZone']
+            self.fundConfigOrigin['localCurrency'] = FundConfig.EXCHANGE_SETTING['localCurrency']
 
             # mid变化了 或者 点击过恢复按钮
             if refreshDataFlag or dialog.isRecoveryTxt.text() == '1':
@@ -1175,8 +1210,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 if type(self.fundConfigOrigin['optional']) != list:
                     self.fundConfigOrigin['optional'] = []
 
-                if type(self.fundConfigOrigin['crypto-coin']) != list:
-                    self.fundConfigOrigin['crypto-coin'] = []
+                if type(self.fundConfigOrigin['optionalCoins']) != list:
+                    self.fundConfigOrigin['optionalCoins'] = []
+
             # 删除旧的配置文件
             if os.path.exists(config_old):
                 os.remove(config_old)
@@ -1203,8 +1239,10 @@ class FundMain(QMainWindow, Ui_MainWindow):
                     'proxyAddress': '',
                     'mid': str(uuid.uuid4()),
                     'enableSync': False,
-                    'crypto-coin': ["BTC-USDT", "ETH-USDT", "DOGE-USDT"],
-                    'crypto-api': ""
+                    'optionalCoins': ["BTC-USDT", "ETH-USDT", "DOGE-USDT"],
+                    'exchangeApi': "",
+                    'timeZone': 0,
+                    'localCurrency': 0
                 }
                 self.fundConfigOrigin = config
                 json.dump(config, f, indent=4, ensure_ascii=False)
@@ -1226,7 +1264,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 with open(self.config_path, 'w', encoding='utf-8') as f:
                     json.dump(self.fundConfigOrigin, f, indent=4, ensure_ascii=False)
                     return
-                    # 删除持仓
+
+            # 删除持仓
             if isDelete and not isOptional:
                 for index, item in enumerate(self.fundConfigOrigin['positions']):
                     if item['fundCode'] == fundCode:
@@ -1299,6 +1338,22 @@ class FundMain(QMainWindow, Ui_MainWindow):
         FundConfig.PROXY_POOL = self.getOrDefault('proxyAddress', '')
         FundConfig.FUND_MID = self.getOrDefault('mid', str(uuid.uuid4()))
         FundConfig.ENABLE_SYNC = self.getOrDefault('enableSync', False)
+
+        # 虚拟货币
+        # origin_api_str = self.getOrDefault('exchangeApi', '')
+        origin_api_str = 'b2tleCw0MmFkYzRmMS0zYTRjLTRjYjQtYjRiNS0xNTYwNTFhNzdjYWIsNjk4NjZEN0M2MDU0MjQyNjRBRUM3OTQyOEVENzNEMjIsTkJoZ2ZJeTMyNG9wOWN2TA=='
+        origin_api_str = base64.decodebytes(origin_api_str.encode('utf-8')).decode('utf-8')
+        origin_api_array = origin_api_str.split(',')
+        FundConfig.EXCHANGE_API = {'okex': {
+            'apiAddress': 'https://www.ouyi.cc',
+            'apiKey': origin_api_array[1],
+            'apiSecret': origin_api_array[2],
+            'passPhrase': origin_api_array[3]
+        }}
+        FundConfig.EXCHANGE_SETTING = {
+            'timeZone': self.getOrDefault('timeZone', 0),
+            'localCurrency': self.getOrDefault('localCurrency', 0)
+        }
 
         self.dbSourceCob.setCurrentIndex(FundConfig.DB_SWITCH.value)
 
