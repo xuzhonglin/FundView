@@ -68,7 +68,7 @@
       <string notr="true">ß</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -529,13 +529,25 @@
              </widget>
             </item>
             <item row="1" column="1" colspan="3">
-             <widget class="QLineEdit" name="api_key_text"/>
+             <widget class="QLineEdit" name="api_key_text">
+              <property name="echoMode">
+               <enum>QLineEdit::PasswordEchoOnEdit</enum>
+              </property>
+             </widget>
             </item>
             <item row="2" column="1" colspan="3">
-             <widget class="QLineEdit" name="secret_key_text"/>
+             <widget class="QLineEdit" name="secret_key_text">
+              <property name="echoMode">
+               <enum>QLineEdit::PasswordEchoOnEdit</enum>
+              </property>
+             </widget>
             </item>
             <item row="3" column="1" colspan="3">
-             <widget class="QLineEdit" name="pass_phrase_text"/>
+             <widget class="QLineEdit" name="pass_phrase_text">
+              <property name="echoMode">
+               <enum>QLineEdit::PasswordEchoOnEdit</enum>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>

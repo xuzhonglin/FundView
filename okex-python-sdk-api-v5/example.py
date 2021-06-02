@@ -23,7 +23,7 @@ if __name__ == '__main__':
     # 查看账户余额  Get Balance
     # result = accountAPI.get_account()
     # 查看持仓信息  Get Positions
-    result = accountAPI.get_positions()
+    # result = accountAPI.get_positions()
     # 账单流水查询（近七天） Get Bills Details (recent 7 days)
     # result = accountAPI.get_bills_detail('FUTURES', 'BTC','cross')
     # 账单流水查询（近三个月） Get Bills Details (recent 3 months)

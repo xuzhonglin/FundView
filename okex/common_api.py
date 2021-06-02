@@ -7,7 +7,7 @@ from .consts import *
 @Time     : 2021/5/22 18:08
 @Author   : colinxu
 @File     : common_api.py
-@Desc     : okex v5 刚刚公共api
+@Desc     : okex v5 公共api
 """
 
 
@@ -19,3 +19,10 @@ class CommonApi(Client):
     # 获取搜索的币
     def get_all_coin(self):
         return self._request_without_params(GET, ALL_COIN)
+
+    # 获取汇率
+    def get_rate(self, currency: str):
+        params = {}
+        if currency:
+            params['rateName'] = 'usd_' + currency
+        return self._request_with_params(GET, CURRENCY_RATE, params)

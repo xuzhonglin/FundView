@@ -3,6 +3,7 @@ import json
 import os, requests
 import sys
 import uuid
+import webbrowser
 from datetime import datetime
 import time
 
@@ -39,9 +40,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
     scheduler = BackgroundScheduler()
     BoardChange = pyqtSignal(int, list)
     TableChange = pyqtSignal(list)
-    api_key = "42adc4f1-3a4c-4cb4-b4b5-156051a77cab"
-    secret_key = "69866D7C605424264AEC79428ED73D22"
-    passphrase = "NBhgfIy324op9cvL"
+
     # flag是实盘与模拟盘的切换参数 flag is the key parameter which can help you to change between demo and real trading.
     # flag = '1'  # 模拟盘 demo trading
     flag = '0'  # 实盘 real trading
@@ -51,8 +50,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
     loop = asyncio.new_event_loop()
 
     # account api
-    accountAPI = Account.AccountAPI(api_key, secret_key, passphrase, False, flag)
-    commonAPI = Common.CommonApi(api_key, secret_key, passphrase, False, flag)
+    accountAPI = Account.AccountAPI('', '', '', False, '0')
+    commonAPI = Common.CommonApi('', '', '', False, '0')
 
     def __init__(self, parent: QApplication):
         super().__init__()
@@ -77,6 +76,13 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.op_coin = []
         self.config_path = ''
         self.socket_running = True
+        self.exchange_rate_dict = {}
+
+        self.api_key = ''
+        self.secret_key = ''
+        self.passphrase = ''
+
+        self.has_exchange_api = False
 
         self.timer = QTimer()  # 初始化定时器
         self.timer.timeout.connect(self.timer_refresh)
@@ -125,7 +131,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         tray_icon_menu.addAction(open_action)
         tray_icon_menu.addAction(quit_action)
 
-        quit_action.triggered.connect(QCoreApplication.quit)
+        quit_action.triggered.connect(self.quit_app)
         open_action.triggered.connect(self.showNormal)
         about_action.triggered.connect(self.show_about)
         update_action.triggered.connect(self.check_update)
@@ -138,6 +144,11 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.trayIcon.setContextMenu(tray_icon_menu)
         self.trayIcon.activated.connect(lambda reason: self.tray_icon_activated(reason))
         self.trayIcon.show()
+
+    def quit_app(self):
+        # 保存配置
+        self.write_local_config()
+        QCoreApplication.quit()
 
     def show_about(self):
         self.showNormal()
@@ -190,6 +201,13 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 self.coin_pair_completer.setCaseSensitivity(Qt.CaseInsensitive)
                 self.coinPairText.setCompleter(self.coin_pair_completer)
 
+                self.init_exchange()
+
+                # 刷新汇率
+                ret = self.commonAPI.get_rate('cny')
+                rate = ret['data'][0]['rateParities']
+                self.exchange_rate_dict['cny'] = float(rate)
+
                 # 检查更新
                 if FundConfig.PLATFORM == 'win32':
                     FundUpdate(self).update(sys.argv)
@@ -207,19 +225,30 @@ class FundMain(QMainWindow, Ui_MainWindow):
         if restart:
             self.socket_running = False
             while self.loop.is_running():
-                print('等待结束')
+                pass
             print('loop 已结束')
             self.loop.close()
             self.loop = asyncio.new_event_loop()
             self.socket_running = True
-            self.channels = []
+            self.channels = ["index/ticker:BTC-USDT", "index/ticker:ETH-USDT", "index/ticker:ADA-USDT",
+                             "index/ticker:XRP-USDT", "index/ticker:DOT-USDT"]
         self.op_coin = []
         for item in self.fundConfigOrigin['optionalCoins']:
             self.op_coin.append("spot/ticker:" + item)
         self.channels.extend(self.op_coin)
-        # loop = asyncio.new_event_loop()
         # 公共数据 不需要登录（行情，K线，交易数据，资金费率，限价范围，深度数据，标记价格等频道）
         self.loop.run_until_complete(self.subscribe_without_login(self.url, self.channels))
+
+    def init_exchange(self):
+        self.api_key = FundConfig.EXCHANGE_API['okex']['apiKey']
+        self.secret_key = FundConfig.EXCHANGE_API['okex']['apiSecret']
+        self.passphrase = FundConfig.EXCHANGE_API['okex']['passPhrase']
+
+        if len(self.api_key) > 0 and len(self.secret_key) > 0 and len(self.passphrase) > 0:
+            self.accountAPI = Account.AccountAPI(self.api_key, self.secret_key, self.passphrase, False, '0')
+            self.has_exchange_api = True
+        else:
+            self.has_exchange_api = False
 
     def scheduler_job(self):
         """
@@ -251,10 +280,18 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.addCoinPairBtn.clicked.connect(self.add_coin_btn_clicked)
 
     def balance_click(self):
-        res = self.accountAPI.get_account()
-        balance = float(res['data'][0]['totalEq'])
-        balance_str = '{} USD'.format(format(balance, '.2f'))
-        self.total_assets_txt.setText(balance_str)
+        if self.has_exchange_api:
+            res = self.accountAPI.get_account()
+            balance = float(res['data'][0]['totalEq'])
+            if FundConfig.EXCHANGE_SETTING['localCurrency'] == 0:
+                rate = self.exchange_rate_dict['cny']
+                balance = rate * balance
+                balance_str = '{} CNY'.format(format(balance, '.2f'))
+            else:
+                balance_str = '{} USD'.format(format(balance, '.2f'))
+            self.total_assets_txt.setText(balance_str)
+        else:
+            self.total_assets_txt.setText('[请配置API]')
 
     def tab_widget_changed(self, index):
         if index == 2:
@@ -445,9 +482,9 @@ class FundMain(QMainWindow, Ui_MainWindow):
         # self.positionTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
         # 允许弹出菜单
-        # self.coinMarketTable.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.coinMarketTable.setContextMenuPolicy(Qt.CustomContextMenu)
         # 将信号请求连接到槽（单击鼠标右键，就调用方法）
-        # self.coinMarketTable.customContextMenuRequested.connect(self.fund_table_menu)
+        self.coinMarketTable.customContextMenuRequested.connect(self.coin_market_menu)
 
     def fund_table_menu(self, pos):
         curTabIndex = self.tabWidget.currentIndex()
@@ -1068,7 +1105,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         ui.midTxt.setCursorPosition(0)
         ui.cloudSyncChb.setChecked(FundConfig.ENABLE_SYNC)
 
-        #虚拟货币
+        # 虚拟货币
         ui.api_address_text.setText(FundConfig.EXCHANGE_API['okex']['apiAddress'])
         ui.api_key_text.setText(FundConfig.EXCHANGE_API['okex']['apiKey'])
         ui.secret_key_text.setText(FundConfig.EXCHANGE_API['okex']['apiSecret'])
@@ -1173,6 +1210,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
                 self.start_init()
             else:
                 self.write_local_config()
+
+            self.init_exchange()
 
 
         except Exception as e:
@@ -1340,15 +1379,14 @@ class FundMain(QMainWindow, Ui_MainWindow):
         FundConfig.ENABLE_SYNC = self.getOrDefault('enableSync', False)
 
         # 虚拟货币
-        # origin_api_str = self.getOrDefault('exchangeApi', '')
-        origin_api_str = 'b2tleCw0MmFkYzRmMS0zYTRjLTRjYjQtYjRiNS0xNTYwNTFhNzdjYWIsNjk4NjZEN0M2MDU0MjQyNjRBRUM3OTQyOEVENzNEMjIsTkJoZ2ZJeTMyNG9wOWN2TA=='
+        origin_api_str = self.getOrDefault('exchangeApi', 'LCws')
         origin_api_str = base64.decodebytes(origin_api_str.encode('utf-8')).decode('utf-8')
         origin_api_array = origin_api_str.split(',')
         FundConfig.EXCHANGE_API = {'okex': {
             'apiAddress': 'https://www.ouyi.cc',
-            'apiKey': origin_api_array[1],
-            'apiSecret': origin_api_array[2],
-            'passPhrase': origin_api_array[3]
+            'apiKey': origin_api_array[1] if len(origin_api_array) >= 2 else '',
+            'apiSecret': origin_api_array[2] if len(origin_api_array) >= 3 else '',
+            'passPhrase': origin_api_array[3] if len(origin_api_array) >= 4 else ''
         }}
         FundConfig.EXCHANGE_SETTING = {
             'timeZone': self.getOrDefault('timeZone', 0),
@@ -1729,10 +1767,11 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
     def coin_double_clicked(self, index: QModelIndex):
         try:
-            rowIndex = index.row()
-            coin_pair = self.coinMarketTable.item(rowIndex, 0).text()
-            coin_pair = coin_pair.lower()
-            url = 'https://www.ouyi.cc/markets/spot-info/' + coin_pair
+            pass
+            # rowIndex = index.row()
+            # coin_pair = self.coinMarketTable.item(rowIndex, 0).text()
+            # coin_pair = coin_pair.lower()
+            # url = 'https://www.ouyi.cc/markets/spot-info/' + coin_pair
             # title = "行情"
             # dialog = QDialog(self.centralwidget)
             # windowsFlags = dialog.windowFlags()
@@ -1750,10 +1789,53 @@ class FundMain(QMainWindow, Ui_MainWindow):
     def add_coin_btn_clicked(self):
         print('add_coin_btn_clicked')
         coin_pair = self.coinPairText.text()
-        if not coin_pair or len(coin_pair) < 5:
+        if not coin_pair or len(coin_pair) < 5 or '-' not in coin_pair:
+            QMessageBox.warning(self, '提示', '请检查输入的币对是否正确！')
+            self.coinPairText.setText("")
             return
         coin_pair = coin_pair.split(' ')[0]
         coin_pair = coin_pair.upper()
-        self.fundConfigOrigin['crypto-coin'].append(coin_pair)
+
+        if FundConfig.PLATFORM == 'darwin':
+            selection_style = 'selection-background-color:rgb(0,99,225);selection-color:rgb(255,255,255)'
+        else:
+            selection_style = 'selection-background-color:rgb(51,153,255);selection-color:rgb(255,255,255)'
+
+        # 如果币对已经在里面了
+        if coin_pair in self.fundConfigOrigin['optionalCoins']:
+            find_items = self.coinMarketTable.findItems(coin_pair, Qt.MatchContains)
+            for item in find_items:
+                self.coinMarketTable.scrollToItem(item)
+                self.coinMarketTable.setStyleSheet(selection_style)
+                index = self.coinMarketTable.indexFromItem(item)
+                self.coinMarketTable.selectRow(index.row())
+            self.coinPairText.setText("")
+            return
+
+        self.fundConfigOrigin['optionalCoins'].append(coin_pair)
         self.write_local_config()
-        self.start_websocket(True)
+        _thread.start_new_thread(lambda: self.start_websocket(True), ())
+        self.coinPairText.setText("")
+
+    def remove_coin_pair(self, coin_pair: str):
+        print(coin_pair)
+        self.fundConfigOrigin['optionalCoins'].remove(coin_pair)
+        self.write_local_config()
+        _thread.start_new_thread(lambda: self.start_websocket(True), ())
+
+    def coin_market_menu(self, pos):
+        contextMenu = QMenu(self.coinMarketTable)
+        menu1 = contextMenu.addAction('走势图')
+        contextMenu.addSeparator()
+        menu2 = contextMenu.addAction('删除')
+
+        screenPos = self.coinMarketTable.mapToGlobal(pos)
+        action = contextMenu.exec_(screenPos)
+
+        coin_pair = self.coinMarketTable.selectedItems()[0].text()
+
+        if action == menu1:
+            url = 'https://www.ouyi.cc/markets/spot-info/' + coin_pair
+            webbrowser.open_new_tab(url)
+        elif action == menu2:
+            self.remove_coin_pair(coin_pair)
