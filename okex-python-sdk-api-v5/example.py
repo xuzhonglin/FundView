@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # 获取充值地址信息  Get Deposit Address
     # result = fundingAPI.get_deposit_address('')
     # 获取资金账户余额信息  Get Balance
-    # result = fundingAPI.get_balances('BTC')
+    # result = fundingAPI.get_balances()
     # 资金划转  Funds Transfer
     # result = fundingAPI.funds_transfer(ccy='', amt='', type='1', froms="", to="",subAcct='')
     # 提币  Withdrawal
@@ -184,9 +184,9 @@ if __name__ == '__main__':
     # result = tradeAPI.order_algos_history('conditional', 'canceled', instType='FUTURES')
 
     # 子账户API subAccount
-    # subAccountAPI = SubAccount.SubAccountAPI(api_key, secret_key, passphrase, False, flag)
+    subAccountAPI = SubAccount.SubAccountAPI(api_key, secret_key, passphrase, False, flag)
     # 查询子账户的交易账户余额(适用于母账户) Query detailed balance info of Trading Account of a sub-account via the master account
-    # result = subAccountAPI.balances(subAcct='')
+    result = subAccountAPI.balances(subAcct='colinxusub')
     # 查询子账户转账记录(仅适用于母账户) History of sub-account transfer(applies to master accounts only)
     # result = subAccountAPI.bills()
     # 删除子账户APIKey(仅适用于母账户) Delete the APIkey of sub-accounts (applies to master accounts only)

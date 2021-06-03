@@ -32,6 +32,7 @@ from src.fund_utils import get_or_default, get_color, judge_time
 from okex.okex_websocket import *
 import okex.Account_api as Account
 import okex.common_api as Common
+import okex.subAccount_api as SubAccount
 import traceback
 import asyncio
 
@@ -51,6 +52,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
     # account api
     accountAPI = Account.AccountAPI('', '', '', False, '0')
+    subAccountAPI = SubAccount.SubAccountAPI('', '', '', False, '0')
     commonAPI = Common.CommonApi('', '', '', False, '0')
 
     def __init__(self, parent: QApplication):
@@ -77,6 +79,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.config_path = ''
         self.socket_running = True
         self.exchange_rate_dict = {}
+        self.has_sub_account = False
+        self.sub_account_list = []
 
         self.api_key = ''
         self.secret_key = ''
@@ -246,8 +250,13 @@ class FundMain(QMainWindow, Ui_MainWindow):
 
         if len(self.api_key) > 0 and len(self.secret_key) > 0 and len(self.passphrase) > 0:
             self.accountAPI = Account.AccountAPI(self.api_key, self.secret_key, self.passphrase, False, '0')
+            self.subAccountAPI = SubAccount.SubAccountAPI(self.api_key, self.secret_key, self.passphrase, False, '0')
+            self.sub_account_list = self.subAccountAPI.view_list()['data']
+            if len(self.sub_account_list) > 0:
+                self.has_sub_account = True
             self.has_exchange_api = True
         else:
+            self.has_sub_account = False
             self.has_exchange_api = False
 
     def scheduler_job(self):
@@ -274,7 +283,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         self.settingLabel.clicked.connect(self.setting_btn_clicked)
         self.tabWidget.currentChanged.connect(self.tab_widget_changed)
         self.BoardChange.connect(self.change_board_text)
-        self.TableChange.connect(self.change_table_coneten)
+        self.TableChange.connect(self.change_table_content)
         self.total_assets_txt.clicked.connect(self.balance_click)
         self.coinMarketTable.doubleClicked.connect(self.coin_double_clicked)
         self.addCoinPairBtn.clicked.connect(self.add_coin_btn_clicked)
@@ -283,6 +292,12 @@ class FundMain(QMainWindow, Ui_MainWindow):
         if self.has_exchange_api:
             res = self.accountAPI.get_account()
             balance = float(res['data'][0]['totalEq'])
+            # 查询子账户余额
+            # if self.has_sub_account:
+            #     for item in self.sub_account_list:
+            #         ret = self.subAccountAPI.balances(item['subAcct'])
+            #         balance += float(ret['data'][0]['totalEq'])
+
             if FundConfig.EXCHANGE_SETTING['localCurrency'] == 0:
                 rate = self.exchange_rate_dict['cny']
                 balance = rate * balance
@@ -1094,6 +1109,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
         ui = Ui_FundSettingDialog()
         ui.setupUi(dialog)
 
+        ui.tabWidget.setCurrentIndex(0)
+
         ui.isRecoveryTxt.hide()
         ui.fontNameCob.setCurrentText(FundConfig.FONT_NAME)
         ui.fontSizeCob.setCurrentText(str(FundConfig.FONT_SIZE))
@@ -1659,7 +1676,14 @@ class FundMain(QMainWindow, Ui_MainWindow):
         for item in list:
             coin_type = item['instrument_id']
             last_price = float(item['last'])
-            open_price = float(item['open_utc8'])
+            open_price = 0
+            utc_timezone = FundConfig.EXCHANGE_SETTING['timeZone']
+            if utc_timezone == 0:
+                open_price = float(item['open_utc8'])
+            elif utc_timezone == 1:
+                open_price = float(item['open_utc0'])
+            elif utc_timezone == 2:
+                open_price = float(item['open_24h'])
             price_diff = last_price - open_price
             colorString = get_color(price_diff, 'str')
             changePercent = '{}%'.format(format(price_diff / open_price * 100, '.2f'))
@@ -1688,13 +1712,20 @@ class FundMain(QMainWindow, Ui_MainWindow):
             return
         self.TableChange.emit(list)
 
-    def change_table_coneten(self, list: dict):
+    def change_table_content(self, list: dict):
         self.coinMarketTable.setRowCount(len(self.op_coin))
         for item in list:
             coin_type = item['instrument_id']
             row_index = self.op_coin.index("spot/ticker:" + coin_type)
             coin_price = float(item['last'])
-            coin_open = float(item['open_utc8'])
+            coin_open = 0
+            utc_timezone = FundConfig.EXCHANGE_SETTING['timeZone']
+            if utc_timezone == 0:
+                coin_open = float(item['open_utc8'])
+            elif utc_timezone == 1:
+                coin_open = float(item['open_utc0'])
+            elif utc_timezone == 2:
+                coin_open = float(item['open_24h'])
             change_percent = (coin_price - coin_open) / coin_open * 100
             change_color = get_color(change_percent, 'brush')
 
@@ -1835,7 +1866,7 @@ class FundMain(QMainWindow, Ui_MainWindow):
         coin_pair = self.coinMarketTable.selectedItems()[0].text()
 
         if action == menu1:
-            url = 'https://www.ouyi.cc/markets/spot-info/' + coin_pair
+            url = 'https://www.ouyi.cc/markets/spot-info/' + coin_pair.lower()
             webbrowser.open_new_tab(url)
         elif action == menu2:
             self.remove_coin_pair(coin_pair)
