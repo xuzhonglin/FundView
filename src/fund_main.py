@@ -1017,6 +1017,8 @@ class FundMain(QMainWindow, Ui_MainWindow):
         else:
             selection_style = 'selection-background-color:rgb(51,153,255);selection-color:rgb(255,255,255)'
 
+        self.optionalFundCodeTxt.setText('')
+
         # 设置选中色
         if fundCode in self.optionalFund:
             find_items = self.optionalTable.findItems(fundCode, Qt.MatchContains)

@@ -94,10 +94,15 @@ class FundTableMain(QMainWindow, Ui_FundTableDialog):
 
                 self.fundTable.setItem(row, 0, QTableWidgetItem(item['netWorthDate']))
                 self.fundTable.setItem(row, 1, QTableWidgetItem(item['netWorth']))
-                netGrowth = float(item['netGrowth'])
-                netGrowthColor = RED if netGrowth >= 0 else GREEN
-                self.fundTable.setItem(row, 2, QTableWidgetItem("{}%".format(netGrowth)))
-                self.fundTable.item(row, 2).setForeground(netGrowthColor)
+
+                if item['netGrowth'] == '' or '--' in item['netGrowth']:
+                    netGrowth = '-'
+                    self.fundTable.setItem(row, 2, QTableWidgetItem("{}".format(netGrowth)))
+                else:
+                    netGrowth = float(item['netGrowth'])
+                    netGrowthColor = RED if netGrowth >= 0 else GREEN
+                    self.fundTable.setItem(row, 2, QTableWidgetItem("{}%".format(netGrowth)))
+                    self.fundTable.item(row, 2).setForeground(netGrowthColor)
 
         elif self.tableType == 2:
             list = self.fundCrawler.get_fund_positions(self.fundCode)
